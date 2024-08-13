@@ -27,7 +27,7 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
   // or<F>(res: Result<T, F>): Result<T, F>;
   // orElse<F>(fn: (value: E) => Result<T, F>): Result<T, F>;
   unwrapOr<U>(defaultValue: U): T | U;
-  // unwrapOrElse<U>(fn: (value: E) => U): T | U;
+   unwrapOrElse<U>(fn: (value: E) => U): T | U;
   // unwrapUnchecked(): T;
   // unwrapErrUnchecked(): E;
 }
@@ -61,6 +61,9 @@ class OkImpl<T> implements BaseResult<T, never> {
     return this.#value
   }
   unwrapOr<U>(_defaultValue: U): T | U {
+    return this.#value
+  }
+  unwrapOrElse<U>(_fn: (value: never) => U): T | U {
     return this.#value
   }
   ok(): Option<T> {
@@ -103,7 +106,6 @@ class ErrImpl<E> implements BaseResult<never, E> {
     this.#stack = stackLines.join("\n");
     this.#value = value;
   }
-
   isOkAnd(_fn: (value: never) => boolean): boolean {
     return false;
   }
@@ -124,6 +126,9 @@ class ErrImpl<E> implements BaseResult<never, E> {
   }
   unwrapOr<U>(defaultValue: U): U {
     return defaultValue
+  }
+  unwrapOrElse<U>(fn: (value: E) => U): U {
+    return fn(this.#value)
   }
   ok(): Option<never> {
     return None
