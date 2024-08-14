@@ -1,4 +1,3 @@
-import { Option, Some, None } from "./option.ts";
 import { toString } from "./utils.ts";
 
 interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : never> {
@@ -6,8 +5,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
   isOkAnd(fn: (value: T) => boolean): boolean;
   isErr(): boolean;
   isErrAnd(fn: (value: E) => boolean): boolean;
-  ok(): Option<T>;
-  err(): Option<E>;
+  ok(): T | undefined
+  err(): E | undefined
   // map<U>(fn: (value: T) => U): Result<U, E>;
   // mapOr<U>(defaultValue: U, fn: (value: T) => U): U;
   // mapOrElse<U>(defaultFn: () => U, fn: (value: T) => U): U;
@@ -66,11 +65,11 @@ class OkImpl<T> implements BaseResult<T, never> {
   unwrapOrElse<U>(_fn: (value: never) => U): T | U {
     return this.#value
   }
-  ok(): Option<T> {
-    return Some(this.#value)
+  ok(): T {
+    return this.#value;
   }
-  err(): Option<never> {
-    return None
+  err(): undefined {
+    return undefined
   }
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
@@ -130,11 +129,11 @@ class ErrImpl<E> implements BaseResult<never, E> {
   unwrapOrElse<U>(fn: (value: E) => U): U {
     return fn(this.#value)
   }
-  ok(): Option<never> {
-    return None
+  ok(): undefined {
+    return undefined
   }
-  err(): Option<E> {
-    return Some(this.#value)
+  err(): E {
+    return this.#value;
   }
 
   [Symbol.iterator](): Iterator<never> {
