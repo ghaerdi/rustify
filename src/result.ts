@@ -26,7 +26,7 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
   // or<F>(res: Result<T, F>): Result<T, F>;
   // orElse<F>(fn: (value: E) => Result<T, F>): Result<T, F>;
   unwrapOr<U>(defaultValue: U): T | U;
-   unwrapOrElse<U>(fn: (value: E) => U): T | U;
+  unwrapOrElse<U>(fn: (value: E) => U): T | U;
   // unwrapUnchecked(): T;
   // unwrapErrUnchecked(): E;
 }
