@@ -9,4 +9,4 @@ const result = divide(10, 5).unwrapOrElse((err) => {
   return 0;
 });
 
-console.log(result); // 2 or 0 if error
+console.log({ result }); // 2 or 0 if error

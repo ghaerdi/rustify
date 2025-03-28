@@ -1,4 +1,4 @@
-import { type Result, Err, Ok, ResultWrapper } from "../src/result.ts";
+import { type Result, Err, Ok, wrapInResult } from "../src/result.ts";
 import { describe, test, expect } from "bun:test";
 
 const enum MathError {
@@ -28,7 +28,7 @@ describe("Result.unwrapOrElse", () => {
   test("should throw error message if it is Err", () => {
     expect(() => {
       divide(10, 0).unwrapOrElse(_ => {
-        throw new Error("cannot divide by zero");
+        throw new Error(MathError.DivisionByZero);
       });
     }).toThrow(MathError.DivisionByZero);
   });
@@ -137,19 +137,256 @@ describe("Result.isErrAnd", () => {
   });
 });
 
-describe("ResultWrapper", () => {
-  const divide = ResultWrapper<number, MathError>((a: number, b: number) => {
+describe("Result.map", () => {
+  test("should apply the function to the value if it is Ok", () => {
+    const result = divide(10, 2).map(x => x * 2);
+    expect(result.unwrap()).toBe(10);
+  });
+
+  test("should not apply the function if it is Err", () => {
+    const result = divide(10, 0).map(x => x * 2);
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.DivisionByZero);
+  });
+});
+
+describe("Result.mapOr", () => {
+  test("should apply the function to the value if it is Ok", () => {
+    const result = divide(10, 2).mapOr(0, x => x * 2);
+    expect(result).toBe(10);
+  });
+
+  test("should return the default value if it is Err", () => {
+    const result = divide(10, 0).mapOr(0, x => x * 2);
+    expect(result).toBe(0);
+  });
+});
+
+describe("Result.mapOrElse", () => {
+  test("should apply the function to the value if it is Ok", () => {
+    const result = divide(10, 2).mapOrElse(() => 0, x => x * 2);
+    expect(result).toBe(10);
+  });
+
+  test("should apply the default function if it is Err", () => {
+    const result = divide(10, 0).mapOrElse(() => 0, x => x * 2);
+    expect(result).toBe(0);
+  });
+});
+
+describe("Result.mapErr", () => {
+  test("should apply the function to the error if it is Err", () => {
+    const result = divide(10, 0).mapErr(e => `Error: ${e}`);
+    expect(result.err()).toBe("Error: cannot divide by zero");
+  });
+
+  test("should not apply the function if it is Ok", () => {
+    const result = divide(10, 2).mapErr(e => `Error: ${e}`);
+    expect(result.unwrap()).toBe(5);
+  });
+});
+
+describe("Result.inspect", () => {
+  test("should call the function with the value if it is Ok", () => {
+    let inspectedValue: number | undefined;
+    const result = divide(10, 2).inspect(x => {
+      inspectedValue = x;
+    });
+    expect(inspectedValue).toBe(5);
+    expect(result.unwrap()).toBe(5);
+  });
+
+  test("should not call the function if it is Err", () => {
+    let inspectedValue: number | undefined;
+    const result = divide(10, 0).inspect(x => {
+      inspectedValue = x;
+    });
+    expect(inspectedValue).toBeUndefined();
+    expect(result.isErr()).toBe(true);
+  });
+});
+
+describe("Result.inspectErr", () => {
+  test("should call the function with the error if it is Err", () => {
+    let inspectedError: MathError | undefined;
+    const result = divide(10, 0).inspectErr(e => {
+      inspectedError = e;
+    });
+    expect(inspectedError).toBe(MathError.DivisionByZero);
+    expect(result.isErr()).toBe(true);
+  });
+
+  test("should not call the function if it is Ok", () => {
+    let inspectedError: MathError | undefined;
+    const result = divide(10, 2).inspectErr(e => {
+      inspectedError = e;
+    });
+    expect(inspectedError).toBeUndefined();
+    expect(result.unwrap()).toBe(5);
+  });
+});
+
+describe("Result.and", () => {
+  test("should return the other Result if it is Ok", () => {
+    const result = divide(10, 2).and(Ok("hello"));
+    expect(result.unwrap()).toBe("hello");
+  });
+
+  test("should return the Err if it is Err", () => {
+    const result = divide(10, 0).and(Ok("hello"));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.DivisionByZero);
+  });
+
+  test("should return the Err if the other Result is Err", () => {
+    const result = divide(10, 2).and(Err(MathError.UnknownError));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.UnknownError);
+  });
+});
+
+describe("Result.andThen", () => {
+  test("should call the function and return the result if it is Ok", () => {
+    const result = divide(10, 2).andThen(x => Ok(x.toString()));
+    expect(result.unwrap()).toBe("5");
+  });
+
+  test("should not call the function and return the Err if it is Err", () => {
+    const result = divide(10, 0).andThen(x => Ok(x.toString()));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.DivisionByZero);
+  });
+
+  test("should return Err if the function returns Err", () => {
+    const result = divide(10, 2).andThen(_ => Err(MathError.UnknownError));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.UnknownError);
+  });
+});
+
+describe("Result.or", () => {
+  test("should return the Ok if it is Ok", () => {
+    const result = divide(10, 2).or(Ok(0));
+    expect(result.unwrap()).toBe(5);
+  });
+
+  test("should return the Ok if it is Err and the other is Ok", () => {
+    const result = divide(10, 0).or(Ok(0));
+    expect(result.unwrap()).toBe(0);
+  });
+
+  test("should return the Err if both are Err", () => {
+    const result = divide(10, 0).or(Err("other error"));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe("other error");
+  });
+});
+
+describe("Result.orElse", () => {
+  test("should return the Ok if it is Ok", () => {
+    const result = divide(10, 2).orElse(() => Ok(0));
+    expect(result.unwrap()).toBe(5);
+  });
+
+  test("should call the function and return the result if it is Err", () => {
+    const result = divide(10, 0).orElse(() => Ok(0));
+    expect(result.unwrap()).toBe(0);
+  });
+
+  test("should return Err if the function returns Err", () => {
+    const result = divide(10, 0).orElse(() => Err("other error"));
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe("other error");
+  });
+});
+
+describe("Result.expectErr", () => {
+  test("should return the error if it is Err", () => {
+    expect(divide(10, 0).expectErr("should throw error message")).toBe(MathError.DivisionByZero);
+  });
+
+  test("should throw if it is Ok", () => {
+    expect(() => {
+      divide(10, 2).expectErr("should throw error message");
+    }).toThrow();
+  });
+});
+
+describe("Result.unwrapErr", () => {
+  test("should return the error if it is Err", () => {
+    expect(divide(10, 0).unwrapErr()).toBe(MathError.DivisionByZero);
+  });
+
+  test("should throw if it is Ok", () => {
+    expect(() => {
+      divide(10, 2).unwrapErr();
+    }).toThrow();
+  });
+});
+
+describe("Result.cloned", () => {
+  test("should clone the Ok value (primitive)", () => {
+    const result = Ok(5).cloned();
+    expect(result.unwrap()).toBe(5);
+  });
+
+  test("should clone the Ok value (object)", () => {
+    const original = { a: 1, b: "hello" };
+    const result = Ok(original).cloned();
+    const cloned = result.unwrap();
+    expect(cloned).toEqual(original);
+    expect(cloned).not.toBe(original);
+  });
+
+  test("should not clone the Err value", () => {
+    const result: Result<number, string> = Err("error").cloned();
+    expect(result.err()).toBe("error");
+  });
+});
+
+describe("wrapInResult", () => {
+  const divide = (a: number, b: number) => {
     if (b === 0) {
       throw new Error(MathError.DivisionByZero);
     }
     return a / b;
+  }
+  const safeDivide = wrapInResult<number, MathError>(divide);
+
+  test("should return Ok with the function's result if the function does not throw an error", () => {
+    const result = safeDivide(10, 2);
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(5);
   });
 
-  test("should return Ok if the function does not throw an error", () => {
-    expect(divide(10, 2).isOk()).toBeTrue();
+  test("should return Err with the thrown error message if the function throws an error", () => {
+    const result = safeDivide(10, 0);
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe(MathError.DivisionByZero);
   });
 
-  test("should return Err if the function throws an error", () => {
-    expect(divide(10, 0).isErr()).toBeTrue();
+  test("should return Err with a transformed error if errorTransform is provided", () => {
+    const divideWithTransform = wrapInResult<number, { message: string; code: number }>(
+      divide,
+      (error) => {
+        if (error instanceof Error) {
+          return { message: error.message, code: 500 }
+        }
+        return { message: String(error), code: 500 };
+      }
+    );
+
+    const result = divideWithTransform(10, 0);
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toEqual({ message: MathError.DivisionByZero, code: 500 });
+  });
+
+  test("should handle non-Error throws", () => {
+    const throwString = wrapInResult<string, string>(() => {
+      throw "This is a string error";
+    });
+    const result = throwString();
+    expect(result.isErr()).toBe(true);
+    expect(result.err()).toBe("This is a string error");
   });
 });
