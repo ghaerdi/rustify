@@ -1,11 +1,44 @@
 {
-  "name": "rustify",
-  "module": "main.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+	"name": "@ghaerdi/rustify",
+	"version": "1.0.0",
+	"description": "A TypeScript library implementing Rust-like error handling with Result, Ok, and Err types.",
+	"module": "src/index.ts",
+	"type": "module",
+	"main": "src/index.ts",
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ghaerdi/rustify"
+	},
+	"bugs": {
+		"url": "https://github.com/ghaerdi/rustify/issues"
+	},
+	"keywords": [
+		"typescript",
+		"rust",
+		"error handling",
+		"result",
+		"ok",
+		"err",
+		"ts-result",
+		"functional programming",
+		"type-safe"
+	],
+	"author": "ghaerdi",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5.0.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"scripts": {
+		"check": "tsc --noEmit",
+		"prepublishOnly": "bun run check & bun test"
+	}
 }
