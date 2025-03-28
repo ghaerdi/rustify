@@ -17,6 +17,9 @@
 	"bugs": {
 		"url": "https://github.com/ghaerdi/rustify/issues"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"keywords": [
 		"typescript",
 		"rust",
