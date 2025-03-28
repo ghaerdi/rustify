@@ -344,6 +344,38 @@ describe("Result.cloned", () => {
   });
 });
 
+describe("Result [Symbol.iterator]", () => {
+  test("should iterate over Ok value if it is iterable (Array)", () => {
+    const result = Ok([1, 2, 3]);
+    const iterated = [...result];
+    expect(iterated).toEqual([1, 2, 3]);
+  });
+
+  test("should iterate over Ok value if it is iterable (String)", () => {
+    const result = Ok("abc");
+    const iterated = [...result];
+    expect(iterated).toEqual(['a', 'b', 'c']);
+  });
+
+  test("should yield nothing if Ok value is not iterable (number)", () => {
+    const result = Ok(123);
+    const iterated = [...result];
+    expect(iterated).toEqual([]);
+  });
+
+  test("should yield nothing if Ok value is not iterable (object)", () => {
+    const result = Ok({ a: 1 });
+    const iterated = [...result];
+    expect(iterated).toEqual([]);
+  });
+
+  test("should yield nothing if it is Err", () => {
+    const result: Result<number[], string> = Err("error");
+    const iterated = [...result];
+    expect(iterated).toEqual([]);
+  });
+});
+
 describe("wrapInResult", () => {
   const divide = (a: number, b: number) => {
     if (b === 0) {

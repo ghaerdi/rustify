@@ -522,7 +522,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
-    if (typeof value === 'object' && value !== null && Symbol.iterator in value) {
+    if ([null, undefined].every(v => v !== value) && typeof (value as any)[Symbol.iterator] === "function") {
       return (value as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
     } else {
       return {
