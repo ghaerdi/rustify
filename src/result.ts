@@ -441,7 +441,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   ok(): T { return this.#value; }
   err(): undefined { return undefined; }
 
-  map<U>(fn: (value: T) => U): Result<U, never> {
+  map<U>(fn: (value: T) => U): Result<U, E> {
     return Ok(fn(this.#value));
   }
 
@@ -449,11 +449,11 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return fn(this.#value);
   }
 
-  mapOrElse<U>(_defaultFn: (err: never) => U, fn: (value: T) => U): U {
+  mapOrElse<U>(_defaultFn: (err: E) => U, fn: (value: T) => U): U {
     return fn(this.#value);
   }
 
-  mapErr<F>(_fn: (value: never) => F): Result<T, F> {
+  mapErr<F>(_fn: (value: E) => F): Result<T, F> {
     return this as unknown as Result<T, F>; // Type assertion is safe here
   }
 
@@ -462,7 +462,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return this;
   }
 
-  inspectErr(_fn: (value: never) => void): Result<T, E> {
+  inspectErr(_fn: (value: E) => void): Result<T, E> {
     return this;
   }
 
@@ -478,7 +478,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return this.#value;
   }
 
-  unwrapOrElse<U>(_fn: (value: never) => U): T {
+  unwrapOrElse<U>(_fn: (value: E) => U): T {
     return this.#value;
   }
 
@@ -494,7 +494,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return this as unknown as Result<T, F>; // Type assertion is safe here
   }
 
-  orElse<F>(_fn: (value: never) => Result<T, F>): Result<T, F> {
+  orElse<F>(_fn: (value: E) => Result<T, F>): Result<T, F> {
     return this as unknown as Result<T, F>; // Type assertion is safe here
   }
 
@@ -512,11 +512,11 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     }
   }
 
-  expectErr(message: string): never {
+  expectErr(message: string): E {
     throw new Error(`${message}: ${toString(this.#value)}`);
   }
 
-  unwrapErr(): never {
+  unwrapErr(): E {
     throw new Error(`Tried to unwrap Ok value: ${toString(this.#value)}`);
   }
 
@@ -572,15 +572,15 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   ok(): undefined { return undefined; }
   err(): E { return this.#value; }
 
-  map<U>(_fn: (value: never) => U): Result<U, E> {
+  map<U>(_fn: (value: T) => U): Result<U, E> {
     return this as unknown as Result<U, E>; // Type assertion is safe here
   }
 
-  mapOr<U>(defaultValue: U, _fn: (value: never) => U): U {
+  mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
     return defaultValue;
   }
 
-  mapOrElse<U>(defaultFn: (err: E) => U, _fn: (value: never) => U): U {
+  mapOrElse<U>(defaultFn: (err: E) => U, _fn: (value: T) => U): U {
     return defaultFn(this.#value);
   }
 
@@ -588,7 +588,7 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     return Err(fn(this.#value));
   }
 
-  inspect(_fn: (value: never) => void): Result<T, E> {
+  inspect(_fn: (value: T) => void): Result<T, E> {
     return this;
   }
 
@@ -597,11 +597,11 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     return this;
   }
 
-  expect(message: string): never {
+  expect(message: string): T {
     throw new Error(`${message}: ${toString(this.#value)}\n${this.#stack}`);
   }
 
-  unwrap(): never {
+  unwrap(): T {
     throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.#stack}`);
   }
 
@@ -617,7 +617,7 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     return this as unknown as Result<U, E>; // Type assertion is safe here
   }
 
-  andThen<U>(_fn: (value: never) => Result<U, E>): Result<U, E> {
+  andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
     return this as unknown as Result<U, E>; // Type assertion is safe here
   }
 
