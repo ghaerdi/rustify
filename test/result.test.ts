@@ -1,424 +1,401 @@
 import { type Result, Err, Ok, wrapInResult } from "../src/result.ts";
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, mock } from "bun:test";
 
-const enum MathError {
-  DivisionByZero = "cannot divide by zero",
-  UnknownError = "unknown error"
-}
+describe('Result', () => {
+  describe('Ok', () => {
+    const value = 'success';
+    const okResult: Result<string, string> = Ok(value);
 
-function divide(a: number, b: number): Result<number, MathError> {
-  return b === 0 ? Err(MathError.DivisionByZero) : Ok(a / b);
-}
-
-describe("Result.unwrapOrElse", () => {
-  test("should return the value if it is Ok", () => {
-    const result = divide(10, 2).unwrapOrElse(_ => {
-      return 0;
+    test('isOk should return true', () => {
+      expect(okResult.isOk()).toBeTrue();
     });
-    expect(result).toBe(5);
-  });
 
-  test("should return the default value if it is Err", () => {
-    const result = divide(10, 0).unwrapOrElse(_ => {
-      return 0;
+    test('isErr should return false', () => {
+      expect(okResult.isErr()).toBeFalse();
     });
-    expect(result).toBe(0);
-  });
 
-  test("should throw error message if it is Err", () => {
-    expect(() => {
-      divide(10, 0).unwrapOrElse(_ => {
-        throw new Error(MathError.DivisionByZero);
+    test('ok should return the value', () => {
+      expect(okResult.ok()).toBe(value);
+    });
+
+    test('err should return undefined', () => {
+      expect(okResult.err()).toBeUndefined();
+    });
+
+    test('unwrap should return the value', () => {
+      expect(okResult.unwrap()).toBe(value);
+    });
+
+    test('unwrapErr should throw', () => {
+      expect(() => okResult.unwrapErr()).toThrow(/^Tried to unwrap Ok value:/);
+    });
+
+    test('unwrapOr should return the value', () => {
+      expect(okResult.unwrapOr('default')).toBe(value);
+    });
+
+    test('map should apply function and wrap result in Ok', () => {
+      const mapped = okResult.map((val) => val.length);
+      expect(mapped.isOk()).toBeTrue();
+      expect(mapped.unwrap()).toBe(value.length);
+    });
+
+    test('mapErr should not apply function and return self', () => {
+      const mapErrFn = mock((_err: string) => `Error: ${_err}`);
+      const mappedErr = okResult.mapErr(mapErrFn);
+      expect(mappedErr.isOk()).toBeTrue();
+      expect(mappedErr.unwrap()).toBe(value);
+      expect(mapErrFn).not.toHaveBeenCalled();
+    });
+
+    test('andThen should apply function returning Result', () => {
+      const andThenFn = mock((val: string) => Ok(val.length));
+      const andThenResult = okResult.andThen(andThenFn);
+      expect(andThenResult.isOk()).toBeTrue();
+      expect(andThenResult.unwrap()).toBe(value.length);
+      expect(andThenFn).toHaveBeenCalledWith(value);
+    });
+
+    test('orElse should not apply function and return self', () => {
+      const orElseFn = mock((err: string) => Err(`Error: ${err}`));
+      const orElseResult = okResult.orElse(orElseFn);
+      expect(orElseResult.isOk()).toBeTrue();
+      expect(orElseResult.unwrap()).toBe(value);
+      expect(orElseFn).not.toHaveBeenCalled();
+    });
+
+    test('isOkAnd should return true if predicate matches', () => {
+      expect(okResult.isOkAnd(v => v === value)).toBeTrue();
+    });
+
+    test('isOkAnd should return false if predicate does not match', () => {
+      expect(okResult.isOkAnd(v => v === 'different')).toBeFalse();
+    });
+
+    test('isErrAnd should return false', () => {
+      expect(okResult.isErrAnd(_ => true)).toBeFalse();
+    });
+
+    test('mapOr should apply function and return the result', () => {
+      const mapOrFn = mock((val: string) => val.length);
+      expect(okResult.mapOr(0, mapOrFn)).toBe(value.length);
+      expect(mapOrFn).toHaveBeenCalledWith(value);
+    });
+
+    test('mapOrElse should apply ok function and return the result', () => {
+      const okFn = mock((val: string) => val.length);
+      const errFn = mock((_err: string) => 0);
+      expect(okResult.mapOrElse(errFn, okFn)).toBe(value.length);
+      expect(okFn).toHaveBeenCalledWith(value);
+      expect(errFn).not.toHaveBeenCalled();
+    });
+
+    test('inspect should call function and return self', () => {
+      const inspectFn = mock((v: string) => { });
+      const result = okResult.inspect(inspectFn);
+      expect(result).toBe(okResult);
+      expect(inspectFn).toHaveBeenCalledWith(value);
+    });
+
+    test('inspectErr should not call function and return self', () => {
+      const inspectErrFn = mock((e: string) => { });
+      const result = okResult.inspectErr(inspectErrFn);
+      expect(result).toBe(okResult);
+      expect(inspectErrFn).not.toHaveBeenCalled();
+    });
+
+    test('expect should return the value', () => {
+      expect(okResult.expect('should be Ok')).toBe(value);
+    });
+
+    test('expectErr should throw with message', () => {
+      const message = 'Value was Ok';
+      expect(() => okResult.expectErr(message)).toThrow(`${message}: ${value}`);
+    });
+
+    test('unwrapOrElse should return the value', () => {
+      const elseFn = mock((_err: string) => 'default');
+      expect(okResult.unwrapOrElse(elseFn)).toBe(value);
+      expect(elseFn).not.toHaveBeenCalled();
+    });
+
+    test('and should return the other result if Ok', () => {
+      const compatibleAndOk: Result<number, string> = Ok(99);
+      const compatibleAndErr: Result<number, string> = Err("compatible error");
+      expect(okResult.and(compatibleAndOk).unwrap()).toBe(99);
+      expect(okResult.and(compatibleAndErr).err()).toBe("compatible error");
+    });
+
+    test('or should return self if Ok', () => {
+      expect(okResult.or(Ok("another success")).unwrap()).toBe(value);
+      expect(okResult.or(Err(404)).unwrap()).toBe(value);
+    });
+
+    test('cloned should return a new Ok with a cloned value (object)', () => {
+      const obj = { a: 1, b: { c: 2 } };
+      const okObj = Ok(obj);
+      const cloned = okObj.cloned();
+      expect(cloned.isOk()).toBeTrue();
+      const unwrapped = cloned.unwrap();
+      expect(unwrapped).toEqual(obj);
+      expect(unwrapped).not.toBe(obj);
+      expect(unwrapped.b).not.toBe(obj.b);
+    });
+
+    test('cloned should return a new Ok with the same value (primitive)', () => {
+      const okPrimitive = Ok(123);
+      const cloned = okPrimitive.cloned();
+      expect(cloned.isOk()).toBeTrue();
+      expect(cloned.unwrap()).toBe(123);
+    });
+
+    describe('Iterator', () => {
+      test('should yield values if Ok value is iterable (Array)', () => {
+        const iterableValue = [1, 2, 3];
+        const okIterable = Ok(iterableValue);
+        const yielded = [...okIterable];
+        expect(yielded).toEqual(iterableValue);
       });
-    }).toThrow(MathError.DivisionByZero);
-  });
-});
 
-describe("Result.unwrapOr", () => {
-  test("should return the value if it is Ok", () => {
-    expect(divide(10, 2).unwrapOr(0)).toBe(5);
-  });
+      test('should yield values if Ok value is iterable (String)', () => {
+        const result = Ok("abc");
+        const iterated = [...result];
+        expect(iterated).toEqual(['a', 'b', 'c']);
+      });
 
-  test("should return the default value if it is Err", () => {
-    expect(divide(10, 0).unwrapOr(0)).toBe(0);
-  });
-});
+      test('should yield values if Ok value is iterable (Set)', () => {
+        const setData = [1, 2, 3];
+        const result = Ok(new Set(setData));
+        const iterated = [...result];
+        expect(iterated).toEqual(setData);
+      });
 
-describe("Result.unwrap", () => {
-  test("should return the value if it is Ok", () => {
-    expect(divide(10, 2).unwrap()).toBe(5);
-  });
+      test('should yield key-value pairs if Ok value is iterable (Map)', () => {
+        const mapData: [string, number][] = [['a', 1], ['b', 2]];
+        const result = Ok(new Map(mapData));
+        const iterated = [...result];
+        expect(iterated).toEqual(mapData);
+      });
 
-  test("should throw error message if it is Err", () => {
-    expect(() => {
-      divide(10, 0).unwrap();
-    }).toThrow(MathError.DivisionByZero);
-  });
-});
+      test('should yield nothing if Ok value is not iterable (Number)', () => {
+        const result = Ok(123);
+        const iterated = [...result];
+        expect(iterated).toEqual([]);
+      });
 
-describe("Result.expect", () => {
-  test("should return the value if it is Ok", () => {
-    const result = divide(10, 2).expect("should divide successfully");
-    expect(result).toBe(5);
-  });
+      test('should yield nothing if Ok value is not iterable (Object)', () => {
+        const okNonIterable = Ok({ a: 1 });
+        const yielded = [...okNonIterable];
+        expect(yielded).toEqual([]);
+      });
 
-  test("should throw error message if it is Err", () => {
-    expect(() => {
-      divide(10, 0).expect("should throw error message");
-    }).toThrow("should throw error message");
-  });
-});
-
-describe("Result.isOk", () => {
-  test("should return true if it is Ok", () => {
-    expect(divide(10, 2).isOk()).toBeTrue();
-  });
-
-  test("should return false if it is Err", () => {
-    expect(divide(10, 0).isOk()).toBeFalse();
-  });
-});
-
-describe("Result.ok", () => {
-  test("should return the value if it is Ok", () => {
-    expect(divide(10, 2).ok()).toBe(5);
-  });
-
-  test("should return undefined if it is Err", () => {
-    expect(divide(10, 0).ok()).toBeUndefined();
-  });
-});
-
-describe("Result.err", () => {
-  test("should return the error if it is Err", () => {
-    expect(divide(10, 0).err()).toBe(MathError.DivisionByZero);
-  });
-
-  test("should return undefined if it is Ok", () => {
-    expect(divide(10, 2).err()).toBeUndefined();
-  });
-});
-
-describe("Result.isErr", () => {
-  test("should return true if it is Err", () => {
-    expect(divide(10, 0).isErr()).toBeTrue();
-  });
-
-  test("should return false if it is Ok", () => {
-    expect(divide(10, 2).isErr()).toBeFalse();
-  });
-});
-
-describe("Result.isOkAnd", () => {
-  test("should return false if it is Err", () => {
-    expect(divide(10, 0).isOkAnd(result => result === 5)).toBeFalse();
-  });
-
-  test("should return true if it is Ok and condition is met", () => {
-    expect(divide(10, 2).isOkAnd(result => result === 5)).toBeTrue();
-  });
-
-  test("should return false if it is Ok and condition is not met", () => {
-    expect(divide(10, 2).isOkAnd(result => result === 10)).toBeFalse();
-  });
-});
-
-describe("Result.isErrAnd", () => {
-  test("should return true if it is Err and condition is met", () => {
-    expect(divide(10, 0).isErrAnd(error => error === MathError.DivisionByZero)).toBeTrue();
-  });
-
-  test("should return false if it is Err and condition is not met", () => {
-    expect(divide(10, 0).isErrAnd(error => error === MathError.UnknownError)).toBeFalse();
-  });
-
-  test("should return false if it is Ok", () => {
-    expect(divide(10, 2).isErrAnd(error => error === MathError.DivisionByZero)).toBeFalse();
-  });
-});
-
-describe("Result.map", () => {
-  test("should apply the function to the value if it is Ok", () => {
-    const result = divide(10, 2).map(x => x * 2);
-    expect(result.unwrap()).toBe(10);
-  });
-
-  test("should not apply the function if it is Err", () => {
-    const result = divide(10, 0).map(x => x * 2);
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.DivisionByZero);
-  });
-});
-
-describe("Result.mapOr", () => {
-  test("should apply the function to the value if it is Ok", () => {
-    const result = divide(10, 2).mapOr(0, x => x * 2);
-    expect(result).toBe(10);
-  });
-
-  test("should return the default value if it is Err", () => {
-    const result = divide(10, 0).mapOr(0, x => x * 2);
-    expect(result).toBe(0);
-  });
-});
-
-describe("Result.mapOrElse", () => {
-  test("should apply the function to the value if it is Ok", () => {
-    const result = divide(10, 2).mapOrElse(() => 0, x => x * 2);
-    expect(result).toBe(10);
-  });
-
-  test("should apply the default function if it is Err", () => {
-    const result = divide(10, 0).mapOrElse(() => 0, x => x * 2);
-    expect(result).toBe(0);
-  });
-});
-
-describe("Result.mapErr", () => {
-  test("should apply the function to the error if it is Err", () => {
-    const result = divide(10, 0).mapErr(e => `Error: ${e}`);
-    expect(result.err()).toBe("Error: cannot divide by zero");
-  });
-
-  test("should not apply the function if it is Ok", () => {
-    const result = divide(10, 2).mapErr(e => `Error: ${e}`);
-    expect(result.unwrap()).toBe(5);
-  });
-});
-
-describe("Result.inspect", () => {
-  test("should call the function with the value if it is Ok", () => {
-    let inspectedValue: number | undefined;
-    const result = divide(10, 2).inspect(x => {
-      inspectedValue = x;
+      test('should yield nothing if Ok value is null or undefined', () => {
+        const okNull = Ok(null);
+        const okUndefined = Ok(undefined);
+        expect([...okNull]).toEqual([]);
+        expect([...okUndefined]).toEqual([]);
+      });
     });
-    expect(inspectedValue).toBe(5);
-    expect(result.unwrap()).toBe(5);
   });
 
-  test("should not call the function if it is Err", () => {
-    let inspectedValue: number | undefined;
-    const result = divide(10, 0).inspect(x => {
-      inspectedValue = x;
+  describe('Err', () => {
+    const error = 'error message';
+    const errResult: Result<string, string> = Err(error);
+    const compatibleOtherOkForAnd: Result<number, string> = Ok(99);
+    const compatibleOtherErrForAnd: Result<number, string> = Err("another error");
+    const otherOk: Result<string, number> = Ok("success");
+    const otherErr: Result<string, number> = Err(404);
+
+    test('isOk should return false', () => {
+      expect(errResult.isOk()).toBeFalse();
     });
-    expect(inspectedValue).toBeUndefined();
-    expect(result.isErr()).toBe(true);
-  });
-});
 
-describe("Result.inspectErr", () => {
-  test("should call the function with the error if it is Err", () => {
-    let inspectedError: MathError | undefined;
-    const result = divide(10, 0).inspectErr(e => {
-      inspectedError = e;
+    test('isErr should return true', () => {
+      expect(errResult.isErr()).toBeTrue();
     });
-    expect(inspectedError).toBe(MathError.DivisionByZero);
-    expect(result.isErr()).toBe(true);
-  });
 
-  test("should not call the function if it is Ok", () => {
-    let inspectedError: MathError | undefined;
-    const result = divide(10, 2).inspectErr(e => {
-      inspectedError = e;
+    test('ok should return undefined', () => {
+      expect(errResult.ok()).toBeUndefined();
     });
-    expect(inspectedError).toBeUndefined();
-    expect(result.unwrap()).toBe(5);
-  });
-});
 
-describe("Result.and", () => {
-  test("should return the other Result if it is Ok", () => {
-    const result = divide(10, 2).and(Ok("hello"));
-    expect(result.unwrap()).toBe("hello");
-  });
-
-  test("should return the Err if it is Err", () => {
-    const result = divide(10, 0).and(Ok("hello"));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.DivisionByZero);
-  });
-
-  test("should return the Err if the other Result is Err", () => {
-    const result = divide(10, 2).and(Err(MathError.UnknownError));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.UnknownError);
-  });
-});
-
-describe("Result.andThen", () => {
-  test("should call the function and return the result if it is Ok", () => {
-    const result = divide(10, 2).andThen(x => Ok(x.toString()));
-    expect(result.unwrap()).toBe("5");
-  });
-
-  test("should not call the function and return the Err if it is Err", () => {
-    const result = divide(10, 0).andThen(x => Ok(x.toString()));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.DivisionByZero);
-  });
-
-  test("should return Err if the function returns Err", () => {
-    const result = divide(10, 2).andThen(_ => Err(MathError.UnknownError));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.UnknownError);
-  });
-});
-
-describe("Result.or", () => {
-  test("should return the Ok if it is Ok", () => {
-    const result = divide(10, 2).or(Ok(0));
-    expect(result.unwrap()).toBe(5);
-  });
-
-  test("should return the Ok if it is Err and the other is Ok", () => {
-    const result = divide(10, 0).or(Ok(0));
-    expect(result.unwrap()).toBe(0);
-  });
-
-  test("should return the Err if both are Err", () => {
-    const result = divide(10, 0).or(Err("other error"));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe("other error");
-  });
-});
-
-describe("Result.orElse", () => {
-  test("should return the Ok if it is Ok", () => {
-    const result = divide(10, 2).orElse(() => Ok(0));
-    expect(result.unwrap()).toBe(5);
-  });
-
-  test("should call the function and return the result if it is Err", () => {
-    const result = divide(10, 0).orElse(() => Ok(0));
-    expect(result.unwrap()).toBe(0);
-  });
-
-  test("should return Err if the function returns Err", () => {
-    const result = divide(10, 0).orElse(() => Err("other error"));
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe("other error");
-  });
-});
-
-describe("Result.expectErr", () => {
-  test("should return the error if it is Err", () => {
-    expect(divide(10, 0).expectErr("should throw error message")).toBe(MathError.DivisionByZero);
-  });
-
-  test("should throw if it is Ok", () => {
-    expect(() => {
-      divide(10, 2).expectErr("should throw error message");
-    }).toThrow();
-  });
-});
-
-describe("Result.unwrapErr", () => {
-  test("should return the error if it is Err", () => {
-    expect(divide(10, 0).unwrapErr()).toBe(MathError.DivisionByZero);
-  });
-
-  test("should throw if it is Ok", () => {
-    expect(() => {
-      divide(10, 2).unwrapErr();
-    }).toThrow();
-  });
-});
-
-describe("Result.cloned", () => {
-  test("should clone the Ok value (primitive)", () => {
-    const result = Ok(5).cloned();
-    expect(result.unwrap()).toBe(5);
-  });
-
-  test("should clone the Ok value (object)", () => {
-    const original = { a: 1, b: "hello" };
-    const result = Ok(original).cloned();
-    const cloned = result.unwrap();
-    expect(cloned).toEqual(original);
-    expect(cloned).not.toBe(original);
-  });
-
-  test("should not clone the Err value", () => {
-    const result: Result<number, string> = Err("error").cloned();
-    expect(result.err()).toBe("error");
-  });
-});
-
-describe("Result [Symbol.iterator]", () => {
-  test("should iterate over Ok value if it is iterable (Array)", () => {
-    const result = Ok([1, 2, 3]);
-    const iterated = [...result];
-    expect(iterated).toEqual([1, 2, 3]);
-  });
-
-  test("should iterate over Ok value if it is iterable (String)", () => {
-    const result = Ok("abc");
-    const iterated = [...result];
-    expect(iterated).toEqual(['a', 'b', 'c']);
-  });
-
-  test("should yield nothing if Ok value is not iterable (number)", () => {
-    const result = Ok(123);
-    const iterated = [...result];
-    expect(iterated).toEqual([]);
-  });
-
-  test("should yield nothing if Ok value is not iterable (object)", () => {
-    const result = Ok({ a: 1 });
-    const iterated = [...result];
-    expect(iterated).toEqual([]);
-  });
-
-  test("should yield nothing if it is Err", () => {
-    const result: Result<number[], string> = Err("error");
-    const iterated = [...result];
-    expect(iterated).toEqual([]);
-  });
-});
-
-describe("wrapInResult", () => {
-  const divide = (a: number, b: number) => {
-    if (b === 0) {
-      throw new Error(MathError.DivisionByZero);
-    }
-    return a / b;
-  }
-  const safeDivide = wrapInResult<number, MathError>(divide);
-
-  test("should return Ok with the function's result if the function does not throw an error", () => {
-    const result = safeDivide(10, 2);
-    expect(result.isOk()).toBe(true);
-    expect(result.unwrap()).toBe(5);
-  });
-
-  test("should return Err with the thrown error message if the function throws an error", () => {
-    const result = safeDivide(10, 0);
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe(MathError.DivisionByZero);
-  });
-
-  test("should return Err with a transformed error if errorTransform is provided", () => {
-    const divideWithTransform = wrapInResult<number, { message: string; code: number }>(
-      divide,
-      (error) => {
-        if (error instanceof Error) {
-          return { message: error.message, code: 500 }
-        }
-        return { message: String(error), code: 500 };
-      }
-    );
-
-    const result = divideWithTransform(10, 0);
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toEqual({ message: MathError.DivisionByZero, code: 500 });
-  });
-
-  test("should handle non-Error throws", () => {
-    const throwString = wrapInResult<string, string>(() => {
-      throw "This is a string error";
+    test('err should return the error', () => {
+      expect(errResult.err()).toBe(error);
     });
-    const result = throwString();
-    expect(result.isErr()).toBe(true);
-    expect(result.err()).toBe("This is a string error");
+
+    test('unwrap should throw', () => {
+      expect(() => errResult.unwrap()).toThrow(/^Tried to unwrap Error:/);
+    });
+
+    test('unwrapErr should return the error', () => {
+      expect(errResult.unwrapErr()).toBe(error);
+    });
+
+    test('unwrapOr should return the default value', () => {
+      expect(errResult.unwrapOr('default')).toBe('default');
+    });
+
+    test('map should not apply function and return self', () => {
+      const mapFn = mock((val: string) => val.length);
+      const mapped = errResult.map(mapFn);
+      expect(mapped.isErr()).toBeTrue();
+      expect(mapped.err()).toBe(error);
+      expect(mapFn).not.toHaveBeenCalled();
+    });
+
+    test('mapErr should apply function and wrap result in Err', () => {
+      const mapErrFn = mock((err: string) => `Error: ${err}`);
+      const mappedErr = errResult.mapErr(mapErrFn);
+      expect(mappedErr.isErr()).toBeTrue();
+      const expectedError = `Error: ${error}`;
+      expect(mappedErr.unwrapErr()).toBe(expectedError);
+      expect(mapErrFn).toHaveBeenCalledWith(error);
+    });
+
+    test('andThen should not apply function and return self', () => {
+      const andThenFn = mock((val: string) => Ok(val.length));
+      const andThenResult = errResult.andThen(andThenFn);
+      expect(andThenResult.isErr()).toBeTrue();
+      expect(andThenResult.err()).toBe(error);
+      expect(andThenFn).not.toHaveBeenCalled();
+    });
+
+    test('orElse should apply function returning Result', () => {
+      const orElseFn = mock((err: string) => Ok(`Recovered from ${err}`));
+      const orElseResult = errResult.orElse(orElseFn);
+      const expectedValue = `Recovered from ${error}`;
+      expect(orElseResult.isOk()).toBeTrue();
+      expect(orElseResult.unwrap()).toBe(expectedValue);
+      expect(orElseFn).toHaveBeenCalledWith(error);
+    });
+
+    test('isOkAnd should return false', () => {
+      expect(errResult.isOkAnd(_ => true)).toBeFalse();
+    });
+
+    test('isErrAnd should return true if predicate matches', () => {
+      expect(errResult.isErrAnd(e => e === error)).toBeTrue();
+    });
+
+    test('isErrAnd should return false if predicate does not match', () => {
+      expect(errResult.isErrAnd(e => e === 'different')).toBeFalse();
+    });
+
+    test('mapOr should return the default value', () => {
+      const mapFn = mock((val: string) => val.length);
+      const defaultValue = 99;
+      expect(errResult.mapOr(defaultValue, mapFn)).toBe(defaultValue);
+      expect(mapFn).not.toHaveBeenCalled();
+    });
+
+    test('mapOrElse should apply error function and return the result', () => {
+      const okFn = mock((val: string) => `Success length: ${val.length}`);
+      const errFn = mock((err: string) => `Error was: ${err}`);
+      const expected = `Error was: ${error}`;
+      expect(errResult.mapOrElse(errFn, okFn)).toBe(expected);
+      expect(errFn).toHaveBeenCalledWith(error);
+      expect(okFn).not.toHaveBeenCalled();
+    });
+
+    test('inspect should not call function and return self', () => {
+      const inspectFn = mock((v: string) => { });
+      const result = errResult.inspect(inspectFn);
+      expect(result).toBe(errResult);
+      expect(inspectFn).not.toHaveBeenCalled();
+    });
+
+    test('inspectErr should call function and return self', () => {
+      const inspectErrFn = mock((e: string) => { });
+      const result = errResult.inspectErr(inspectErrFn);
+      expect(result).toBe(errResult);
+      expect(inspectErrFn).toHaveBeenCalledWith(error);
+    });
+
+    test('expect should throw with message', () => {
+      const message = 'Value was an error';
+      expect(() => errResult.expect(message)).toThrow(new RegExp(`^${message}: ${error}`));
+    });
+
+    test('expectErr should return the error', () => {
+      expect(errResult.expectErr('should be Err')).toBe(error);
+    });
+
+    test('unwrapOrElse should call function and return its result', () => {
+      const elseFn = mock((err: string) => `Computed default: ${err.length}`);
+      const expected = `Computed default: ${error.length}`;
+      expect(errResult.unwrapOrElse(elseFn)).toBe(expected);
+      expect(elseFn).toHaveBeenCalledWith(error);
+    });
+
+    test('and should return self if Err', () => {
+      expect(errResult.and(compatibleOtherOkForAnd).err()).toBe(error);
+      expect(errResult.and(compatibleOtherErrForAnd).err()).toBe(error);
+    });
+
+    test('or should return the other result if Err', () => {
+      const compatibleOrOk: Result<string, number> = Ok("fallback success");
+      const compatibleOrErr: Result<string, number> = Err(500);
+      expect(errResult.or(compatibleOrOk).unwrap()).toBe("fallback success");
+      expect(errResult.or(compatibleOrErr).err()).toBe(500);
+    });
+
+    test('cloned should return self (Err is not cloned)', () => {
+      const errObj = Err({ code: 500, msg: 'server error' });
+      const cloned = errObj.cloned();
+      expect(cloned.isErr()).toBeTrue();
+      expect(cloned.err()).toBe(errObj.err());
+      expect(cloned).toBe(errObj);
+    });
+
+    describe('Iterator', () => {
+      test('should yield nothing if Err', () => {
+        const yielded = [...errResult];
+        expect(yielded).toEqual([]);
+      });
+    });
+  });
+
+  describe('wrapInResult', () => {
+    test('should return Ok with the result for a function that succeeds', () => {
+      const add = (a: number, b: number) => a + b;
+      const wrappedAdd = wrapInResult(add);
+      const result = wrappedAdd(2, 3);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(5);
+    });
+
+    test('should return Err with the error message for a function that throws an Error', () => {
+      const throwError = () => { throw new Error('Something went wrong'); };
+      const wrappedThrow = wrapInResult(throwError);
+      const result = wrappedThrow();
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe('Something went wrong');
+    });
+
+    test('should return Err with the thrown value if it is not an Error', () => {
+      const throwValue = () => { throw 'just a string error'; };
+      const wrappedThrow = wrapInResult(throwValue);
+      const result = wrappedThrow();
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe('just a string error');
+    });
+
+    test('should use errorTransform function if provided', () => {
+      const throwError = () => { throw new Error('Original error'); };
+      const transform = mock((err: unknown) => ({ message: `Transformed: ${err instanceof Error ? err.message : String(err)}`, code: 500 }));
+      const wrappedThrow = wrapInResult(throwError, transform);
+      const result = wrappedThrow();
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toEqual({ message: 'Transformed: Original error', code: 500 });
+      expect(transform).toHaveBeenCalledTimes(1);
+    });
+
+    test('should pass arguments correctly to the wrapped function', () => {
+      const subtract = (a: number, b: number) => a - b;
+      const wrappedSubtract = wrapInResult(subtract);
+      const result = wrappedSubtract(10, 4);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(6);
+    });
   });
 });
+
