@@ -700,64 +700,128 @@ export const Err = <E>(value: E): Err<never, E> => new ErrImpl(value);
  * It's commonly used for error handling without resorting to exceptions.
  * @template T The type of the successful result.
  * @template E The type of the error result.
- * @example
- * ```typescript
- * function divide(a: number, b: number): Result<number, string> {
- * if (b === 0) {
- * return Err("Cannot divide by zero");
- * }
- * return Ok(a / b);
- * }
- *
- * const result1 = divide(10, 2);
- * console.log(result1.unwrapOr(NaN)); // Output: 5
- *
- * const result2 = divide(10, 0);
- * console.log(result2.unwrapOr(NaN)); // Output: NaN
- * if (result2.isErr()) {
- * console.error(result2.err()); // Output: "Cannot divide by zero"
- * }
- * ```
  */
 export type Result<T, E> = Ok<T, E> | Err<T, E>;
 
+
 /**
+ * Default error transformation function used by `Result.from` and `Result.fromAsync`.
+ * Extracts the `message` property if the error is an `Error` instance, otherwise returns the error as is.
+ * @param error The caught error.
+ * @returns The transformed error, typically a string or the original error.
+ */
+function defaultErrorTransform<E = unknown>(error: unknown): E {
+  return (error instanceof Error ? error.message : error) as E;
+}
+
+/**
+ * @deprecated Use `Result.from(() => fn(...args))` instead. This function will be removed in a future version.
  * Wraps a function that might throw an error, returning its result as a `Result<T, E>`.
- * If the function executes successfully, returns `Ok(returnValue)`.
- * If the function throws an error, catches it and returns `Err(transformedError)`.
+ * This deprecated version returns a *new function* that wraps the original.
  *
+ * @template A The argument types of the function `fn`.
  * @template T The type of the successful result of `fn`.
  * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
- * @param fn The function to wrap. It can be any function that returns a value of type `T` or throws an error.
+ * @param fn The function to wrap.
  * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
- * @default errorTransform If omitted, uses `error.message` if `error` is an `Error` instance, otherwise uses `error` directly (casted to `E`).
+ * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
  * @returns A new function that takes the same arguments as `fn` but returns a `Result<T, E>`.
- * @example
- * ```typescript
- * // Wrap JSON.parse using default error handling
- * const safeParse = wrapInResult(JSON.parse);
- *
- * // Successful call
- * const resultOk = safeParse('{"value": true}');
- * console.log(resultOk.unwrapOr({ value: false })); // Output: { value: true }
- *
- * // Failing call (JSON.parse throws)
- * const resultErr = safeParse('invalid json');
- * console.log(resultErr.err()); // Output: "Unexpected token i in JSON at position 0" (or similar)
- * ```
  */
-export function wrapInResult<T, E = unknown>(
-  fn: (...args: any[]) => T,
+export function wrapInResult<A extends any[], T, E = unknown>(
+  fn: (...args: A) => T,
   errorTransform?: (error: unknown) => E
-): (...args: any[]) => Result<T, E> {
-  return (...args: any[]): Result<T, E> => {
+): (...args: A) => Result<T, E> {
+  const transformFn = errorTransform ?? defaultErrorTransform;
+  return (...args: A): Result<T, E> => {
     try {
       return Ok(fn(...args));
     } catch (error) {
-      const transformedError: E = errorTransform
-        ? errorTransform(error)
-        : error instanceof Error ? error.message as E : error as E;
-      return Err(transformedError);
+      return Err(transformFn(error));
     }
   };
 }
+
+
+/**
+ * Provides static methods for creating and handling Result instances.
+ */
+export const Result = {
+  /**
+   * Wraps a synchronous function that might throw an error or return a Result,
+   * returning its outcome as a `Result<T, E>`. Executes the function immediately.
+   * - If `fn()` returns a `Result`, it's returned directly.
+   * - If `fn()` returns a value `v`, it's wrapped in `Ok(v)`.
+   * - If `fn()` throws an error, it's caught and returned as `Err(transformedError)`.
+   *
+   * @template T The type of the successful result of `fn` (if it doesn't return a Result).
+   * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
+   * @param fn The synchronous function to wrap.
+   * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
+   * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
+   * @returns A `Result<T, E>` representing the outcome.
+   */
+  from<T, E = unknown>(
+    fn: () => T | Result<T, any>,
+    errorTransform: (error: unknown) => E = defaultErrorTransform
+  ): Result<T, E> {
+    try {
+      const value = fn();
+      if (Result.isResult<T, E>(value)) {
+        return value as Result<T, E>;
+      }
+      return Ok(value as T);
+    } catch (error) {
+      return Err(errorTransform(error));
+    }
+  },
+
+  /**
+   * Wraps an asynchronous function (returning a Promise) that might throw, reject,
+   * or resolve with a Result, returning its outcome as a `Promise<Result<T, E>>`.
+   * Executes the function immediately and awaits its result.
+   * - If the promise resolves with a `Result`, it's returned directly.
+   * - If the promise resolves with a value `v`, it's wrapped in `Ok(v)`.
+   * - If the function throws synchronously or the promise rejects, the error is caught and returned as `Err(transformedError)`.
+   *
+   * @template T The type of the successful resolved value (if it's not a Result).
+   * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
+   * @param fn The asynchronous function to wrap. It should return `Promise<T>` or `Promise<Result<T, any>>`.
+   * @param errorTransform An optional function to transform a caught error (sync or async) into the desired error type `E`.
+   * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
+   * @returns A `Promise<Result<T, E>>` representing the eventual outcome.
+   */
+  async fromAsync<T, E = unknown>(
+    fn: () => Promise<T | Result<T, any>>,
+    errorTransform: (error: unknown) => E = defaultErrorTransform
+  ): Promise<Result<T, E>> {
+    try {
+      const value = await fn();
+      if (Result.isResult<T, E>(value)) {
+        return value as Result<T, E>;
+      }
+      return Ok(value as T);
+    } catch (error) {
+      return Err(errorTransform(error));
+    }
+  },
+
+  /**
+   * Checks if a value is a Result (either Ok or Err) created by this library.
+   * @param value The value to check.
+   * @returns True if the value is an Ok or Err instance, false otherwise.
+   * @example
+   * ```typescript
+   * const ok = Ok(1);
+   * const err = Err("error");
+   * const plain = 123;
+   *
+   * console.log(Result.isResult(ok)); // Output: true
+   * console.log(Result.isResult(err)); // Output: true
+   * console.log(Result.isResult(plain)); // Output: false
+   * ```
+   */
+  isResult<T, E>(value: unknown): value is Result<T, E> {
+    return value instanceof OkImpl || value instanceof ErrImpl;
+  }
+};
+
