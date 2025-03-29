@@ -1,4 +1,4 @@
-import { type Result, Err, Ok, wrapInResult } from "../src/result.ts";
+import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
 import { describe, test, expect, mock } from "bun:test";
 
 describe('Result', () => {
@@ -91,14 +91,14 @@ describe('Result', () => {
     });
 
     test('inspect should call function and return self', () => {
-      const inspectFn = mock((v: string) => { });
+      const inspectFn = mock((_v: string) => { });
       const result = okResult.inspect(inspectFn);
       expect(result).toBe(okResult);
       expect(inspectFn).toHaveBeenCalledWith(value);
     });
 
     test('inspectErr should not call function and return self', () => {
-      const inspectErrFn = mock((e: string) => { });
+      const inspectErrFn = mock((_e: string) => { });
       const result = okResult.inspectErr(inspectErrFn);
       expect(result).toBe(okResult);
       expect(inspectErrFn).not.toHaveBeenCalled();
@@ -201,10 +201,6 @@ describe('Result', () => {
   describe('Err', () => {
     const error = 'error message';
     const errResult: Result<string, string> = Err(error);
-    const compatibleOtherOkForAnd: Result<number, string> = Ok(99);
-    const compatibleOtherErrForAnd: Result<number, string> = Err("another error");
-    const otherOk: Result<string, number> = Ok("success");
-    const otherErr: Result<string, number> = Err(404);
 
     test('isOk should return false', () => {
       expect(errResult.isOk()).toBeFalse();
@@ -297,14 +293,14 @@ describe('Result', () => {
     });
 
     test('inspect should not call function and return self', () => {
-      const inspectFn = mock((v: string) => { });
+      const inspectFn = mock((_v: string) => { });
       const result = errResult.inspect(inspectFn);
       expect(result).toBe(errResult);
       expect(inspectFn).not.toHaveBeenCalled();
     });
 
     test('inspectErr should call function and return self', () => {
-      const inspectErrFn = mock((e: string) => { });
+      const inspectErrFn = mock((_e: string) => { });
       const result = errResult.inspectErr(inspectErrFn);
       expect(result).toBe(errResult);
       expect(inspectErrFn).toHaveBeenCalledWith(error);
@@ -327,8 +323,8 @@ describe('Result', () => {
     });
 
     test('and should return self if Err', () => {
-      expect(errResult.and(compatibleOtherOkForAnd).err()).toBe(error);
-      expect(errResult.and(compatibleOtherErrForAnd).err()).toBe(error);
+      expect(errResult.and(Ok(99)).err()).toBe(error);
+      expect(errResult.and(Err("another error")).err()).toBe(error);
     });
 
     test('or should return the other result if Err', () => {
@@ -354,7 +350,138 @@ describe('Result', () => {
     });
   });
 
-  describe('wrapInResult', () => {
+  describe('Result.isResult', () => {
+    test('should return true for Ok', () => {
+      expect(Result.isResult(Ok(1))).toBeTrue();
+    });
+
+    test('should return true for Err', () => {
+      expect(Result.isResult(Err('error'))).toBeTrue();
+    });
+
+    test('should return false for plain object', () => {
+      expect(Result.isResult({ isOk: true })).toBeFalse();
+    });
+
+    test('should return false for null', () => {
+      expect(Result.isResult(null)).toBeFalse();
+    });
+
+    test('should return false for undefined', () => {
+      expect(Result.isResult(undefined)).toBeFalse();
+    });
+
+    test('should return false for primitive number', () => {
+      expect(Result.isResult(123)).toBeFalse();
+    });
+
+    test('should return false for primitive string', () => {
+      expect(Result.isResult("hello")).toBeFalse();
+    });
+  });
+
+  describe('Result.from', () => {
+    test('should return Ok with the result for a function that returns a value', () => {
+      const result = Result.from(() => 5);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(5);
+    });
+
+    test('should return Err with the error message for a function that throws an Error', () => {
+      const errMsg = 'Something went wrong';
+      const result = Result.from(() => { throw new Error(errMsg); });
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe(errMsg);
+    });
+
+    test('should return Err with the thrown value if it is not an Error', () => {
+      const errValue = 'just a string error';
+      const result = Result.from(() => { throw errValue; });
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe(errValue);
+    });
+
+    test('should use errorTransform function if provided', () => {
+      const transform = mock((err: unknown) => ({ message: `Transformed: ${err instanceof Error ? err.message : String(err)}`, code: 500 }));
+      const result = Result.from(() => { throw new Error('Original error'); }, transform);
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toEqual({ message: 'Transformed: Original error', code: 500 });
+      expect(transform).toHaveBeenCalledTimes(1);
+    });
+
+    test('should return existing Ok if function returns Ok', () => {
+      const innerOk = Ok(10);
+      const result = Result.from(() => innerOk);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(10);
+      expect(result).toBe(innerOk);
+    });
+
+    test('should return existing Err if function returns Err', () => {
+      const innerErr = Err('Inner error');
+      const result = Result.from(() => innerErr);
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe('Inner error');
+      expect(result).toBe(innerErr);
+    });
+  });
+
+  describe('Result.fromAsync', () => {
+    test('should return Ok with the resolved value for a promise that resolves', async () => {
+      const result = await Result.fromAsync(async () => 5);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(5);
+    });
+
+    test('should return Err with the error message for a promise that rejects with an Error', async () => {
+      const errMsg = 'Async went wrong';
+      const result = await Result.fromAsync(async () => { throw new Error(errMsg); });
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe(errMsg);
+    });
+
+    test('should return Err with the rejection value if it is not an Error', async () => {
+      const errValue = 'just an async string error';
+      const result = await Result.fromAsync(async () => { throw errValue; });
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe(errValue);
+    });
+
+    test('should use errorTransform function if provided for rejection', async () => {
+      const transform = mock((err: unknown) => ({ message: `Async Transformed: ${err instanceof Error ? err.message : String(err)}`, code: 503 }));
+      const result = await Result.fromAsync(async () => { throw new Error('Async Original error'); }, transform);
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toEqual({ message: 'Async Transformed: Async Original error', code: 503 });
+      expect(transform).toHaveBeenCalledTimes(1);
+    });
+
+    test('should return existing Ok if promise resolves with Ok', async () => {
+      const innerOk = Ok(20);
+      const result = await Result.fromAsync(async () => innerOk);
+      expect(result.isOk()).toBeTrue();
+      expect(result.unwrap()).toBe(20);
+      expect(result).toBe(innerOk);
+    });
+
+    test('should return existing Err if promise resolves with Err', async () => {
+      const innerErr = Err('Async Inner error');
+      const result = await Result.fromAsync(async () => innerErr);
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe('Async Inner error');
+      expect(result).toBe(innerErr);
+    });
+
+     test('should return Err if the async function throws synchronously', async () => {
+      const errMsg = 'Sync throw in async function';
+      const result = await Result.fromAsync(() => {
+          throw new Error(errMsg);
+      });
+      expect(result.isErr()).toBeTrue();
+      expect(result.unwrapErr()).toBe(errMsg);
+    });
+  });
+
+  describe('wrapInResult (Deprecated)', () => {
     test('should return Ok with the result for a function that succeeds', () => {
       const add = (a: number, b: number) => a + b;
       const wrappedAdd = wrapInResult(add);
