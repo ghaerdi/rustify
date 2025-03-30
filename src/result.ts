@@ -12,8 +12,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns True if the result is Ok, false otherwise.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.isOk()); // Output: true
+   * Ok(5).isOk(); // true
+   * Err("error").isOk(); // false
    * ```
    */
   isOk(): boolean;
@@ -24,12 +24,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns True if the result is Ok and the predicate returns true, false otherwise.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.isOkAnd(x => x > 3)); // Output: true
-   * console.log(result.isOkAnd(x => x < 3)); // Output: false
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * console.log(errResult.isOkAnd(x => x > 3)); // Output: false
+   * Ok(5).isOkAnd(x => x > 3); // true
+   * Ok(5).isOkAnd(x => x < 3); // false
+   * Err("error").isOkAnd(x => x > 3); // false
    * ```
    */
   isOkAnd(fn: (value: T) => boolean): boolean;
@@ -39,11 +36,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns True if the result is Err, false otherwise.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * console.log(result.isErr()); // Output: true
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * console.log(okResult.isErr()); // Output: false
+   * Err("error").isErr(); // true
+   * Ok(5).isErr(); // false
    * ```
    */
   isErr(): boolean;
@@ -54,12 +48,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns True if the result is Err and the predicate returns true, false otherwise.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * console.log(result.isErrAnd(e => e === "error")); // Output: true
-   * console.log(result.isErrAnd(e => e === "other")); // Output: false
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * console.log(okResult.isErrAnd(e => e === "error")); // Output: false
+   * Err("error").isErrAnd(e => e === "error"); // true
+   * Err("error").isErrAnd(e => e === "other"); // false
+   * Ok(5).isErrAnd(e => e === "error"); // false
    * ```
    */
   isErrAnd(fn: (value: E) => boolean): boolean;
@@ -69,11 +60,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Ok value, or undefined if the result is Err.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.ok()); // Output: 5
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * console.log(errResult.ok()); // Output: undefined
+   * Ok(5).ok(); // 5
+   * Err("error").ok(); // undefined
    * ```
    */
   ok(): T | undefined;
@@ -83,11 +71,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Err value, or undefined if the result is Ok.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * console.log(result.err()); // Output: "error"
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * console.log(okResult.err()); // Output: undefined
+   * Err("error").err(); // "error"
+   * Ok(5).err(); // undefined
    * ```
    */
   err(): E | undefined;
@@ -100,13 +85,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns A new Result with the mapped Ok value or the original Err value.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * const mappedResult = result.map(x => x.toString());
-   * console.log(mappedResult.unwrap()); // Output: "5"
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * const mappedErr = errResult.map(x => x.toString()); // Does nothing
-   * console.log(mappedErr.err()); // Output: "error"
+   * Ok(5).map(x => x.toString()).unwrap(); // "5"
+   * Err("error").map(x => x.toString()).err(); // "error"
    * ```
    */
   map<U>(fn: (value: T) => U): Result<U, E>;
@@ -119,11 +99,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The result of `fn(Ok_value)` or `defaultValue`.
    * @example
    * ```typescript
-   * const result: Result<string, string> = Ok("foo");
-   * console.log(result.mapOr(42, v => v.length)); // Output: 3
-   *
-   * const errResult: Result<string, string> = Err("bar");
-   * console.log(errResult.mapOr(42, v => v.length)); // Output: 42
+   * Ok("foo").mapOr(42, v => v.length); // 3
+   * Err("bar").mapOr(42, v => v.length); // 42
    * ```
    */
   mapOr<U>(defaultValue: U, fn: (value: T) => U): U;
@@ -137,13 +114,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The result of `fn(Ok_value)` or `defaultFn(Err_value)`.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * const value = result.mapOrElse(e => `Error: ${e}`, x => `Success: ${x}`);
-   * console.log(value); // Output: "Success: 5"
-   *
-   * const errResult: Result<number, string> = Err("failure");
-   * const errValue = errResult.mapOrElse(e => `Error: ${e}`, x => `Success: ${x}`);
-   * console.log(errValue); // Output: "Error: failure"
+   * Ok(5).mapOrElse(e => `Err: ${e}`, x => `Ok: ${x}`); // "Ok: 5"
+   * Err("fail").mapOrElse(e => `Err: ${e}`, x => `Ok: ${x}`); // "Err: fail"
    * ```
    */
   mapOrElse<U>(defaultFn: (err: E) => U, fn: (value: T) => U): U;
@@ -156,13 +128,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns A new Result with the mapped Err value or the original Ok value.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * const mappedResult = result.mapErr(e => new Error(e));
-   * console.log(mappedResult.err()); // Output: Error: error
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * const mappedOk = okResult.mapErr(e => new Error(e)); // Does nothing
-   * console.log(mappedOk.ok()); // Output: 5
+   * Err("error").mapErr(e => new Error(e)).err()?.message; // "error"
+   * Ok(5).mapErr(e => new Error(e)).ok(); // 5
    * ```
    */
   mapErr<F>(fn: (value: E) => F): Result<T, F>;
@@ -174,9 +141,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The original `Result<T, E>`.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * const inspectedResult = result.inspect(x => console.log(`Value: ${x}`)); // Logs: Value: 5
-   * console.log(inspectedResult.unwrap()); // Output: 5
+   * Ok(5).inspect(x => console.log(x)); // Logs 5, returns Ok(5)
+   * Err("error").inspect(x => console.log(x)); // Returns Err("error")
    * ```
    */
   inspect(fn: (value: T) => void): Result<T, E>;
@@ -188,9 +154,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The original `Result<T, E>`.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * const inspectedResult = result.inspectErr(e => console.error(`Error occurred: ${e}`)); // Logs: Error occurred: error
-   * console.log(inspectedResult.isErr()); // Output: true
+   * Err("error").inspectErr(e => console.error(e)); // Logs "error", returns Err("error")
+   * Ok(5).inspectErr(e => console.error(e)); // Returns Ok(5)
    * ```
    */
   inspectErr(fn: (value: E) => void): Result<T, E>;
@@ -203,15 +168,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @throws {Error} Throws an error prefixed with `message` if the result is Err.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.expect("should be Ok")); // Output: 5
-   *
-   * const errResult: Result<number, string> = Err("failure");
-   * try {
-   * errResult.expect("Value was an error");
-   * } catch (e) {
-   * console.error(e.message); // Output: Value was an error: failure (+ stacktrace)
-   * }
+   * Ok(5).expect("should be Ok"); // 5
+   * // Err("fail").expect("should be Ok"); // Throws "should be Ok: fail"
    * ```
    */
   expect(message: string): T;
@@ -223,15 +181,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @throws {Error} Throws an error if the result is Err.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.unwrap()); // Output: 5
-   *
-   * const errResult: Result<number, string> = Err("failure");
-   * try {
-   * errResult.unwrap();
-   * } catch (e) {
-   * console.error(e.message); // Output: Tried to unwrap Error: failure (+ stacktrace)
-   * }
+   * Ok(5).unwrap(); // 5
+   * // Err("fail").unwrap(); // Throws "Tried to unwrap Error: fail"
    * ```
    */
   unwrap(): T;
@@ -243,14 +194,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Ok value or `defaultValue`.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.unwrapOr(0)); // Output: 5
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * console.log(errResult.unwrapOr(0)); // Output: 0
-   *
-   * const errResult2: Result<number, string> = Err("error");
-   * console.log(errResult2.unwrapOr("default string")); // Output: "default string"
+   * Ok(5).unwrapOr(0); // 5
+   * Err("error").unwrapOr(0); // 0
+   * Err("error").unwrapOr("default"); // "default"
    * ```
    */
   unwrapOr<U>(defaultValue: U): T | U;
@@ -262,11 +208,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Ok value or the value computed by `fn(Err_value)`.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Ok(5);
-   * console.log(result.unwrapOrElse(() => 0)); // Output: 5
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * console.log(errResult.unwrapOrElse(e => e.length)); // Output: 5 (length of "error")
+   * Ok(5).unwrapOrElse(() => 0); // 5
+   * Err("error").unwrapOrElse(e => e.length); // 5
    * ```
    */
   unwrapOrElse<U>(fn: (value: E) => U): T | U;
@@ -279,13 +222,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns `res` if self is Ok, otherwise the Err value of self.
    * @example
    * ```typescript
-   * const r1: Result<number, string> = Ok(2);
-   * const r2: Result<string, string> = Ok("late error");
-   * console.log(r1.and(r2).unwrap()); // Output: "late error"
-   *
-   * const e1: Result<number, string> = Err("early error");
-   * const e2: Result<string, string> = Ok("late error");
-   * console.log(e1.and(e2).err()); // Output: "early error"
+   * Ok(2).and(Ok("late success")).unwrap(); // "late success"
+   * Err("early").and(Ok("late success")).err(); // "early"
+   * Ok(2).and(Err("late error")).err(); // "late error"
    * ```
    */
   and<U>(res: Result<U, E>): Result<U, E>;
@@ -298,18 +237,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Result returned by `fn`, or the Err value of self.
    * @example
    * ```typescript
-   * function checkPositive(x: number): Result<number, string> {
-   * return x > 0 ? Ok(x) : Err("Not positive");
-   * }
-   *
-   * const r1: Result<number, string> = Ok(5);
-   * console.log(r1.andThen(checkPositive).unwrap()); // Output: 5
-   *
-   * const r2: Result<number, string> = Ok(-1);
-   * console.log(r2.andThen(checkPositive).err()); // Output: "Not positive"
-   *
-   * const e1: Result<number, string> = Err("initial error");
-   * console.log(e1.andThen(checkPositive).err()); // Output: "initial error"
+   * Ok(5).andThen(x => Ok(x > 0)).unwrap(); // true
+   * Ok(-1).andThen(x => x > 0 ? Ok(x) : Err("neg")).err(); // "neg"
+   * Err("init").andThen(x => Ok(x > 0)).err(); // "init"
    * ```
    */
   andThen<U>(fn: (value: T) => Result<U, E>): Result<U, E>;
@@ -322,17 +252,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Ok value of self, or `res`.
    * @example
    * ```typescript
-   * const r1: Result<number, string> = Ok(5);
-   * const r2: Result<number, string> = Ok(10);
-   * console.log(r1.or(r2).unwrap()); // Output: 5
-   *
-   * const e1: Result<number, string> = Err("error");
-   * const e2: Result<number, string> = Ok(10);
-   * console.log(e1.or(e2).unwrap()); // Output: 10
-   *
-   * const e3: Result<number, string> = Err("error 1");
-   * const e4: Result<number, number> = Err(2); // Different error type
-   * console.log(e3.or(e4).err()); // Output: 2
+   * Ok(5).or(Ok(10)).unwrap(); // 5
+   * Err("error").or(Ok(10)).unwrap(); // 10
+   * Err("error1").or(Err(2)).err(); // 2
    * ```
    */
   or<F>(res: Result<T, F>): Result<T, F>;
@@ -345,15 +267,9 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @returns The Ok value of self, or the Result returned by `fn`.
    * @example
    * ```typescript
-   * function fallback(e: string): Result<number, string> {
-   * return Ok(0); // Provide a default value on error
-   * }
-   *
-   * const r1: Result<number, string> = Ok(5);
-   * console.log(r1.orElse(fallback).unwrap()); // Output: 5
-   *
-   * const e1: Result<number, string> = Err("error");
-   * console.log(e1.orElse(fallback).unwrap()); // Output: 0
+   * Ok(5).orElse(e => Ok(0)).unwrap(); // 5
+   * Err("error").orElse(e => Ok(0)).unwrap(); // 0
+   * Err("fail").orElse(e => Err(e.length)).err(); // 4
    * ```
    */
   orElse<F>(fn: (value: E) => Result<T, F>): Result<T, F>;
@@ -363,18 +279,11 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * Uses `structuredClone` for objects. Primitive values are copied directly.
    * Does *not* clone the Err value.
    * @returns A new Result with a clone of the Ok value, or the original Err value.
+   * @note Not a standard Rust Result method. Uses `structuredClone`.
    * @example
    * ```typescript
-   * const obj = { a: 5 };
-   * const result: Result<{ a: number }, string> = Ok(obj);
-   * const clonedResult = result.cloned();
-   * const unwrapped = clonedResult.unwrap();
-   * console.log(unwrapped); // Output: { a: 5 }
-   * console.log(unwrapped === obj); // Output: false (it's a clone)
-   *
-   * const errResult: Result<number, string> = Err("error");
-   * const clonedErr = errResult.cloned(); // Err value is not cloned
-   * console.log(clonedErr.err()); // Output: "error"
+   * Ok({ a: 1 }).cloned().unwrap(); // { a: 1 } (new object)
+   * Err("error").cloned().err(); // "error"
    * ```
    */
   cloned(): Result<T, E>;
@@ -387,15 +296,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @throws {Error} Throws an error prefixed with `message` if the result is Ok.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * console.log(result.expectErr("should be Err")); // Output: "error"
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * try {
-   * okResult.expectErr("Value was Ok");
-   * } catch (e) {
-   * console.error(e.message); // Output: Value was Ok: 5
-   * }
+   * Err("error").expectErr("should be Err"); // "error"
+   * // Ok(5).expectErr("should be Err"); // Throws "should be Err: 5"
    * ```
    */
   expectErr(message: string): E;
@@ -407,15 +309,8 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @throws {Error} Throws an error if the result is Ok.
    * @example
    * ```typescript
-   * const result: Result<number, string> = Err("error");
-   * console.log(result.unwrapErr()); // Output: "error"
-   *
-   * const okResult: Result<number, string> = Ok(5);
-   * try {
-   * okResult.unwrapErr();
-   * } catch (e) {
-   * console.error(e.message); // Output: Tried to unwrap Ok value: 5
-   * }
+   * Err("error").unwrapErr(); // "error"
+   * // Ok(5).unwrapErr(); // Throws "Tried to unwrap Ok value: 5"
    * ```
    */
   unwrapErr(): E;
@@ -428,8 +323,8 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   readonly #value!: T;
 
   constructor(value: T) {
-    if (this instanceof OkImpl === false) {
-      return new OkImpl(value)
+    if (!(this instanceof OkImpl)) {
+      return new OkImpl(value);
     }
     this.#value = value;
   }
@@ -454,7 +349,8 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   mapErr<F>(_fn: (value: E) => F): Result<T, F> {
-    return this as unknown as Result<T, F>; // Type assertion is safe here
+    // Type assertion is safe because the E type parameter is unused in OkImpl.
+    return this as unknown as Result<T, F>;
   }
 
   inspect(fn: (value: T) => void): Result<T, E> {
@@ -491,22 +387,20 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   or<F>(_res: Result<T, F>): Result<T, F> {
-    return this as unknown as Result<T, F>; // Type assertion is safe here
+    // Type assertion is safe because the E type parameter is unused in OkImpl.
+    return this as unknown as Result<T, F>;
   }
 
   orElse<F>(_fn: (value: E) => Result<T, F>): Result<T, F> {
-    return this as unknown as Result<T, F>; // Type assertion is safe here
+    // Type assertion is safe because the E type parameter is unused in OkImpl.
+    return this as unknown as Result<T, F>;
   }
 
   cloned(): Result<T, E> {
     try {
-      // structuredClone handles primitives, objects, arrays, dates, regex, maps, sets, etc.
-      // Throws DataCloneError for non-cloneable types like functions or DOM nodes.
       const clonedValue = structuredClone(this.#value);
       return Ok(clonedValue);
     } catch (e) {
-      // If structuredClone fails, return the original Ok - best effort.
-      // Alternatively, could return an Err indicating cloning failure.
       console.warn("Failed to structuredClone Ok value:", this.#value, e);
       return this;
     }
@@ -522,8 +416,8 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
-    if ([null, undefined].every(v => v !== value) && typeof (value as any)[Symbol.iterator] === "function") {
-      return (value as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
+    if (value !== null && value !== undefined && typeof (value as any)[Symbol.iterator] === "function") {
+      return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
     } else {
       return {
         next(): IteratorResult<T extends Iterable<infer U> ? U : never> {
@@ -548,8 +442,8 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
    * @param value The error value.
    */
   constructor(value: E) {
-    if (this instanceof ErrImpl === false) {
-      return new ErrImpl(value)
+    if (!(this instanceof ErrImpl)) {
+      return new ErrImpl(value);
     }
 
     const stackLines = (new Error().stack || '').split('\n');
@@ -573,7 +467,8 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   err(): E { return this.#value; }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
-    return this as unknown as Result<U, E>; // Type assertion is safe here
+    // Type assertion is safe because the T type parameter is unused in ErrImpl.
+    return this as unknown as Result<U, E>;
   }
 
   mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
@@ -614,11 +509,13 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   and<U>(_res: Result<U, E>): Result<U, E> {
-    return this as unknown as Result<U, E>; // Type assertion is safe here
+    // Type assertion is safe as T is unused.
+    return this as unknown as Result<U, E>;
   }
 
   andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
-    return this as unknown as Result<U, E>; // Type assertion is safe here
+    // Type assertion is safe as T is unused.
+    return this as unknown as Result<U, E>;
   }
 
   or<F>(res: Result<T, F>): Result<T, F> {
@@ -654,22 +551,13 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
  * Represents the successful case (`Ok`) of a {@link Result}.
  * Contains the successful value of type `T`.
  * @template T The type of the successful value.
+ * @template E The error type (typically `never` for Ok).
  * @example
  * ```typescript
- * const okValue: Ok<number> = Ok(10);
- * if (okValue.isOk()) {
- * console.log(okValue.unwrap()); // Output: 10
- * }
+ * Ok(10).unwrap(); // 10
  * ```
  */
 export type Ok<T, E = never> = OkImpl<T, E>;
-
-/**
- * Creates a new Ok result containing the given value.
- * @template T The type of the successful value.
- * @param value The successful value.
- * @returns An Ok result wrapping the value.
- */
 export const Ok = <T>(value: T): Ok<T, never> => new OkImpl(value);
 
 /**
@@ -679,20 +567,10 @@ export const Ok = <T>(value: T): Ok<T, never> => new OkImpl(value);
  * @template T The type of the success value (usually `never` for Err).
  * @example
  * ```typescript
- * const error: Err<string> = Err("Something went wrong");
- * if (error.isErr()) {
- * console.error(error.unwrapErr()); // Output: Something went wrong
- * }
+ * Err("fail").unwrapErr(); // "fail"
  * ```
  */
 export type Err<T = never, E = unknown> = ErrImpl<T, E>;
-
-/**
- * Creates a new Err result containing the given error value.
- * @template E The type of the error value.
- * @param value The error value.
- * @returns An Err result wrapping the error value.
- */
 export const Err = <E>(value: E): Err<never, E> => new ErrImpl(value);
 
 /**
@@ -709,13 +587,19 @@ export type Result<T, E> = Ok<T, E> | Err<T, E>;
  * Extracts the `message` property if the error is an `Error` instance, otherwise returns the error as is.
  * @param error The caught error.
  * @returns The transformed error, typically a string or the original error.
+ * @note Not a standard Rust Result method. Helper for `Result.from` and `Result.fromAsync`.
+ * @example
+ * ```typescript
+ * defaultErrorTransform(new Error("Failed")); // "Failed"
+ * defaultErrorTransform("Just string"); // "Just string"
+ * ```
  */
 function defaultErrorTransform<E = unknown>(error: unknown): E {
   return (error instanceof Error ? error.message : error) as E;
 }
 
 /**
- * @deprecated Use `Result.from(() => fn(...args))` instead. This function will be removed in a future version.
+ * @deprecated Use {@link Result.from `Result.from(() => fn(...args))`} instead. This function will be removed in a future version.
  * Wraps a function that might throw an error, returning its result as a `Result<T, E>`.
  * This deprecated version returns a *new function* that wraps the original.
  *
@@ -726,6 +610,13 @@ function defaultErrorTransform<E = unknown>(error: unknown): E {
  * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
  * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
  * @returns A new function that takes the same arguments as `fn` but returns a `Result<T, E>`.
+ * @note Not a standard Rust Result method. Provides a way to adapt throwing functions.
+ * @example
+ * ```typescript
+ * const safeParse = wrapInResult(JSON.parse);
+ * safeParse('{"a":1}').unwrap(); // {a: 1}
+ * safeParse('invalid').isErr(); // true
+ * ```
  */
 export function wrapInResult<A extends any[], T, E = unknown>(
   fn: (...args: A) => T,
@@ -755,10 +646,18 @@ export const Result = {
    *
    * @template T The type of the successful result of `fn` (if it doesn't return a Result).
    * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
-   * @param fn The synchronous function to wrap.
+   * @param fn The synchronous function to wrap and execute.
    * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
    * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
    * @returns A `Result<T, E>` representing the outcome.
+   * @note Not a standard Rust Result method. Convenience for converting throwing functions or existing Results.
+   * @example
+   * ```typescript
+   * Result.from(() => JSON.parse('{"a": 1}')).unwrap(); // { a: 1 }
+   * Result.from(() => JSON.parse('invalid')).isErr(); // true
+   * Result.from(() => Ok(10)).unwrap(); // 10
+   * Result.from(() => { throw "err"; }, (e) => ({ m: e })).err(); // { m: "err" }
+   * ```
    */
   from<T, E = unknown>(
     fn: () => T | Result<T, any>,
@@ -767,6 +666,8 @@ export const Result = {
     try {
       const value = fn();
       if (Result.isResult<T, E>(value)) {
+        // If the returned value is already a Result instance from this library,
+        // return it directly to avoid double-wrapping.
         return value as Result<T, E>;
       }
       return Ok(value as T);
@@ -785,10 +686,18 @@ export const Result = {
    *
    * @template T The type of the successful resolved value (if it's not a Result).
    * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
-   * @param fn The asynchronous function to wrap. It should return `Promise<T>` or `Promise<Result<T, any>>`.
+   * @param fn The asynchronous function to wrap and execute. It should return `Promise<T>` or `Promise<Result<T, any>>`.
    * @param errorTransform An optional function to transform a caught error (sync or async) into the desired error type `E`.
    * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
    * @returns A `Promise<Result<T, E>>` representing the eventual outcome.
+   * @note Not a standard Rust Result method. Convenience for handling Promises.
+   * @example
+   * ```typescript
+   * // Assuming async functions:
+   * // await Result.fromAsync(async () => 5); // Resolves to Ok(5)
+   * // await Result.fromAsync(async () => { throw "err"; }); // Resolves to Err("err")
+   * // await Result.fromAsync(async () => Ok(10)); // Resolves to Ok(10)
+   * ```
    */
   async fromAsync<T, E = unknown>(
     fn: () => Promise<T | Result<T, any>>,
@@ -807,17 +716,16 @@ export const Result = {
 
   /**
    * Checks if a value is a Result (either Ok or Err) created by this library.
+   * Useful for type guards or conditional logic based on whether a value is a Result.
    * @param value The value to check.
    * @returns True if the value is an Ok or Err instance, false otherwise.
+   * @note Not a standard Rust Result method. Utility for type checking.
    * @example
    * ```typescript
-   * const ok = Ok(1);
-   * const err = Err("error");
-   * const plain = 123;
-   *
-   * console.log(Result.isResult(ok)); // Output: true
-   * console.log(Result.isResult(err)); // Output: true
-   * console.log(Result.isResult(plain)); // Output: false
+   * Result.isResult(Ok(1)); // true
+   * Result.isResult(Err("error")); // true
+   * Result.isResult(123); // false
+   * Result.isResult(null); // false
    * ```
    */
   isResult<T, E>(value: unknown): value is Result<T, E> {
