@@ -10,10 +10,11 @@ A TypeScript library implementing Rust-like error handling with `Result`, `Ok`, 
 
 JavaScript/TypeScript error handling often relies on `try...catch` blocks or nullable return types, which can be verbose or hide potential errors. `rustify` brings the `Result` type, a pattern widely used in Rust, to TypeScript. This allows you to:
 
-* **Handle errors explicitly:** Functions return a `Result` which is either `Ok(value)` for success or `Err(error)` for failure, forcing you to handle both cases.
+* **Handle errors explicitly:** Functions return a `Result` which is either `Ok(value)` for success or `Err(error)` for failure.
 * **Improve type safety:** The types `T` (success) and `E` (error) are tracked by the type system.
-* **Chain operations safely:** Methods like `andThen` and `orElse` allow elegant chaining of operations that might fail.
-* **Write cleaner code:** Avoid deeply nested `try...catch` blocks or excessive null checks.
+* **Chain operations safely:** Methods like `andThen` and `orElse` allow elegant chaining.
+* **Perform exhaustive checks:** The `match` method ensures you handle both `Ok` and `Err` cases explicitly.
+* **Easily wrap unsafe functions:** `Result.from` provides a simple way to convert functions that might throw errors into functions that return a `Result`.
 
 ## Installation
 
@@ -30,6 +31,7 @@ pnpm add @ghaerdi/rustify
 ```
 
 **jsr:**
+
 ```bash
 npx jsr add @ghaerdi/rustify
 # or
@@ -40,48 +42,48 @@ deno add @ghaerdi/rustify
 
 ## Basic Usage
 
-Import `Ok`, `Err`, and `Result` from the library. Functions that can fail should return a `Result<T, E>`.
+Import `Ok`, `Err`, and `Result` from the library.
 
 ```typescript
 import { Result, Ok, Err } from "@ghaerdi/rustify";
 
-// Example function that might fail
+// Function that might fail
 function divide(a: number, b: number): Result<number, string> {
   if (b === 0) {
-    return Err("Cannot divide by zero"); // Return Err on failure
+    return Err("Cannot divide by zero"); // Failure case
   }
-  return Ok(a / b); // Return Ok on success
+  return Ok(a / b); // Success case
 }
 
-// --- Handling the result ---
+// --- Handling results ---
 
-const result1 = divide(10, 2);
+const result1 = divide(10, 2); // Ok(5)
+const result2 = divide(10, 0); // Err("Cannot divide by zero")
 
-// 1. Using unwrapOr: Provide a default value if it's an Err
+// Get the value or a default
 console.log(result1.unwrapOr(NaN)); // Output: 5
-
-// 2. Using pattern matching (isOk/isErr)
-if (result1.isOk()) {
-  console.log("Success:", result1.unwrap()); // Safely unwrap Ok value
-} else {
-  console.error("Error:", result1.unwrapErr()); // Safely unwrap Err value
-}
-
-const result2 = divide(10, 0);
-
 console.log(result2.unwrapOr(NaN)); // Output: NaN
 
-if (result2.isErr()) {
-  console.error("Error:", result2.err()); // Get the error value
-  // Output: Error: Cannot divide by zero
+// Explicitly handle both cases with match
+const message = result2.match({
+  Ok: (value) => `Success: ${value}`,
+  Err: (error) => `Failure: ${error}`
+});
+console.log(message); // Output: Failure: Cannot divide by zero
+
+// Wrap a function that might throw
+const safeJsonParse = (text: string): Result<unknown, string> =>
+  Result.from(() => JSON.parse(text));
+
+const parsed = safeJsonParse('{"id": 1}'); // Ok({id: 1})
+const failedParse = safeJsonParse('invalid{'); // Err("Unexpected token i...")
+
+if (parsed.isOk()) {
+  console.log("Parsed data:", parsed.unwrap()); // Output: Parsed data: { id: 1 }
 }
 
-// 3. Expecting a value (throws if it's an Err)
-try {
-  const value = result2.expect("Division failed");
-  // This line won't be reached
-} catch (e) {
-  console.error(e.message); // Output: Division failed: Cannot divide by zero
+if (failedParse.isErr()) {
+    console.error("Parse error:", failedParse.err()); // Output: Parse error: Unexpected token i...
 }
 ```
 
@@ -89,88 +91,88 @@ try {
 
 * **`Result<T, E>`:** The main type, representing either success (`Ok<T>`) or failure (`Err<E>`).
 * **`Ok<T>`:** Represents a successful result containing a value of type `T`. Created using the `Ok(value)` function.
+    * If `T` is iterable (like an Array or String), the `Ok` instance itself becomes iterable.
 * **`Err<E>`:** Represents a failure containing an error value of type `E`. Created using the `Err(error)` function.
 
 ## API Overview
 
-The `Result` type provides numerous methods for convenient handling and transformation:
+The `Result` type provides numerous methods for handling and transformation:
 
 * **Checking:**
-    * `isOk()`: Returns `true` if the result is `Ok`.
-    * `isErr()`: Returns `true` if the result is `Err`.
-    * `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies the predicate `fn`.
-    * `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies the predicate `fn`.
+    * `isOk()`: Returns `true` if `Ok`.
+    * `isErr()`: Returns `true` if `Err`.
+    * `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies `fn`.
+    * `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies `fn`.
 * **Extracting Values:**
-    * `ok()`: Returns the `Ok` value or `undefined` if `Err`.
-    * `err()`: Returns the `Err` value or `undefined` if `Ok`.
-    * `unwrap()`: Returns the `Ok` value, throws an error if `Err`. **Use with caution.**
-    * `unwrapErr()`: Returns the `Err` value, throws an error if `Ok`.
-    * `expect(message)`: Returns the `Ok` value, throws an error with `message` if `Err`.
-    * `expectErr(message)`: Returns the `Err` value, throws an error with `message` if `Ok`.
-    * `unwrapOr(defaultValue)`: Returns the `Ok` value or `defaultValue` if `Err`.
-    * `unwrapOrElse(fn)`: Returns the `Ok` value or computes a default value using `fn(errorValue)` if `Err`.
+    * `ok()`: Returns the `Ok` value or `undefined`.
+    * `err()`: Returns the `Err` value or `undefined`.
+    * `unwrap()`: Returns the `Ok` value, throws if `Err`. **Use with caution.**
+    * `unwrapErr()`: Returns the `Err` value, throws if `Ok`.
+    * `expect(message)`: Returns `Ok` value, throws `message` if `Err`.
+    * `expectErr(message)`: Returns `Err` value, throws `message` if `Ok`.
+    * `unwrapOr(defaultValue)`: Returns `Ok` value or `defaultValue` if `Err`.
+    * `unwrapOrElse(fn)`: Returns `Ok` value or computes default using `fn(errorValue)` if `Err`.
 * **Mapping & Transformation:**
-    * `map(fn)`: Maps `Ok<T>` to `Ok<U>` by applying `fn` to the value, leaves `Err` untouched.
-    * `mapErr(fn)`: Maps `Err<E>` to `Err<F>` by applying `fn` to the error, leaves `Ok` untouched.
-    * `mapOr(defaultValue, fn)`: Applies `fn` to the `Ok` value, returns `defaultValue` if `Err`.
-    * `mapOrElse(defaultFn, fn)`: Applies `fn` to the `Ok` value, applies `defaultFn` to the `Err` value.
+    * `map(fn)`: Maps `Ok<T>` to `Ok<U>`. Leaves `Err` untouched.
+    * `mapErr(fn)`: Maps `Err<E>` to `Err<F>`. Leaves `Ok` untouched.
+    * `mapOr(defaultValue, fn)`: Applies `fn` to `Ok` value, returns `defaultValue` if `Err`.
+    * `mapOrElse(defaultFn, fn)`: Applies `fn` to `Ok` value, applies `defaultFn` to `Err` value.
 * **Chaining & Side Effects:**
-    * `and(res)`: Returns `res` (another `Result`) if self is `Ok`, otherwise returns self (`Err`).
-    * `andThen(fn)`: Calls `fn(okValue)` if self is `Ok`, returning the resulting `Result`. Returns self (`Err`) otherwise. Useful for chaining operations that return `Result`.
-    * `or(res)`: Returns `res` (another `Result`) if self is `Err`, otherwise returns self (`Ok`).
-    * `orElse(fn)`: Calls `fn(errValue)` if self is `Err`, returning the resulting `Result`. Returns self (`Ok`) otherwise. Useful for handling errors by trying an alternative.
-    * `inspect(fn)`: Calls `fn(okValue)` if `Ok`, returns the original `Result`. Useful for debugging.
-    * `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns the original `Result`. Useful for logging errors.
+    * `and(res)`: Returns `res` if `Ok`, else returns self (`Err`).
+    * `andThen(fn)`: Calls `fn(okValue)` if `Ok`, returns the resulting `Result`.
+    * `or(res)`: Returns `res` if `Err`, else returns self (`Ok`).
+    * `orElse(fn)`: Calls `fn(errValue)` if `Err`, returns the resulting `Result`.
+    * `inspect(fn)`: Calls `fn(okValue)` if `Ok`, returns original `Result`.
+    * `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns original `Result`.
+* **Pattern Matching:**
+    * `match(matcher)`: Executes `matcher.Ok(value)` or `matcher.Err(error)`, returning the result.
+    ```typescript
+    result.match({
+      Ok: (value) => console.log(value),
+      Err: (error) => console.error(error)
+    });
+    ```
 * **Cloning:**
     * `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value (using `structuredClone`). `Err` values are not cloned.
-* **Utilities:**
-    * `wrapInResult(fn, errorTransform?)`: Wraps a function `fn` that might throw. Returns a new function that returns `Ok(returnValue)` on success or `Err(error)` on failure. Optionally transforms the caught error.
-
-```typescript
-import { wrapInResult, Ok, Err } from "@ghaerdi/rustify";
-
-// Wrap JSON.parse
-const safeParse = wrapInResult(JSON.parse);
-
-const resultOk = safeParse('{"value": true}');
-console.log(resultOk.unwrapOr({ value: false })); // Output: { value: true }
-
-const resultErr = safeParse('invalid json');
-console.log(resultErr.err()); // Output: "Unexpected token i..."
-```
+* **Utilities (Static Methods on `Result`):**
+    * `Result.from(fn, errorTransform?)`: Wraps a sync function `fn` that might throw. Executes `fn`. Returns `Ok(result)` or `Err(error)`.
+    ```typescript
+    const safeParse = (str: string) => Result.from(() => JSON.parse(str));
+    ```
+    * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function `fn` returning a Promise. Returns `Promise<Result>`. Handles resolution/rejection.
+    * `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or `Err`.
+    * `wrapInResult(fn, errorTransform?)`: **[Deprecated]** Use `Result.from(() => fn(...args))` instead.
 
 ## Development
 
 This project uses Bun.
 
 * **Install Dependencies:**
-```bash
-bun install
-```
-
+    ```bash
+    bun install
+    ```
 * **Type Checking:**
-```bash
-bun run check --watch
-```
-
+    ```bash
+    bun run check --watch
+    ```
 * **Run Tests:**
-```bash
-bun test --watch
-```
+    ```bash
+    bun test --watch
+    ```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions welcome! Please submit issues and pull requests.
 
 1.  Fork the repository.
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'feat: Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
+2.  Create your feature branch.
+3.  Commit your changes.
+4.  Push to the branch.
 5.  Open a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see the LICENSE file for details.
 
 ## Links
 
