@@ -48,59 +48,41 @@ Import `Ok`, `Err`, and `Result` from the library.
 ```typescript
 import { Result, Ok, Err } from "@ghaerdi/rustify";
 
-// Function that might fail
-function divide(a: number, b: number): Result<number, string> {
-  if (b === 0) {
+// --- Creating a function that returns a Result ---
+
+// Example: A function that performs division but returns Err for division by zero
+function divide(numerator: number, denominator: number): Result<number, string> {
+  if (denominator === 0) {
     return Err("Cannot divide by zero"); // Failure case
   }
-  return Ok(a / b); // Success case
+  const result = numerator / denominator;
+  return Ok(result); // Success case
 }
 
-// --- Handling results ---
+// --- Using the function and handling the Result ---
 
-const result1 = divide(10, 2); // Ok(5)
-const result2 = divide(10, 0); // Err("Cannot divide by zero")
+const result = divide(10, 2); // Try change 2 to 0 for an Err case
 
-// Get the value or a default
-console.log(result1.unwrapOr(NaN)); // Output: 5
-console.log(result2.unwrapOr(NaN)); // Output: NaN
-
-// Explicitly handle both cases with match
-const message = result2.match({
-  Ok: (value) => `Success: ${value}`,
-  Err: (error) => `Failure: ${error}`
+// Use 'match' to exhaustively handle both Ok and Err cases.
+// This is often the clearest way to ensure all possibilities are handled.
+const message = result.match({
+  Ok: (value) => {
+    // This runs only if result is Ok
+    console.log(`Match Ok: Division successful, value is ${value}`);
+    return `Result: ${value}`;
+  },
+  Err: (errorMessage) => {
+    // This runs only if result is Err
+    console.error("Match Err:", errorMessage);
+    return `Error: ${errorMessage}`;
+  }
 });
-console.log(message); // Output: Failure: Cannot divide by zero
 
-// Wrap a function that might throw
-const safeJsonParse = (text: string): Result<unknown, string> =>
-  Result.from(() => JSON.parse(text));
+console.log(message);
 
-const parsed = safeJsonParse('{"id": 1}'); // Ok({id: 1})
-const failedParse = safeJsonParse('invalid{'); // Err("Unexpected token i...")
-
-// Check status and get values safely
-if (parsed.isOk()) {
-  console.log("Parsed data:", parsed.unwrap()); // Output: Parsed data: { id: 1 }
-}
-
-if (failedParse.isErr()) {
-    console.error("Parse error:", failedParse.err()); // Output: Parse error: Unexpected token i...
-}
-
-// --- Destructuring results ---
-
-// Using asTuple() for Go-style [err, val]
-const [err1, val1] = result1.asTuple(); // err1: undefined, val1: 5
-const [err2, val2] = result2.asTuple(); // err2: "Cannot divide by zero", val2: undefined
-console.log(`Tuple Ok -> err1: ${err1}, val1: ${val1}`);
-console.log(`Tuple Err -> err2: ${err2}, val2: ${val2}`);
-
-// Using asObject() for { error, value }
-const { error: err3, value: val3 } = result1.asObject(); // err3: undefined, val3: 5
-const { error: err4, value: val4 } = result2.asObject(); // err4: "Cannot divide by zero", val4: undefined
-console.log(`Object Ok -> err3: ${err3}, value: ${val3}`);
-console.log(`Object Err -> err4: ${err4}, value: ${val4}`);
+// Other methods like Result.from, isOk, map, andThen, unwrapOrElse, asTuple etc.
+// allow for wrapping functions, specific checks, transformations, and handling patterns.
+// See the API Overview section for more details.
 ```
 
 ## Core Concepts
