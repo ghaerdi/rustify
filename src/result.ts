@@ -365,6 +365,36 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * ```
    */
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V;
+
+  /**
+ * Represents the Result's state as a tuple `[error, value]`.
+ * Useful for destructuring assignments.
+ * - If `Ok(v)`, returns `[undefined, v]`.
+ * - If `Err(e)`, returns `[e, undefined]`.
+ * @returns A tuple representing the error and value state: `[E, undefined] | [undefined, T]`.
+ * @note Not a standard Rust Result method.
+ * @example
+ * ```typescript
+ * const [err, val] = Ok(10).asTuple(); // err is undefined, val is 10
+ * const [err2, val2] = Err("fail").asTuple(); // err2 is "fail", val2 is undefined
+ * ```
+ */
+  asTuple(): [E, undefined] | [undefined, T];
+
+  /**
+   * Represents the Result's state as an object `{ error, value }`.
+   * Useful for destructuring assignments with named properties.
+   * - If `Ok(v)`, returns `{ error: undefined, value: v }`.
+   * - If `Err(e)`, returns `{ error: e, value: undefined }`.
+   * @returns An object representing the error and value state: `{ error: E; value: undefined } | { error: undefined; value: T }`.
+   * @note Not a standard Rust Result method.
+   * @example
+   * ```typescript
+   * const { error, value } = Ok(10).asObject(); // error is undefined, value is 10
+   * const { error: err2, value: val2 } = Err("fail").asObject(); // err2 is "fail", val2 is undefined
+   * ```
+   */
+  asObject(): { error: E, value: undefined } | { error: undefined, value: T };
 }
 
 /**
@@ -378,6 +408,14 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
       return new OkImpl(value);
     }
     this.#value = value;
+  }
+
+  asTuple(): [undefined, T] {
+    return [undefined, this.#value];
+  }
+
+  asObject(): { error: undefined; value: T; } {
+    return { error: undefined, value: this.#value };
   }
 
   isOk(): true { return true; }
@@ -512,6 +550,14 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
     this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
     this.#value = value;
+  }
+
+  asTuple(): [E, undefined] {
+    return [this.#value, undefined];
+  }
+
+  asObject(): { error: E, value: undefined } {
+    return { error: this.#value, value: undefined };
   }
 
   isOk(): false { return false; }

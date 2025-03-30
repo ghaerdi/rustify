@@ -150,6 +150,18 @@ describe('Result', () => {
       expect(cloned.unwrap()).toBe(123);
     });
 
+    test('asTuple should return [undefined, value]', () => {
+      const [err, val] = okResult.asTuple();
+      expect(err).toBeUndefined();
+      expect(val).toBe(value);
+    });
+
+    test('asObject should return { error: undefined, value: value }', () => {
+      const { error, value: val } = okResult.asObject();
+      expect(error).toBeUndefined();
+      expect(val).toBe(value);
+    });
+
     describe('match', () => {
       const okValue = 100;
       const okResultInstance: Result<number, string> = Ok(okValue);
@@ -379,6 +391,18 @@ describe('Result', () => {
       expect(cloned.isErr()).toBeTrue();
       expect(cloned.err()).toBe(errObj.err());
       expect(cloned).toBe(errObj);
+    });
+
+    test('asTuple should return [error, undefined]', () => {
+      const [err, val] = errResult.asTuple();
+      expect(err).toBe(error);
+      expect(val).toBeUndefined();
+    });
+
+    test('asObject should return { error: error, value: undefined }', () => {
+      const { error: err, value } = errResult.asObject();
+      expect(err).toBe(error);
+      expect(value).toBeUndefined();
     });
 
     describe('match', () => {

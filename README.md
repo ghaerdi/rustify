@@ -15,6 +15,7 @@ JavaScript/TypeScript error handling often relies on `try...catch` blocks or nul
 * **Chain operations safely:** Methods like `andThen` and `orElse` allow elegant chaining.
 * **Perform exhaustive checks:** The `match` method ensures you handle both `Ok` and `Err` cases explicitly.
 * **Easily wrap unsafe functions:** `Result.from` provides a simple way to convert functions that might throw errors into functions that return a `Result`.
+* **Destructure results easily:** Use `asTuple()` for Go-style `[err, val]` destructuring, or `asObject()` if you prefer `{ error, value }` destructuring.
 
 ## Installation
 
@@ -134,6 +135,19 @@ The `Result` type provides numerous methods for handling and transformation:
     ```
 * **Cloning:**
     * `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value (using `structuredClone`). `Err` values are not cloned.
+
+* **Destructuring / Representation:**
+    * `asTuple()`: Represents the Result's state as a tuple `[error, value]`. Returns `[undefined, T]` for `Ok(T)` and `[E, undefined]` for `Err(E)`.
+    ```typescript
+    const [err, val] = Ok(10).asTuple(); // err: undefined, val: 10
+    const [err2, val2] = Err("fail").asTuple(); // err2: "fail", val2: undefined
+    ```
+    * `asObject()`: Represents the Result's state as an object `{ error, value }`. Returns `{ error: undefined, value: T }` for `Ok(T)` and `{ error: E, value: undefined }` for `Err(E)`.
+    ```typescript
+    const { error, value } = Ok(10).asObject(); // error: undefined, value: 10
+    const { error: err2, value: val2 } = Err("fail").asObject(); // err2: "fail", val2: undefined
+    ```
+
 * **Utilities (Static Methods on `Result`):**
     * `Result.from(fn, errorTransform?)`: Wraps a sync function `fn` that might throw. Executes `fn`. Returns `Ok(result)` or `Err(error)`.
     ```typescript
