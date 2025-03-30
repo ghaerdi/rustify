@@ -1,6 +1,16 @@
 import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
 import { describe, test, expect, mock } from "bun:test";
 
+const divide = (a: number, b: number): number => {
+  if (b === 0) throw "cannot divide by 0";
+  return a / b;
+}
+
+const result = Result.from(() => divide(10, 0)).match({
+  Ok: (value) => value,
+  Err: () => NaN
+})
+
 describe('Result', () => {
   describe('Ok', () => {
     const value = 'success';
@@ -147,6 +157,44 @@ describe('Result', () => {
       const cloned = okPrimitive.cloned();
       expect(cloned.isOk()).toBeTrue();
       expect(cloned.unwrap()).toBe(123);
+    });
+
+    describe('match', () => {
+      const okValue = 100;
+      const okResultInstance: Result<number, string> = Ok(okValue);
+
+      test('should execute the Ok handler', () => {
+        const okHandler = mock((v: number) => `Ok value: ${v}`);
+        const errHandler = mock((e: string) => `Err value: ${e}`);
+
+        const matchResult = okResultInstance.match({
+          Ok: okHandler,
+          Err: errHandler,
+        });
+
+        expect(matchResult).toBe(`Ok value: ${okValue}`);
+        expect(okHandler).toHaveBeenCalledTimes(1);
+        expect(okHandler).toHaveBeenCalledWith(okValue);
+        expect(errHandler).not.toHaveBeenCalled();
+      });
+
+      test('should return the correct type from the Ok handler', () => {
+        const result = Ok(5).match({
+          Ok: (v) => v * 2,
+          Err: (e: string) => e.length,
+        });
+        expect(result).toBe(10);
+      });
+
+      test('should work with different Ok types', () => {
+        const complexOk: Result<{ id: number }, boolean> = Ok({ id: 123 });
+
+        const matchOk = complexOk.match({
+          Ok: (data) => `ID: ${data.id}`,
+          Err: (flag) => `Flag: ${flag}`,
+        });
+        expect(matchOk).toBe("ID: 123");
+      });
     });
 
     describe('Iterator', () => {
@@ -342,6 +390,44 @@ describe('Result', () => {
       expect(cloned).toBe(errObj);
     });
 
+    describe('match', () => {
+      const errValue = "failure";
+      const errResultInstance: Result<number, string> = Err(errValue);
+
+      test('should execute the Err handler', () => {
+        const okHandler = mock((v: number) => `Ok value: ${v}`);
+        const errHandler = mock((e: string) => `Err value: ${e}`);
+
+        const matchResult = errResultInstance.match({
+          Ok: okHandler,
+          Err: errHandler,
+        });
+
+        expect(matchResult).toBe(`Err value: ${errValue}`);
+        expect(errHandler).toHaveBeenCalledTimes(1);
+        expect(errHandler).toHaveBeenCalledWith(errValue);
+        expect(okHandler).not.toHaveBeenCalled();
+      });
+
+      test('should return the correct type from the Err handler', () => {
+        const result = Err("error").match({
+          Ok: (_v: number) => "was ok",
+          Err: (_e: string) => false,
+        });
+        expect(result).toBe(false);
+      });
+
+      test('should work with different Err types', () => {
+        const complexErr: Result<{ id: number }, boolean> = Err(true);
+
+        const matchErr = complexErr.match({
+          Ok: (data) => `ID: ${data.id}`,
+          Err: (flag) => `Flag is ${flag}`,
+        });
+        expect(matchErr).toBe("Flag is true");
+      });
+    });
+
     describe('Iterator', () => {
       test('should yield nothing if Err', () => {
         const yielded = [...errResult];
@@ -471,10 +557,10 @@ describe('Result', () => {
       expect(result).toBe(innerErr);
     });
 
-     test('should return Err if the async function throws synchronously', async () => {
+    test('should return Err if the async function throws synchronously', async () => {
       const errMsg = 'Sync throw in async function';
       const result = await Result.fromAsync(() => {
-          throw new Error(errMsg);
+        throw new Error(errMsg);
       });
       expect(result.isErr()).toBeTrue();
       expect(result.unwrapErr()).toBe(errMsg);

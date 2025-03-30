@@ -1,6 +1,29 @@
 import { toString } from "./utils.ts";
 
 /**
+ * Interface defining the structure for the pattern matching handlers used by the `match` method.
+ * @template T The type of the successful value.
+ * @template E The type of the error value.
+ * @template U The return type of the Ok handler.
+ * @template V The return type of the Err handler.
+ */
+interface ResultMatcher<T, E, U, V> {
+  /**
+   * Handler function for the Ok case.
+   * @param value The successful value of type T.
+   * @returns A value of type U.
+   */
+  Ok: (value: T) => U;
+  /**
+   * Handler function for the Err case.
+   * @param err The error value of type E.
+   * @returns A value of type V.
+   */
+  Err: (err: E) => V;
+}
+
+
+/**
  * BaseResult interface defines the common methods for Ok and Err implementations.
  * It allows iteration over the contained value *only* if it's `Ok` and the value itself is iterable.
  * @template T The type of the successful value.
@@ -314,6 +337,34 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * ```
    */
   unwrapErr(): E;
+
+  /**
+   * Executes one of two provided functions based on whether the Result is Ok or Err.
+   * This allows for pattern matching on the Result type.
+   *
+   * @template U The return type of the `Ok` handler.
+   * @template V The return type of the `Err` handler.
+   * @param matcher An object containing `Ok` and `Err` functions.
+   * @returns The value returned by the executed handler (`U` or `V`).
+   * @note Inspired by Rust's `match` expression, but not a standard method on Rust's `Result`.
+   * @example
+   * ```typescript
+   * const result: Result<number, string> = Ok(10);
+   * const message = result.match({
+   *   Ok: (value) => `Success: ${value}`,
+   *   Err: (error) => `Error: ${error}`
+   * });
+   * // message is "Success: 10"
+   *
+   * const result2: Result<number, string> = Err("Failed");
+   * const message2 = result2.match({
+   *   Ok: (value) => `Success: ${value}`,
+   *   Err: (error) => `Error: ${error}`
+   * });
+   * // message2 is "Error: Failed"
+   * ```
+   */
+  match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V;
 }
 
 /**
@@ -412,6 +463,10 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   unwrapErr(): E {
     throw new Error(`Tried to unwrap Ok value: ${toString(this.#value)}`);
+  }
+
+  match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
+    return matcher.Ok(this.#value);
   }
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
@@ -536,6 +591,10 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
   unwrapErr(): E {
     return this.#value;
+  }
+
+  match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
+    return matcher.Err(this.#value);
   }
 
   [Symbol.iterator](): Iterator<never> {
