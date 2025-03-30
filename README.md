@@ -79,6 +79,7 @@ const safeJsonParse = (text: string): Result<unknown, string> =>
 const parsed = safeJsonParse('{"id": 1}'); // Ok({id: 1})
 const failedParse = safeJsonParse('invalid{'); // Err("Unexpected token i...")
 
+// Check status and get values safely
 if (parsed.isOk()) {
   console.log("Parsed data:", parsed.unwrap()); // Output: Parsed data: { id: 1 }
 }
@@ -86,6 +87,20 @@ if (parsed.isOk()) {
 if (failedParse.isErr()) {
     console.error("Parse error:", failedParse.err()); // Output: Parse error: Unexpected token i...
 }
+
+// --- Destructuring results ---
+
+// Using asTuple() for Go-style [err, val]
+const [err1, val1] = result1.asTuple(); // err1: undefined, val1: 5
+const [err2, val2] = result2.asTuple(); // err2: "Cannot divide by zero", val2: undefined
+console.log(`Tuple Ok -> err1: ${err1}, val1: ${val1}`);
+console.log(`Tuple Err -> err2: ${err2}, val2: ${val2}`);
+
+// Using asObject() for { error, value }
+const { error: err3, value: val3 } = result1.asObject(); // err3: undefined, val3: 5
+const { error: err4, value: val4 } = result2.asObject(); // err4: "Cannot divide by zero", val4: undefined
+console.log(`Object Ok -> err3: ${err3}, value: ${val3}`);
+console.log(`Object Err -> err4: ${err4}, value: ${val4}`);
 ```
 
 ## Core Concepts
@@ -127,36 +142,16 @@ The `Result` type provides numerous methods for handling and transformation:
     * `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns original `Result`.
 * **Pattern Matching:**
     * `match(matcher)`: Executes `matcher.Ok(value)` or `matcher.Err(error)`, returning the result.
-    ```typescript
-    result.match({
-      Ok: (value) => console.log(value),
-      Err: (error) => console.error(error)
-    });
-    ```
 * **Cloning:**
     * `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value (using `structuredClone`). `Err` values are not cloned.
-
 * **Destructuring / Representation:**
     * `asTuple()`: Represents the Result's state as a tuple `[error, value]`. Returns `[undefined, T]` for `Ok(T)` and `[E, undefined]` for `Err(E)`.
-    ```typescript
-    const [err, val] = Ok(10).asTuple(); // err: undefined, val: 10
-    const [err2, val2] = Err("fail").asTuple(); // err2: "fail", val2: undefined
-    ```
     * `asObject()`: Represents the Result's state as an object `{ error, value }`. Returns `{ error: undefined, value: T }` for `Ok(T)` and `{ error: E, value: undefined }` for `Err(E)`.
-    ```typescript
-    const { error, value } = Ok(10).asObject(); // error: undefined, value: 10
-    const { error: err2, value: val2 } = Err("fail").asObject(); // err2: "fail", val2: undefined
-    ```
-
 * **Utilities (Static Methods on `Result`):**
     * `Result.from(fn, errorTransform?)`: Wraps a sync function `fn` that might throw. Executes `fn`. Returns `Ok(result)` or `Err(error)`.
-    ```typescript
-    const safeParse = (str: string) => Result.from(() => JSON.parse(str));
-    ```
     * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function `fn` returning a Promise. Returns `Promise<Result>`. Handles resolution/rejection.
     * `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or `Err`.
     * `wrapInResult(fn, errorTransform?)`: **[Deprecated]** Use `Result.from(() => fn(...args))` instead.
-
 ## Development
 
 This project uses Bun.
