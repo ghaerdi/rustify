@@ -691,11 +691,7 @@ export function wrapInResult<A extends any[], T, E = unknown>(
   };
 }
 
-
-/**
- * Provides static methods for creating and handling Result instances.
- */
-export const Result = {
+interface ResultTypeStatics {
   /**
    * Wraps a synchronous function that might throw an error or return a Result,
    * returning its outcome as a `Result<T, E>`. Executes the function immediately.
@@ -720,20 +716,8 @@ export const Result = {
    */
   from<T, E = unknown>(
     fn: () => T | Result<T, any>,
-    errorTransform: (error: unknown) => E = defaultErrorTransform
-  ): Result<T, E> {
-    try {
-      const value = fn();
-      if (Result.isResult<T, E>(value)) {
-        // If the returned value is already a Result instance from this library,
-        // return it directly to avoid double-wrapping.
-        return value as Result<T, E>;
-      }
-      return Ok(value as T);
-    } catch (error) {
-      return Err(errorTransform(error));
-    }
-  },
+    errorTransform?: (error: unknown) => E
+  ): Result<T, E>;
 
   /**
    * Wraps an asynchronous function (returning a Promise) that might throw, reject,
@@ -758,20 +742,10 @@ export const Result = {
    * // await Result.fromAsync(async () => Ok(10)); // Resolves to Ok(10)
    * ```
    */
-  async fromAsync<T, E = unknown>(
+  fromAsync<T, E = unknown>(
     fn: () => Promise<T | Result<T, any>>,
-    errorTransform: (error: unknown) => E = defaultErrorTransform
-  ): Promise<Result<T, E>> {
-    try {
-      const value = await fn();
-      if (Result.isResult<T, E>(value)) {
-        return value as Result<T, E>;
-      }
-      return Ok(value as T);
-    } catch (error) {
-      return Err(errorTransform(error));
-    }
-  },
+    errorTransform?: (error: unknown) => E
+  ): Promise<Result<T, E>>;
 
   /**
    * Checks if a value is a Result (either Ok or Err) created by this library.
@@ -787,6 +761,43 @@ export const Result = {
    * Result.isResult(null); // false
    * ```
    */
+  isResult<T, E>(value: unknown): value is Result<T, E>;
+}
+
+/**
+ * Provides static methods for creating and handling Result instances.
+ */
+export const Result: ResultTypeStatics = {
+  from<T, E = unknown>(
+    fn: () => T | Result<T, any>,
+    errorTransform: (error: unknown) => E = defaultErrorTransform
+  ): Result<T, E> {
+    try {
+      const value = fn();
+      if (Result.isResult<T, E>(value)) {
+        return value as Result<T, E>;
+      }
+      return Ok(value as T);
+    } catch (error) {
+      return Err(errorTransform(error));
+    }
+  },
+
+  async fromAsync<T, E = unknown>(
+    fn: () => Promise<T | Result<T, any>>,
+    errorTransform: (error: unknown) => E = defaultErrorTransform
+  ): Promise<Result<T, E>> {
+    try {
+      const value = await fn();
+      if (Result.isResult<T, E>(value)) {
+        return value as Result<T, E>;
+      }
+      return Ok(value as T);
+    } catch (error) {
+      return Err(errorTransform(error));
+    }
+  },
+
   isResult<T, E>(value: unknown): value is Result<T, E> {
     return value instanceof OkImpl || value instanceof ErrImpl;
   }

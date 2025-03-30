@@ -1,15 +1,6 @@
 import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
 import { describe, test, expect, mock } from "bun:test";
 
-const divide = (a: number, b: number): number => {
-  if (b === 0) throw "cannot divide by 0";
-  return a / b;
-}
-
-const result = Result.from(() => divide(10, 0)).match({
-  Ok: (value) => value,
-  Err: () => NaN
-})
 
 describe('Result', () => {
   describe('Ok', () => {
