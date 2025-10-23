@@ -42,6 +42,6 @@
 	},
 	"scripts": {
 		"check": "tsc --noEmit",
-		"prepublishOnly": "bun run check & bun test"
+		"prepublishOnly": "bun run check && bun test"
 	}
 }

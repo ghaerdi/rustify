@@ -440,7 +440,6 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   mapErr<F>(_fn: (value: E) => F): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
@@ -478,12 +477,10 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   or<F>(_res: Result<T, F>): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
   orElse<F>(_fn: (value: E) => Result<T, F>): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
@@ -527,13 +524,11 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
  * @internal Implementation of the Err case for Result. Users should use the `Err` factory function.
  */
 class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
-  readonly #stack!: string;
   readonly #value!: E;
+  #stack?: string;
 
   /**
    * @internal Creates an Err instance.
-   * Captures a stack trace at the point of creation, omitting the ErrImpl constructor frames
-   * for better debugging experience when unwrapping/expecting.
    * @param value The error value.
    */
   constructor(value: E) {
@@ -541,17 +536,24 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
       return new ErrImpl(value);
     }
 
-    const stackLines = (new Error().stack || '').split('\n');
-    let firstRelevantFrame = 1;
-    while (
-      stackLines[firstRelevantFrame] &&
-      (stackLines[firstRelevantFrame].includes('ErrImpl') || stackLines[firstRelevantFrame].includes(' Err '))
-    ) {
-      firstRelevantFrame++;
-    }
-
-    this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
     this.#value = value;
+  }
+
+  private getStack(): string {
+    if (this.#stack === undefined) {
+      const stackLines = (new Error().stack || '').split('\n');
+      let firstRelevantFrame = 1;
+      while (
+        stackLines[firstRelevantFrame] &&
+        (stackLines[firstRelevantFrame].includes('ErrImpl') || 
+         stackLines[firstRelevantFrame].includes(' Err ') ||
+         stackLines[firstRelevantFrame].includes('getStack'))
+      ) {
+        firstRelevantFrame++;
+      }
+      this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
+    }
+    return this.#stack;
   }
 
   asTuple(): [E, undefined] {
@@ -570,7 +572,6 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   err(): Option<E> { return Some(this.#value); }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
-    // Type assertion is safe because the T type parameter is unused in ErrImpl.
     return this as unknown as Result<U, E>;
   }
 
@@ -596,11 +597,11 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   expect(message: string): T {
-    throw new Error(`${message}: ${toString(this.#value)}\n${this.#stack}`);
+    throw new Error(`${message}: ${toString(this.#value)}\n${this.getStack()}`);
   }
 
   unwrap(): T {
-    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.#stack}`);
+    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.getStack()}`);
   }
 
   unwrapOr<U>(defaultValue: U): U {
@@ -612,12 +613,10 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   and<U>(_res: Result<U, E>): Result<U, E> {
-    // Type assertion is safe as T is unused.
     return this as unknown as Result<U, E>;
   }
 
   andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
-    // Type assertion is safe as T is unused.
     return this as unknown as Result<U, E>;
   }
 

@@ -438,29 +438,8 @@ class SomeImpl<T> implements BaseOption<T> {
  * @internal Implementation of the None case for Option. Users should use the `None` singleton.
  */
 class NoneImpl<T = never> implements BaseOption<T> {
-   readonly #stack!: string;
-
-  constructor() {
-    // Ensure this is only called once for the singleton
-    if (typeof (globalThis as any).__rustifyNoneSingletonInitialized !== 'undefined' && (globalThis as any).__rustifyNoneSingletonInitialized) {
-        if (this !== (None as any) ) { // Allow the singleton to construct itself
-             throw new Error("None is a singleton. Use 'None' directly instead of new NoneImpl().");
-        }
-    }
-    (globalThis as any).__rustifyNoneSingletonInitialized = true;
-
-
-    // Capture stack trace for better debugging on unwrap/expect
-    // This stack will be for the creation of the None singleton itself.
-    const stackLines = (new Error().stack || '').split('\n');
-    let firstRelevantFrame = 1; 
-    while (
-      stackLines[firstRelevantFrame] &&
-      (stackLines[firstRelevantFrame].includes('NoneImpl') || stackLines[firstRelevantFrame].includes(' noneSingleton ') || stackLines[firstRelevantFrame].includes(' Object.None '))
-    ) {
-      firstRelevantFrame++;
-    }
-    this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
+   constructor() {
+    // Minimal constructor - performance optimized
   }
 
   isSome(): false { return false; }
