@@ -157,7 +157,6 @@ The `Result` type provides numerous methods for handling and transformation:
     * `Result.from(fn, errorTransform?)`: Wraps a sync function `fn` that might throw. Executes `fn`. Returns `Ok(result)` or `Err(error)`.
     * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function `fn` returning a Promise. Returns `Promise<Result>`. Handles resolution/rejection.
     * `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or `Err`.
-    * `wrapInResult(fn, errorTransform?)`: **[Deprecated]** Use `Result.from(() => fn(...args))` instead.
 
 ## Option Monad (`Option<T>`)
 

@@ -1,4 +1,4 @@
-import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
+import { Result, Err, Ok } from "../src/result.ts";
 import { Some, None } from "../src/option.ts";
 import { describe, test, expect, mock } from "bun:test";
 
@@ -591,48 +591,5 @@ describe('Result', () => {
     });
   });
 
-  describe('wrapInResult (Deprecated)', () => {
-    test('should return Ok with the result for a function that succeeds', () => {
-      const add = (a: number, b: number) => a + b;
-      const wrappedAdd = wrapInResult(add);
-      const result = wrappedAdd(2, 3);
-      expect(result.isOk()).toBeTrue();
-      expect(result.unwrap()).toBe(5);
-    });
-
-    test('should return Err with the error message for a function that throws an Error', () => {
-      const throwError = () => { throw new Error('Something went wrong'); };
-      const wrappedThrow = wrapInResult(throwError);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toBe('Something went wrong');
-    });
-
-    test('should return Err with the thrown value if it is not an Error', () => {
-      const throwValue = () => { throw 'just a string error'; };
-      const wrappedThrow = wrapInResult(throwValue);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toBe('just a string error');
-    });
-
-    test('should use errorTransform function if provided', () => {
-      const throwError = () => { throw new Error('Original error'); };
-      const transform = mock((err: unknown) => ({ message: `Transformed: ${err instanceof Error ? err.message : String(err)}`, code: 500 }));
-      const wrappedThrow = wrapInResult(throwError, transform);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toEqual({ message: 'Transformed: Original error', code: 500 });
-      expect(transform).toHaveBeenCalledTimes(1);
-    });
-
-    test('should pass arguments correctly to the wrapped function', () => {
-      const subtract = (a: number, b: number) => a - b;
-      const wrappedSubtract = wrapInResult(subtract);
-      const result = wrappedSubtract(10, 4);
-      expect(result.isOk()).toBeTrue();
-      expect(result.unwrap()).toBe(6);
-    });
-  });
 });
 

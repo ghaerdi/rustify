@@ -705,39 +705,6 @@ function defaultErrorTransform<E = unknown>(error: unknown): E {
   return (error instanceof Error ? error.message : error) as E;
 }
 
-/**
- * @deprecated Use {@link Result.from `Result.from(() => fn(...args))`} instead. This function will be removed in a future version.
- * Wraps a function that might throw an error, returning its result as a `Result<T, E>`.
- * This deprecated version returns a *new function* that wraps the original.
- *
- * @template A The argument types of the function `fn`.
- * @template T The type of the successful result of `fn`.
- * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
- * @param fn The function to wrap.
- * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
- * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
- * @returns A new function that takes the same arguments as `fn` but returns a `Result<T, E>`.
- * @note Not a standard Rust Result method. Provides a way to adapt throwing functions.
- * @example
- * ```typescript
- * const safeParse = wrapInResult(JSON.parse);
- * safeParse('{"a":1}').unwrap(); // {a: 1}
- * safeParse('invalid').isErr(); // true
- * ```
- */
-export function wrapInResult<A extends any[], T, E = unknown>(
-  fn: (...args: A) => T,
-  errorTransform?: (error: unknown) => E
-): (...args: A) => Result<T, E> {
-  const transformFn = errorTransform ?? defaultErrorTransform;
-  return (...args: A): Result<T, E> => {
-    try {
-      return Ok(fn(...args));
-    } catch (error) {
-      return Err(transformFn(error));
-    }
-  };
-}
 
 interface ResultTypeStatics {
   /**
