@@ -2,7 +2,6 @@ import { expect, test, describe, mock } from "bun:test";
 import { Some, None, Option } from "../src/option"; // Path to src/option.ts
 
 describe("Option", () => {
-  // 1. Creation & Basic Checks
   describe("Creation & Basic Checks", () => {
     describe("Some", () => {
       const value = 5;
@@ -71,7 +70,6 @@ describe("Option", () => {
     });
   });
 
-  // 2. isSomeAnd
   describe("isSomeAnd", () => {
     test("Some(value).isSomeAnd(predicate) should be true if predicate is true", () => {
       expect(Some(5).isSomeAnd(x => x > 3)).toBe(true);
@@ -84,7 +82,6 @@ describe("Option", () => {
     });
   });
 
-  // 3. expect
   describe("expect", () => {
     test("Some(value).expect(message) should return value", () => {
       expect(Some(5).expect("should be Some")).toBe(5);
@@ -101,7 +98,6 @@ describe("Option", () => {
     });
   });
 
-  // 4. unwrap
   describe("unwrap", () => {
     test("Some(value).unwrap() should return value", () => {
       expect(Some(5).unwrap()).toBe(5);
@@ -117,7 +113,6 @@ describe("Option", () => {
     });
   });
 
-  // 5. unwrapOr
   describe("unwrapOr", () => {
     const defaultValue = 0;
     test("Some(value).unwrapOr(defaultValue) should return value", () => {
@@ -129,7 +124,6 @@ describe("Option", () => {
     });
   });
 
-  // 6. unwrapOrElse
   describe("unwrapOrElse", () => {
     const defaultValueFn = () => 0;
     test("Some(value).unwrapOrElse(fn) should return value", () => {
@@ -142,7 +136,6 @@ describe("Option", () => {
     });
   });
 
-  // 7. map
   describe("map", () => {
     const mapFn = (x: number) => x.toString();
     test("Some(value).map(fn) should return Some(fn(value))", () => {
@@ -157,7 +150,6 @@ describe("Option", () => {
     });
   });
 
-  // 8. mapOr
   describe("mapOr", () => {
     const defaultValue = "default";
     const mapFn = (x: number) => x.toString();
@@ -169,7 +161,6 @@ describe("Option", () => {
     });
   });
 
-  // 9. mapOrElse
   describe("mapOrElse", () => {
     const defaultFn = () => "None!";
     const mapFn = (x: number) => `Some: ${x}`;
@@ -183,7 +174,6 @@ describe("Option", () => {
     });
   });
 
-  // 10. inspect
   describe("inspect", () => {
     test("Some(value).inspect(fn) should call fn(value) and return Some(value)", () => {
       const mockFn = mock((_x: number) => {});
@@ -201,7 +191,6 @@ describe("Option", () => {
     });
   });
 
-  // 11. and
   describe("and", () => {
     test("Some(value).and(Some(otherValue)) should return Some(otherValue)", () => {
       const result = Some(2).and(Some("late success"));
@@ -225,7 +214,6 @@ describe("Option", () => {
     });
   });
 
-  // 12. andThen (flatMap)
   describe("andThen", () => {
     const fnReturningSome = (x: number) => Some(x > 0);
     const fnReturningNone = (_x: number) => None; // Return singleton
@@ -249,7 +237,6 @@ describe("Option", () => {
     });
   });
 
-  // 13. or
   describe("or", () => {
     test("Some(value).or(Some(otherValue)) should return Some(value)", () => {
       const result = Some(5).or(Some(10));
@@ -257,33 +244,32 @@ describe("Option", () => {
       expect(result.unwrap()).toBe(5);
     });
     test("Some(value).or(None) should return Some(value)", () => {
-      const result = Some(5).or(None); // Use singleton
+      const result = Some(5).or(None);
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
     test("None.or(Some(value)) should return Some(value)", () => {
-      const result = None.or(Some(10)); // Use singleton
+      const result = None.or(Some(10));
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(10);
     });
     test("None.or(None) should return None singleton", () => {
-      const result = None.or(None); // Use singleton
+      const result = None.or(None);
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result).toBe(None);
     });
   });
 
-  // 14. orElse
   describe("orElse", () => {
     const fnReturningSome = () => Some(0);
-    const fnReturningNone = () => None; // Return singleton
+    const fnReturningNone = () => None;
     test("Some(value).orElse(fn) should return Some(value)", () => {
       const opt = Some(5);
       const result = opt.orElse(fnReturningSome);
       expect(result).toBe(opt);
     });
     test("None.orElse(fnReturningSome) should return result of fnReturningSome", () => {
-      const result = None.orElse(fnReturningSome); // Use singleton
+      const result = None.orElse(fnReturningSome);
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(0);
     });
@@ -294,7 +280,6 @@ describe("Option", () => {
     });
   });
 
-  // 15. xor
   describe("xor", () => {
     test("Some(value).xor(None) should return Some(value)", () => {
       const result = Some(1).xor(None); // Use singleton
@@ -318,7 +303,6 @@ describe("Option", () => {
     });
   });
 
-  // 16. cloned
   describe("cloned", () => {
     test("Some(primitive).cloned() should return a new Some with the same primitive", () => {
       const opt = Some(5);
@@ -344,7 +328,6 @@ describe("Option", () => {
     });
   });
 
-  // 17. zip
   describe("zip", () => {
     test("Some(a).zip(Some(b)) should return Some([a,b])", () => {
       const result = Some(1).zip(Some("a"));
@@ -368,7 +351,6 @@ describe("Option", () => {
     });
   });
 
-  // 18. zipWith
   describe("zipWith", () => {
     const zipFn = (n: number, s: string) => `${n}${s}`;
     test("Some(a).zipWith(Some(b), fn) should return Some(fn(a,b))", () => {
@@ -393,7 +375,6 @@ describe("Option", () => {
     });
   });
 
-  // 19. match
   describe("match", () => {
     const someHandler = (value: number) => `Success: ${value}`;
     const noneHandler = () => "It was None";
@@ -407,7 +388,6 @@ describe("Option", () => {
     });
   });
 
-  // 20. Iterable Protocol
   describe("Iterable Protocol", () => {
     test("Some(iterableValue) allows iteration", () => {
       const arr = [1, 2, 3];

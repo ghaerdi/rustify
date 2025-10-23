@@ -4,7 +4,6 @@ export function toString(val: unknown): string {
     try {
       value = JSON.stringify(val);
     } catch {
-      // ignore
     }
   }
   return value;

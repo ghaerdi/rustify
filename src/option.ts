@@ -323,9 +323,6 @@ class SomeImpl<T> implements BaseOption<T> {
   readonly #value!: T;
 
   constructor(value: T) {
-    // This check is to ensure Some is always constructed via the Some() factory,
-    // maintaining consistency if SomeImpl were to be exported and instantiated directly.
-    // However, with SomeImpl not being exported, this is less critical.
     if (!(this instanceof SomeImpl)) {
       return new SomeImpl(value);
     }
@@ -404,7 +401,7 @@ class SomeImpl<T> implements BaseOption<T> {
 
   zip<U>(other: Option<U>): Option<[T, U]> {
     if (other.isSome()) {
-      return Some([this.#value, other.unwrap()]);
+      return Some([this.#value, other.unwrap()] as [T, U]);
     }
     return None; // Return singleton
   }
@@ -439,7 +436,6 @@ class SomeImpl<T> implements BaseOption<T> {
  */
 class NoneImpl<T = never> implements BaseOption<T> {
    constructor() {
-    // Minimal constructor - performance optimized
   }
 
   isSome(): false { return false; }
@@ -447,8 +443,6 @@ class NoneImpl<T = never> implements BaseOption<T> {
   isNone(): true { return true; }
 
   expect(message: string): T {
-    // The stack trace captured in the constructor is less relevant for expect/unwrap
-    // if we want the call site of expect/unwrap. So, we create a new error here.
     const callSiteError = new Error();
     const stackLines = (callSiteError.stack || '').split('\n');
     let firstRelevantFrame = 1;
@@ -510,15 +504,15 @@ class NoneImpl<T = never> implements BaseOption<T> {
     return None;
   }
 
-  or(res: Option<T>): Option<T> {
+  or<U>(res: Option<U>): Option<U> {
     return res;
   }
 
-  orElse(fn: () => Option<T>): Option<T> {
+  orElse<U>(fn: () => Option<U>): Option<U> {
     return fn();
   }
   
-  xor(optb: Option<T>): Option<T> {
+  xor<U>(optb: Option<U>): Option<U> {
     return optb;
   }
 
@@ -560,10 +554,6 @@ export type Some<T> = SomeImpl<T>;
 export const Some = <T>(value: T): Some<T> => new SomeImpl(value);
 
 
-// --- None Singleton ---
-
-const noneSingleton = new NoneImpl<never>();
-
 /**
  * Represents the absence of a value (`None`) in an {@link Option}.
  * This is a singleton instance.
@@ -576,7 +566,7 @@ const noneSingleton = new NoneImpl<never>();
  * }
  * ```
  */
-export const None = noneSingleton;
+export const None = new NoneImpl<never>();;
 /**
  * The type of the `None` singleton.
  */
