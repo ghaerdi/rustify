@@ -89,6 +89,17 @@ const messageFromOption = anOptionalString.match({
 console.log(messageFromOption);
 
 
+// Working with ok() and err() methods that now return Option:
+const okValue = result.ok(); // Returns Option<number>
+if (okValue.isSome()) {
+  console.log(`Ok value: ${okValue.unwrap()}`);
+}
+
+const errValue = result.err(); // Returns Option<string> 
+if (errValue.isSome()) {
+  console.log(`Error: ${errValue.unwrap()}`);
+}
+
 // Other methods like Result.from, isOk, map, andThen, unwrapOrElse, asTuple etc.
 // and Option.fromNullable, isSome, map, unwrapOr etc.
 // allow for wrapping functions, specific checks, transformations, and handling patterns.
@@ -115,8 +126,8 @@ The `Result` type provides numerous methods for handling and transformation:
     * `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies `fn`.
     * `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies `fn`.
 * **Extracting Values:**
-    * `ok()`: Returns the `Ok` value or `undefined`.
-    * `err()`: Returns the `Err` value or `undefined`.
+    * `ok()`: Returns the `Ok` value as `Some(value)` or `None`.
+    * `err()`: Returns the `Err` value as `Some(error)` or `None`.
     * `unwrap()`: Returns the `Ok` value, throws if `Err`. **Use with caution.**
     * `unwrapErr()`: Returns the `Err` value, throws if `Ok`.
     * `expect(message)`: Returns `Ok` value, throws `message` if `Err`.

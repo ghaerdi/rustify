@@ -1,4 +1,5 @@
 import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
+import { Some, None } from "../src/option.ts";
 import { describe, test, expect, mock } from "bun:test";
 
 
@@ -15,12 +16,16 @@ describe('Result', () => {
       expect(okResult.isErr()).toBeFalse();
     });
 
-    test('ok should return the value', () => {
-      expect(okResult.ok()).toBe(value);
+    test('ok should return Some with the value', () => {
+      const okValue = okResult.ok();
+      expect(okValue.isSome()).toBeTrue();
+      expect(okValue.unwrap()).toBe(value);
     });
 
-    test('err should return undefined', () => {
-      expect(okResult.err()).toBeUndefined();
+    test('err should return None', () => {
+      const errValue = okResult.err();
+      expect(errValue.isNone()).toBeTrue();
+      expect(errValue).toBe(None);
     });
 
     test('unwrap should return the value', () => {
@@ -124,7 +129,7 @@ describe('Result', () => {
       const compatibleAndOk: Result<number, string> = Ok(99);
       const compatibleAndErr: Result<number, string> = Err("compatible error");
       expect(okResult.and(compatibleAndOk).unwrap()).toBe(99);
-      expect(okResult.and(compatibleAndErr).err()).toBe("compatible error");
+      expect(okResult.and(compatibleAndErr).err().unwrap()).toBe("compatible error");
     });
 
     test('or should return self if Ok', () => {
@@ -261,12 +266,16 @@ describe('Result', () => {
       expect(errResult.isErr()).toBeTrue();
     });
 
-    test('ok should return undefined', () => {
-      expect(errResult.ok()).toBeUndefined();
+    test('ok should return None', () => {
+      const okValue = errResult.ok();
+      expect(okValue.isNone()).toBeTrue();
+      expect(okValue).toBe(None);
     });
 
-    test('err should return the error', () => {
-      expect(errResult.err()).toBe(error);
+    test('err should return Some with the error', () => {
+      const errValue = errResult.err();
+      expect(errValue.isSome()).toBeTrue();
+      expect(errValue.unwrap()).toBe(error);
     });
 
     test('unwrap should throw', () => {
@@ -285,7 +294,7 @@ describe('Result', () => {
       const mapFn = mock((val: string) => val.length);
       const mapped = errResult.map(mapFn);
       expect(mapped.isErr()).toBeTrue();
-      expect(mapped.err()).toBe(error);
+      expect(mapped.err().unwrap()).toBe(error);
       expect(mapFn).not.toHaveBeenCalled();
     });
 
@@ -302,7 +311,7 @@ describe('Result', () => {
       const andThenFn = mock((val: string) => Ok(val.length));
       const andThenResult = errResult.andThen(andThenFn);
       expect(andThenResult.isErr()).toBeTrue();
-      expect(andThenResult.err()).toBe(error);
+      expect(andThenResult.err().unwrap()).toBe(error);
       expect(andThenFn).not.toHaveBeenCalled();
     });
 
@@ -374,22 +383,22 @@ describe('Result', () => {
     });
 
     test('and should return self if Err', () => {
-      expect(errResult.and(Ok(99)).err()).toBe(error);
-      expect(errResult.and(Err("another error")).err()).toBe(error);
+      expect(errResult.and(Ok(99)).err().unwrap()).toBe(error);
+      expect(errResult.and(Err("another error")).err().unwrap()).toBe(error);
     });
 
     test('or should return the other result if Err', () => {
       const compatibleOrOk: Result<string, number> = Ok("fallback success");
       const compatibleOrErr: Result<string, number> = Err(500);
       expect(errResult.or(compatibleOrOk).unwrap()).toBe("fallback success");
-      expect(errResult.or(compatibleOrErr).err()).toBe(500);
+      expect(errResult.or(compatibleOrErr).err().unwrap()).toBe(500);
     });
 
     test('cloned should return self (Err is not cloned)', () => {
       const errObj = Err({ code: 500, msg: 'server error' });
       const cloned = errObj.cloned();
       expect(cloned.isErr()).toBeTrue();
-      expect(cloned.err()).toBe(errObj.err());
+      expect(cloned.err().unwrap()).toBe(errObj.err().unwrap());
       expect(cloned).toBe(errObj);
     });
 

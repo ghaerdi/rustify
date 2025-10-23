@@ -1,4 +1,6 @@
 import { toString } from "./utils.ts";
+import type { Option } from "./option.ts";
+import { Some, None } from "./option.ts";
 
 /**
  * Interface defining the structure for the pattern matching handlers used by the `match` method.
@@ -80,25 +82,25 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
 
   /**
    * Returns the contained Ok value, if present.
-   * @returns The Ok value, or undefined if the result is Err.
+   * @returns The Ok value as Some, or None if the result is Err.
    * @example
    * ```typescript
-   * Ok(5).ok(); // 5
-   * Err("error").ok(); // undefined
+   * Ok(5).ok(); // Some(5)
+   * Err("error").ok(); // None
    * ```
    */
-  ok(): T | undefined;
+  ok(): Option<T>;
 
   /**
    * Returns the contained Err value, if present.
-   * @returns The Err value, or undefined if the result is Ok.
+   * @returns The Err value as Some, or None if the result is Ok.
    * @example
    * ```typescript
-   * Err("error").err(); // "error"
-   * Ok(5).err(); // undefined
+   * Err("error").err(); // Some("error")
+   * Ok(5).err(); // None
    * ```
    */
-  err(): E | undefined;
+  err(): Option<E>;
 
   /**
    * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained Ok value,
@@ -422,8 +424,8 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   isOkAnd(fn: (value: T) => boolean): boolean { return fn(this.#value); }
   isErr(): false { return false; }
   isErrAnd(_fn: (value: E) => boolean): false { return false; }
-  ok(): T { return this.#value; }
-  err(): undefined { return undefined; }
+  ok(): Option<T> { return Some(this.#value); }
+  err(): Option<E> { return None; }
 
   map<U>(fn: (value: T) => U): Result<U, E> {
     return Ok(fn(this.#value));
@@ -564,8 +566,8 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   isOkAnd(_fn: (value: T) => boolean): false { return false; }
   isErr(): true { return true; }
   isErrAnd(fn: (value: E) => boolean): boolean { return fn(this.#value); }
-  ok(): undefined { return undefined; }
-  err(): E { return this.#value; }
+  ok(): Option<T> { return None; }
+  err(): Option<E> { return Some(this.#value); }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
     // Type assertion is safe because the T type parameter is unused in ErrImpl.
