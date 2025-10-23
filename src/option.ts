@@ -1,5 +1,3 @@
-import { toString } from "./utils.ts";
-
 /**
  * Interface defining the structure for the pattern matching handlers used by the `match` method.
  * @template T The type of the value.
@@ -510,7 +508,7 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
 
   map<U>(_fn: (value: T) => U): Option<U> {
-    return this as unknown as Option<U>; 
+    return None;
   }
 
   mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
@@ -522,15 +520,15 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
   
   inspect(_fn: (value: T) => void): Option<T> {
-    return this;
+    return None;
   }
 
   and<U>(_res: Option<U>): Option<U> {
-    return this as unknown as Option<U>;
+    return None;
   }
 
   andThen<U>(_fn: (value: T) => Option<U>): Option<U> {
-    return this as unknown as Option<U>;
+    return None;
   }
 
   or(res: Option<T>): Option<T> {
@@ -546,15 +544,15 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
 
   cloned(): Option<T> {
-    return this;
+    return None;
   }
 
   zip<U>(_other: Option<U>): Option<[T, U]> {
-    return this as unknown as Option<[T,U]>;
+    return None
   }
 
   zipWith<U, R>(_other: Option<U>, _fn: (s: T, o: U) => R): Option<R> {
-    return this as unknown as Option<R>;
+    return None
   }
   
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
