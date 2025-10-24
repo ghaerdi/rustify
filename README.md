@@ -4,17 +4,18 @@
 [![JSR version](https://jsr.io/badges/@ghaerdi/rustify)](https://jsr.io/@ghaerdi/rustify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <br>
-A TypeScript library implementing Rust-like error handling with `Result`, `Ok`, and `Err` types, promoting type-safe and explicit error management.
+A TypeScript monad library inspired by Rust, providing `Result` and `Option` types for safe error handling and null management with functional programming patterns.
 
 ## Why rustify?
 
-JavaScript/TypeScript error handling often relies on `try...catch` blocks or nullable return types, which can be verbose or hide potential errors. `rustify` brings the `Result` type, a pattern widely used in Rust, to TypeScript. This allows you to:
+JavaScript/TypeScript error handling often relies on `try...catch` blocks or nullable return types, which can be verbose or hide potential errors. `rustify` brings Rust-inspired monads like `Result` and `Option` to TypeScript, enabling functional programming patterns for safer code. This allows you to:
 
 * **Handle errors explicitly:** Functions return a `Result` which is either `Ok(value)` for success or `Err(error)` for failure.
-* **Improve type safety:** The types `T` (success) and `E` (error) are tracked by the type system.
-* **Chain operations safely:** Methods like `andThen` and `orElse` allow elegant chaining.
-* **Perform exhaustive checks:** The `match` method ensures you handle both `Ok` and `Err` cases explicitly.
-* **Easily wrap unsafe functions:** `Result.from` provides a simple way to convert functions that might throw errors into functions that return a `Result`.
+* **Manage nullable values safely:** Use `Option` to represent values that may or may not exist, eliminating null/undefined errors.
+* **Improve type safety:** Both `Result<T, E>` and `Option<T>` types are tracked by the type system.
+* **Chain operations safely:** Monadic methods like `andThen`, `map`, and `orElse` allow elegant functional composition.
+* **Perform exhaustive checks:** The `match` method ensures you handle all cases explicitly.
+* **Easily wrap unsafe functions:** `Result.from` and `Option.fromNullable` provide simple ways to convert potentially unsafe operations.
 * **Destructure results easily:** Use `asTuple()` for Go-style `[err, val]` destructuring, or `asObject()` if you prefer `{ error, value }` destructuring.
 
 ## Installation

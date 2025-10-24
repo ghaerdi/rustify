@@ -1,7 +1,7 @@
 {
 	"name": "@ghaerdi/rustify",
 	"version": "2.0.0",
-	"description": "A TypeScript library implementing Rust-like error handling with Result, Ok, and Err types.",
+	"description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
 	"module": "src/index.ts",
 	"type": "module",
 	"main": "src/index.ts",
@@ -28,13 +28,14 @@
 	"keywords": [
 		"typescript",
 		"rust",
-		"error handling",
+		"monad",
+		"option",
 		"result",
-		"ok",
-		"err",
-		"ts-result",
+		"error handling",
 		"functional programming",
-		"type-safe"
+		"type-safe",
+		"null safety",
+		"maybe"
 	],
 	"author": "ghaerdi",
 	"license": "MIT",
