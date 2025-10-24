@@ -1,5 +1,5 @@
 import { Result, Err, Ok } from "../src/result.ts";
-import { Some, None } from "../src/option.ts";
+import { Some, None, Option } from "../src/option.ts";
 import { describe, test, expect, mock } from "bun:test";
 
 
@@ -588,6 +588,119 @@ describe('Result', () => {
       });
       expect(result.isErr()).toBeTrue();
       expect(result.unwrapErr()).toBe(errMsg);
+    });
+  });
+
+  // Tests for new missing methods
+  describe("flatten", () => {
+    describe("Ok variant", () => {
+      test("Ok(Ok(value)).flatten() should return Ok(value)", () => {
+        const nested = Ok(Ok(5));
+        const flattened = nested.flatten();
+        expect(flattened.isOk()).toBe(true);
+        expect(flattened.unwrap()).toBe(5);
+      });
+      test("Ok(Err(error)).flatten() should return Err(error)", () => {
+        const nested = Ok(Err("inner error"));
+        const flattened = nested.flatten();
+        expect(flattened.isErr()).toBe(true);
+        expect(flattened.unwrapErr()).toBe("inner error");
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).flatten() should return Err(error)", () => {
+        const nested = Err("outer error");
+        const flattened = nested.flatten();
+        expect(flattened.isErr()).toBe(true);
+        expect(flattened.unwrapErr()).toBe("outer error");
+      });
+    });
+  });
+
+  describe("transpose", () => {
+    describe("Ok variant", () => {
+      test("Ok(Some(value)).transpose() should return Some(Ok(value))", () => {
+        const result = Ok(Some(5));
+        const transposed = result.transpose();
+        expect(transposed.isSome()).toBe(true);
+        expect(transposed.unwrap().isOk()).toBe(true);
+        expect(transposed.unwrap().unwrap()).toBe(5);
+      });
+      test("Ok(None).transpose() should return None", () => {
+        const result = Ok(None);
+        const transposed = result.transpose();
+        expect(transposed.isNone()).toBe(true);
+        expect(transposed).toBe(None);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).transpose() should return Some(Err(error))", () => {
+        const result = Err("error");
+        const transposed = result.transpose();
+        expect(transposed.isSome()).toBe(true);
+        expect(transposed.unwrap().isErr()).toBe(true);
+        expect(transposed.unwrap().unwrapErr()).toBe("error");
+      });
+    });
+  });
+
+
+
+  describe("unwrapOrDefault", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).unwrapOrDefault() should return value", () => {
+        const result = Ok(5);
+        const value = result.unwrapOrDefault(0);
+        expect(value).toBe(5);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).unwrapOrDefault() should return default value for number", () => {
+        const result = Err("error");
+        const value = result.unwrapOrDefault(0);
+        expect(value).toBe(0);
+      });
+      test("Err(error).unwrapOrDefault() should return default value for string", () => {
+        const result = Err("error");
+        const value = result.unwrapOrDefault("");
+        expect(value).toBe("");
+      });
+    });
+  });
+
+  describe("mapOrDefault", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).mapOrDefault(default, fn) should return fn(value)", () => {
+        const result = Ok(5);
+        const mapped = result.mapOrDefault(0, x => x * 2);
+        expect(mapped).toBe(10);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).mapOrDefault(default, fn) should return default", () => {
+        const result = Err("error");
+        const mapped = result.mapOrDefault(0, (x: number) => x * 2);
+        expect(mapped).toBe(0);
+      });
+    });
+  });
+
+  describe("iter", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).iter() should yield the value once", () => {
+        const result = Ok(5);
+        const iter = result.iter();
+        const values = [...iter];
+        expect(values).toEqual([5]);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).iter() should yield nothing", () => {
+        const result = Err("error");
+        const iter = result.iter();
+        const values = [...iter];
+        expect(values).toEqual([]);
+      });
     });
   });
 

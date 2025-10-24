@@ -1,5 +1,6 @@
 import { expect, test, describe, mock } from "bun:test";
 import { Some, None, Option } from "../src/option"; // Path to src/option.ts
+import { Ok, Err, Result } from "../src/result"; // Path to src/result.ts
 
 describe("Option", () => {
   describe("Creation & Basic Checks", () => {
@@ -401,6 +402,120 @@ describe("Option", () => {
       let count = 0;
       for (const _item of opt) { count++; }
       expect(count).toBe(0);
+    });
+  });
+
+  // Tests for new missing methods
+  describe("flatten", () => {
+    test("Some(Some(value)).flatten() should return Some(value)", () => {
+      const nested = Some(Some(5));
+      const flattened = nested.flatten();
+      expect(flattened.isSome()).toBe(true);
+      expect(flattened.unwrap()).toBe(5);
+    });
+    test("Some(None).flatten() should return None singleton", () => {
+      const nested = Some(None);
+      const flattened = nested.flatten();
+      expect(flattened.isNone()).toBe(true);
+      expect(flattened).toBe(None);
+    });
+    test("None.flatten() should return None singleton", () => {
+      const flattened = None.flatten();
+      expect(flattened.isNone()).toBe(true);
+      expect(flattened).toBe(None);
+    });
+  });
+
+  describe("filter", () => {
+    test("Some(value).filter(predicate) should return Some(value) if predicate is true", () => {
+      const opt = Some(5);
+      const filtered = opt.filter(x => x > 3);
+      expect(filtered.isSome()).toBe(true);
+      expect(filtered.unwrap()).toBe(5);
+    });
+    test("Some(value).filter(predicate) should return None if predicate is false", () => {
+      const opt = Some(5);
+      const filtered = opt.filter(x => x > 10);
+      expect(filtered.isNone()).toBe(true);
+      expect(filtered).toBe(None);
+    });
+    test("None.filter(predicate) should return None singleton", () => {
+      const filtered = None.filter((x: any) => x > 3);
+      expect(filtered.isNone()).toBe(true);
+      expect(filtered).toBe(None);
+    });
+  });
+
+  describe("okOr", () => {
+    test("Some(value).okOr(err) should return Ok(value)", () => {
+      const opt = Some(5);
+      const result = opt.okOr("error");
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(5);
+    });
+    test("None.okOr(err) should return Err(err)", () => {
+      const result = None.okOr("error");
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe("error");
+    });
+  });
+
+  describe("okOrElse", () => {
+    test("Some(value).okOrElse(fn) should return Ok(value)", () => {
+      const opt = Some(5);
+      const errorFn = mock(() => "error");
+      const result = opt.okOrElse(errorFn);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(5);
+      expect(errorFn).not.toHaveBeenCalled();
+    });
+    test("None.okOrElse(fn) should return Err(fn())", () => {
+      const errorFn = mock(() => "computed error");
+      const result = None.okOrElse(errorFn);
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe("computed error");
+      expect(errorFn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+
+  describe("transpose", () => {
+    test("Some(Ok(value)).transpose() should return Ok(Some(value))", () => {
+      const opt = Some(Ok(5));
+      const transposed = opt.transpose();
+      expect(transposed.isOk()).toBe(true);
+      expect(transposed.unwrap().isSome()).toBe(true);
+      expect(transposed.unwrap().unwrap()).toBe(5);
+    });
+    test("Some(Err(error)).transpose() should return Err(error)", () => {
+      const opt = Some(Err("error"));
+      const transposed = opt.transpose();
+      expect(transposed.isErr()).toBe(true);
+      expect(transposed.unwrapErr()).toBe("error");
+    });
+    test("None.transpose() should return Ok(None)", () => {
+      const transposed = None.transpose();
+      expect(transposed.isOk()).toBe(true);
+      expect(transposed.unwrap().isNone()).toBe(true);
+      expect(transposed.unwrap()).toBe(None);
+    });
+  });
+
+
+
+  describe("unwrapOrDefault", () => {
+    test("Some(value).unwrapOrDefault() should return value", () => {
+      const opt = Some(5);
+      const value = opt.unwrapOrDefault(0);
+      expect(value).toBe(5);
+    });
+    test("None.unwrapOrDefault() should return default value for number", () => {
+      const value = None.unwrapOrDefault(0);
+      expect(value).toBe(0);
+    });
+    test("None.unwrapOrDefault() should return default value for string", () => {
+      const value = None.unwrapOrDefault("");
+      expect(value).toBe("");
     });
   });
 });

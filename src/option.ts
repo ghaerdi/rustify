@@ -314,13 +314,93 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```
    */
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V;
+
+  /**
+   * Flattens an `Option<Option<T>>` to `Option<T>`.
+   * @returns Some(value) if the option contains Some(Some(value)), None otherwise.
+   * @example
+   * ```typescript
+   * Some(Some(5)).flatten().unwrap(); // 5
+   * Some(None).flatten().isNone(); // true
+   * None.flatten().isNone(); // true
+   * ```
+   */
+  flatten<U>(this: Option<Option<U>>): Option<U>;
+
+  /**
+   * Returns None if the option is None, otherwise calls predicate with the wrapped value and returns:
+   * - Some(value) if predicate returns true
+   * - None if predicate returns false
+   * @param predicate The predicate function to test the Some value.
+   * @returns Some(value) if predicate is true, None otherwise.
+   * @example
+   * ```typescript
+   * Some(5).filter(x => x > 3).unwrap(); // 5
+   * Some(5).filter(x => x > 10).isNone(); // true
+   * None.filter(x => x > 3).isNone(); // true
+   * ```
+   */
+  filter(predicate: (value: T) => boolean): Option<T>;
+
+  /**
+   * Transforms the Option<T> into a Result<T, E>, mapping Some(v) to Ok(v) and None to Err(err).
+   * @template E The error type.
+   * @param err The error value to use if the option is None.
+   * @returns Ok(value) if Some, Err(err) if None.
+   * @example
+   * ```typescript
+   * Some(5).okOr("error").unwrap(); // 5
+   * None.okOr("error").unwrapErr(); // "error"
+   * ```
+   */
+  okOr<E>(err: E): import("./result.ts").Result<T, E>;
+
+  /**
+   * Transforms the Option<T> into a Result<T, E>, mapping Some(v) to Ok(v) and None to Err(fn()).
+   * @template E The error type.
+   * @param fn The function to compute the error if the option is None.
+   * @returns Ok(value) if Some, Err(fn()) if None.
+   * @example
+   * ```typescript
+   * Some(5).okOrElse(() => "error").unwrap(); // 5
+   * None.okOrElse(() => "error").unwrapErr(); // "error"
+   * ```
+   */
+  okOrElse<E>(fn: () => E): import("./result.ts").Result<T, E>;
+
+
+
+
+  /**
+   * Transposes an Option of a Result into a Result of an Option.
+   * @returns Result<Option<T>, E> based on the inner Result.
+   * @example
+   * ```typescript
+   * Some(Ok(5)).transpose().unwrap().unwrap(); // 5
+   * Some(Err("error")).transpose().unwrapErr(); // "error"
+   * None.transpose().unwrap().isNone(); // true
+   * ```
+   */
+  transpose<U, E>(this: Option<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E>;
+
+  /**
+   * Returns the contained Some value or a default value.
+   * @param defaultValue The default value to return if None.
+   * @returns The Some value or defaultValue.
+   * @example
+   * ```typescript
+   * Some(5).unwrapOrDefault(0); // 5
+   * None.unwrapOrDefault(0); // 0
+   * ```
+   */
+  unwrapOrDefault<U>(defaultValue: U): T | U;
 }
 
 /**
  * @internal Implementation of the Some case for Option. Users should use the `Some` factory function.
  */
 class SomeImpl<T> implements BaseOption<T> {
-  readonly #value!: T;
+  #value!: T;
 
   constructor(value: T) {
     if (!(this instanceof SomeImpl)) {
@@ -416,6 +496,45 @@ class SomeImpl<T> implements BaseOption<T> {
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
     return matcher.Some(this.#value);
   }
+
+  flatten<U>(this: SomeImpl<Option<U>>): Option<U> {
+    return this.#value;
+  }
+
+  filter(predicate: (value: T) => boolean): Option<T> {
+    if (predicate(this.#value)) {
+      return this;
+    }
+    return None;
+  }
+
+  okOr<E>(_err: E): import("./result.ts").Result<T, E> {
+    const { Ok } = require("./result.ts");
+    return Ok(this.#value);
+  }
+
+  okOrElse<E>(_fn: () => E): import("./result.ts").Result<T, E> {
+    const { Ok } = require("./result.ts");
+    return Ok(this.#value);
+  }
+
+
+
+
+  transpose<U, E>(this: SomeImpl<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E> {
+    const result = this.#value as any;
+    if (result.isOk()) {
+      const { Ok } = require("./result.ts");
+      return Ok(Some(result.unwrap()));
+    } else {
+      const { Err } = require("./result.ts");
+      return Err(result.unwrapErr());
+    }
+  }
+
+  unwrapOrDefault<U>(_defaultValue: U): T {
+    return this.#value;
+  }
   
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
@@ -435,7 +554,9 @@ class SomeImpl<T> implements BaseOption<T> {
  * @internal Implementation of the None case for Option. Users should use the `None` singleton.
  */
 class NoneImpl<T = never> implements BaseOption<T> {
-   constructor() {
+  #value?: T;
+  
+  constructor() {
   }
 
   isSome(): false { return false; }
@@ -530,6 +651,36 @@ class NoneImpl<T = never> implements BaseOption<T> {
   
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
     return matcher.None();
+  }
+
+  flatten<U>(): Option<U> {
+    return None;
+  }
+
+  filter(_predicate: (value: T) => boolean): Option<T> {
+    return None;
+  }
+
+  okOr<E>(err: E): import("./result.ts").Result<T, E> {
+    const { Err } = require("./result.ts");
+    return Err(err);
+  }
+
+  okOrElse<E>(fn: () => E): import("./result.ts").Result<T, E> {
+    const { Err } = require("./result.ts");
+    return Err(fn());
+  }
+
+
+
+
+  transpose<U, E>(): import("./result.ts").Result<Option<U>, E> {
+    const { Ok } = require("./result.ts");
+    return Ok(None);
+  }
+
+  unwrapOrDefault<U>(defaultValue: U): U {
+    return defaultValue;
   }
   
   [Symbol.iterator](): Iterator<never> {

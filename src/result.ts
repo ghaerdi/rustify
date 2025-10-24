@@ -397,6 +397,68 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * ```
    */
   asObject(): { error: E, value: undefined } | { error: undefined, value: T };
+
+  /**
+   * Flattens a `Result<Result<T, E>, E>` to `Result<T, E>`.
+   * @returns Ok(value) if the result is Ok(Ok(value)), otherwise the error.
+   * @example
+   * ```typescript
+   * Ok(Ok(5)).flatten().unwrap(); // 5
+   * Ok(Err("inner")).flatten().unwrapErr(); // "inner"
+   * Err("outer").flatten().unwrapErr(); // "outer"
+   * ```
+   */
+  flatten<U, F>(this: Result<Result<U, F>, E>): Result<U, E | F>;
+
+  /**
+   * Transposes a Result of an Option into an Option of a Result.
+   * @returns Option<Result<T, E>> based on the inner Option.
+   * @example
+   * ```typescript
+   * Ok(Some(5)).transpose().unwrap().unwrap(); // 5
+   * Ok(None).transpose().isNone(); // true
+   * Err("error").transpose().unwrap().unwrapErr(); // "error"
+   * ```
+   */
+  transpose<U>(this: Result<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>>;
+
+
+
+  /**
+   * Returns the contained Ok value or a default value.
+   * @param defaultValue The default value to return if Err.
+   * @returns The Ok value or defaultValue.
+   * @example
+   * ```typescript
+   * Ok(5).unwrapOrDefault(0); // 5
+   * Err("error").unwrapOrDefault(0); // 0
+   * ```
+   */
+  unwrapOrDefault<U>(defaultValue: U): T | U;
+
+  /**
+   * Applies a function to the contained Ok value, or returns a default value if Err.
+   * @param defaultValue The default value to return if Err.
+   * @param fn The function to apply to the Ok value.
+   * @returns The result of fn(Ok_value) or defaultValue.
+   * @example
+   * ```typescript
+   * Ok(5).mapOrDefault(0, x => x * 2); // 10
+   * Err("error").mapOrDefault(0, x => x * 2); // 0
+   * ```
+   */
+  mapOrDefault<U>(defaultValue: U, fn: (value: T) => U): U;
+
+  /**
+   * Returns an iterator over the possibly contained value.
+   * @returns Iterable yielding the Ok value if present, nothing if Err.
+   * @example
+   * ```typescript
+   * [...Ok(5).iter()]; // [5]
+   * [...Err("error").iter()]; // []
+   * ```
+   */
+  iter(): Iterable<T>;
 }
 
 /**
@@ -504,6 +566,48 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
     return matcher.Ok(this.#value);
+  }
+
+  flatten<U, F>(this: OkImpl<Result<U, F>, E>): Result<U, E | F> {
+    return this.#value as any;
+  }
+
+  transpose<U>(this: OkImpl<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>> {
+    const { Some, None } = require("./option.ts");
+    const option = this.#value as any;
+    if (option.isSome()) {
+      return Some(Ok(option.unwrap()));
+    } else {
+      return None;
+    }
+  }
+
+
+
+  unwrapOrDefault<U>(_defaultValue: U): T {
+    return this.#value;
+  }
+
+  mapOrDefault<U>(_defaultValue: U, fn: (value: T) => U): U {
+    return fn(this.#value);
+  }
+
+  iter(): Iterable<T> {
+    const value = this.#value;
+    return {
+      [Symbol.iterator](): Iterator<T> {
+        let done = false;
+        return {
+          next(): IteratorResult<T> {
+            if (!done) {
+              done = true;
+              return { done: false, value };
+            }
+            return { done: true, value: undefined! };
+          }
+        };
+      }
+    };
   }
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
@@ -642,6 +746,37 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
     return matcher.Err(this.#value);
+  }
+
+  flatten<U, F>(): Result<U, E | F> {
+    return this as unknown as Result<U, E | F>;
+  }
+
+  transpose<U>(): import("./option.ts").Option<Result<U, E>> {
+    const { Some } = require("./option.ts");
+    return Some(Err(this.#value));
+  }
+
+
+
+  unwrapOrDefault<U>(defaultValue: U): U {
+    return defaultValue;
+  }
+
+  mapOrDefault<U>(defaultValue: U, _fn: (value: T) => U): U {
+    return defaultValue;
+  }
+
+  iter(): Iterable<T> {
+    return {
+      [Symbol.iterator](): Iterator<T> {
+        return {
+          next(): IteratorResult<T> {
+            return { done: true, value: undefined! };
+          }
+        };
+      }
+    };
   }
 
   [Symbol.iterator](): Iterator<never> {
