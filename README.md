@@ -114,7 +114,7 @@ if (errValue.isSome()) {
     * `Err<E>`: Contains an error value.
 * **`Option<T>`:** Represents an optional value, either `Some<T>` or `None`.
     * `Some<T>`: Contains a value. Becomes iterable if `T` is iterable.
-    * `None`: Represents the absence of a value. It is a **singleton instance**; all operations resulting in an empty option will return this exact `None` instance. This means you can check for `None` using direct referential equality (`myOption === None`).
+    * `None()`: Represents the absence of a value. Call `None()` to create a None instance. You can check if an option is None using the `.isNone()` method.
 
 
 ## API Overview
@@ -187,34 +187,34 @@ const missingConfig: Option<{ value: string }> = Option.fromNullable(() => findC
 
 console.log(timeoutConfig.unwrapOr({ value: "default" })); // { value: "3000" }
 console.log(missingConfig.unwrapOr({ value: "default" })); // { value: "default" }
-console.log(missingConfig === None); // true, because findConfig("missing") returns undefined
+console.log(missingConfig.isNone()); // true, because findConfig("missing") returns undefined
 ```
 
 ### Working with Options
 
-Options provide a variety of methods to work with potential values safely. You can check if an option is `None` either by using `myOption.isNone()` or by direct comparison `myOption === None`.
+Options provide a variety of methods to work with potential values safely. You can check if an option is `None` by using `myOption.isNone()`.
 
 ```typescript
 // Unwrapping (getting the value)
 const val = Some(5).unwrapOr(0); // val is 5
-const valOr = None.unwrapOr(0); // valOr is 0
+const valOr = None().unwrapOr(0); // valOr is 0
 console.log(`val: ${val}, valOr: ${valOr}`);
 
-const valElse = None.unwrapOrElse(() => Math.random()); // valElse is a random number
+const valElse = None().unwrapOrElse(() => Math.random()); // valElse is a random number
 console.log(`valElse: ${valElse}`);
 
 // Expect (unwrap with a custom error if None)
 // Some("data").expect("Data should be present"); // "data"
-// None.expect("Data should be present"); // Throws Error: "Data should be present"
+// None().expect("Data should be present"); // Throws Error: "Data should be present"
 // console.log(Some("data").expect("Data should be present")); 
-// try { None.expect("Data should be present"); } catch (e:any) { console.error(e.message); }
+// try { None().expect("Data should be present"); } catch (e:any) { console.error(e.message); }
 
 
 // Mapping
 const lengthOpt = Some("hello").map(s => s.length); // Some(5)
-const noLengthOpt = None.map((s: string) => s.length); // None (no generic <string> needed for None)
+const noLengthOpt = None().map((s: string) => s.length); // None instance
 console.log(`lengthOpt: ${lengthOpt.unwrapOr(-1)}, noLengthOpt is None: ${noLengthOpt.isNone()}`);
-console.log(`Is noLengthOpt actually None? ${noLengthOpt === None}`); // true
+console.log(`Is noLengthOpt actually None? ${noLengthOpt.isNone()}`); // true
 
 
 // Chaining (andThen / flatMap)
@@ -229,7 +229,7 @@ const notParsed = Some("abc").andThen(s => {
   return isNaN(num) ? None : Some(num); // Return None singleton
 }); // None
 console.log(`notParsed is None: ${notParsed.isNone()}`);
-console.log(`Is notParsed actually None? ${notParsed === None}`); // true
+console.log(`Is notParsed actually None? ${notParsed.isNone()}`); // true
 
 
 // Matching
@@ -248,15 +248,15 @@ const noMessage = noOptionNumber.match({
 console.log(noMessage);
 
 // Direct comparison with None
-if (noOptionNumber === None) {
+if (noOptionNumber.isNone()) {
   console.log("noOptionNumber is indeed the None singleton.");
 }
 ```
 
-The `Option` type helps avoid common errors like `TypeError: Cannot read property '...' of null/undefined` by making the absence of a value an explicit state that must be handled. Since `None` is a singleton, you can reliably use `=== None` for checks.
+The `Option` type helps avoid common errors like `TypeError: Cannot read property '...' of null/undefined` by making the absence of a value an explicit state that must be handled. Use `.isNone()` method to check for None values.
 
 A full API overview for `Option` would be similar to `Result`'s, including methods like:
-`isSome`, `isNone`, `isSomeAnd`, `expect`, `unwrap`, `unwrapOr`, `unwrapOrElse`, `map`, `mapOr`, `mapOrElse`, `inspect`, `and`, `andThen` (flatMap), `or`, `orElse`, `xor`, `cloned`, `zip`, `zipWith`, and `match`. Refer to the source code or generated documentation for exhaustive details on each method's behavior and signature. (Note: when using these methods on `None`, they operate on the singleton instance, e.g., `None.map(...)`).
+`isSome`, `isNone`, `isSomeAnd`, `expect`, `unwrap`, `unwrapOr`, `unwrapOrElse`, `map`, `mapOr`, `mapOrElse`, `inspect`, `and`, `andThen` (flatMap), `or`, `orElse`, `xor`, `cloned`, `zip`, `zipWith`, and `match`. Refer to the source code or generated documentation for exhaustive details on each method's behavior and signature.
 
 ## Development
 

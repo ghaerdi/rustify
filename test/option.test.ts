@@ -1,6 +1,6 @@
 import { expect, test, describe, mock } from "bun:test";
 import { Some, None, Option } from "../src/option"; // Path to src/option.ts
-import { Ok, Err, Result } from "../src/result"; // Path to src/result.ts
+import { Ok, Err } from "../src/result"; // Path to src/result.ts
 
 describe("Option", () => {
   describe("Creation & Basic Checks", () => {
@@ -12,13 +12,14 @@ describe("Option", () => {
       test("unwrap should return the value", () => expect(opt.unwrap()).toBe(value));
     });
 
-    describe("None Singleton", () => {
-      const opt = None; // Use singleton
+    describe("None Function", () => {
+      const opt = None();
       test("isSome should be false", () => expect(opt.isSome()).toBe(false));
       test("isNone should be true", () => expect(opt.isNone()).toBe(true));
-      test("should be referentially equal to other None instances", () => {
-        const opt2 = None;
-        expect(opt).toBe(opt2);
+      test("should be instances of the same class", () => {
+        const opt2 = None();
+        expect(opt.constructor).toBe(opt2.constructor);
+        expect(opt.isNone()).toBe(opt2.isNone());
       });
     });
 
@@ -43,26 +44,26 @@ describe("Option", () => {
         expect(option.isSome()).toBe(true);
         expect(option.unwrap()).toBe(0);
       });
-      test("should return None singleton for null", () => {
+      test("should return None instance for null", () => {
         const option = Option.fromNullable(() => null);
         expect(option.isNone()).toBe(true);
-        expect(option).toBe(None); // Check for singleton
+        expect(option.isNone()).toBe(true);
       });
-      test("should return None singleton for undefined", () => {
+      test("should return None instance for undefined", () => {
         const option = Option.fromNullable(() => undefined);
         expect(option.isNone()).toBe(true);
-        expect(option).toBe(None); // Check for singleton
+        expect(option.isNone()).toBe(true);
       });
-       test("should return None singleton for a function returning undefined", () => {
+      test("should return None instance for a function returning undefined", () => {
         const option = Option.fromNullable(() => { return; });
         expect(option.isNone()).toBe(true);
-        expect(option).toBe(None); // Check for singleton
+        expect(option.isNone()).toBe(true);
       });
     });
 
     describe("Option.isOption", () => {
       test("should return true for Some", () => expect(Option.isOption(Some(1))).toBe(true));
-      test("should return true for None singleton", () => expect(Option.isOption(None)).toBe(true)); // Use singleton
+      test("should return true for None instance", () => expect(Option.isOption(None())).toBe(true));
       test("should return false for null", () => expect(Option.isOption(null)).toBe(false));
       test("should return false for undefined", () => expect(Option.isOption(undefined)).toBe(false));
       test("should return false for a plain object", () => expect(Option.isOption({})).toBe(false));
@@ -78,8 +79,8 @@ describe("Option", () => {
     test("Some(value).isSomeAnd(predicate) should be false if predicate is false", () => {
       expect(Some(5).isSomeAnd(x => x < 3)).toBe(false);
     });
-    test("None.isSomeAnd(predicate) should be false", () => {
-      expect(None.isSomeAnd((x: any) => x > 3)).toBe(false); // Use singleton
+    test("None().isSomeAnd(predicate) should be false", () => {
+      expect(None().isSomeAnd((x: any) => x > 3)).toBe(false); // Use singleton
     });
   });
 
@@ -87,10 +88,10 @@ describe("Option", () => {
     test("Some(value).expect(message) should return value", () => {
       expect(Some(5).expect("should be Some")).toBe(5);
     });
-    test("None.expect(message) should throw with the given message", () => {
+    test("None().expect(message) should throw with the given message", () => {
       const msg = "Value is None!";
       try {
-        None.expect(msg); // Use singleton
+        None().expect(msg); // Use singleton
         throw new Error("Test failed: expect did not throw");
       } catch (e: any) {
         expect(e.message.startsWith(msg)).toBe(true);
@@ -103,9 +104,9 @@ describe("Option", () => {
     test("Some(value).unwrap() should return value", () => {
       expect(Some(5).unwrap()).toBe(5);
     });
-    test("None.unwrap() should throw", () => {
+    test("None().unwrap() should throw", () => {
       try {
-        None.unwrap(); // Use singleton
+        None().unwrap(); // Use singleton
         throw new Error("Test failed: unwrap did not throw");
       } catch (e: any) {
         expect(e.message.startsWith("Tried to unwrap a None value")).toBe(true);
@@ -119,9 +120,9 @@ describe("Option", () => {
     test("Some(value).unwrapOr(defaultValue) should return value", () => {
       expect(Some(5).unwrapOr(defaultValue)).toBe(5);
     });
-    test("None.unwrapOr(defaultValue) should return defaultValue", () => {
-      expect(None.unwrapOr(defaultValue)).toBe(defaultValue); // Use singleton
-      expect(None.unwrapOr("default")).toBe("default"); // Use singleton
+    test("None().unwrapOr(defaultValue) should return defaultValue", () => {
+      expect(None<number>().unwrapOr(0)).toBe(0);
+      expect(None<string>().unwrapOr("default")).toBe("default");
     });
   });
 
@@ -130,9 +131,9 @@ describe("Option", () => {
     test("Some(value).unwrapOrElse(fn) should return value", () => {
       expect(Some(5).unwrapOrElse(defaultValueFn)).toBe(5);
     });
-    test("None.unwrapOrElse(fn) should compute and return defaultValue", () => {
-      const mockFn = mock(defaultValueFn);
-      expect(None.unwrapOrElse(mockFn)).toBe(0); // Use singleton
+    test("None().unwrapOrElse(fn) should compute and return defaultValue", () => {
+      const mockFn = mock(() => 0);
+      expect(None<number>().unwrapOrElse(mockFn)).toBe(0);
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
   });
@@ -144,10 +145,10 @@ describe("Option", () => {
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe("5");
     });
-    test("None.map(fn) should return None singleton", () => {
-      const result = None.map(mapFn); // Use singleton, no generic needed for None
+    test("None().map(fn) should return None singleton", () => {
+      const result = None().map(mapFn); // Use singleton, no generic needed for None
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
@@ -157,8 +158,8 @@ describe("Option", () => {
     test("Some(value).mapOr(defaultValue, fn) should return fn(value)", () => {
       expect(Some(5).mapOr(defaultValue, mapFn)).toBe("5");
     });
-    test("None.mapOr(defaultValue, fn) should return defaultValue", () => {
-      expect(None.mapOr(defaultValue, mapFn as any)).toBe(defaultValue); // Use singleton
+    test("None().mapOr(defaultValue, fn) should return defaultValue", () => {
+      expect(None().mapOr(defaultValue, mapFn as any)).toBe(defaultValue); // Use singleton
     });
   });
 
@@ -168,27 +169,27 @@ describe("Option", () => {
     test("Some(value).mapOrElse(defaultFn, fn) should return fn(value)", () => {
       expect(Some(5).mapOrElse(defaultFn, mapFn)).toBe("Some: 5");
     });
-    test("None.mapOrElse(defaultFn, fn) should return defaultFn()", () => {
+    test("None().mapOrElse(defaultFn, fn) should return defaultFn()", () => {
       const mockDefaultFn = mock(defaultFn);
-      expect(None.mapOrElse(mockDefaultFn, mapFn as any)).toBe("None!"); // Use singleton
+      expect(None().mapOrElse(mockDefaultFn, mapFn as any)).toBe("None!"); // Use singleton
       expect(mockDefaultFn).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("inspect", () => {
     test("Some(value).inspect(fn) should call fn(value) and return Some(value)", () => {
-      const mockFn = mock((_x: number) => {});
+      const mockFn = mock((_x: number) => { });
       const opt = Some(5);
       const result = opt.inspect(mockFn);
       expect(mockFn).toHaveBeenCalledWith(5);
       expect(result).toBe(opt);
     });
-    test("None.inspect(fn) should not call fn and return None singleton", () => {
-      const mockFn = mock((_x: any) => {});
-      const opt = None; // Use singleton
+    test("None().inspect(fn) should not call fn and return None singleton", () => {
+      const mockFn = mock((_x: any) => { });
+      const opt = None();
       const result = opt.inspect(mockFn);
       expect(mockFn).not.toHaveBeenCalled();
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
@@ -198,26 +199,26 @@ describe("Option", () => {
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe("late success");
     });
-    test("Some(value).and(None) should return None singleton", () => {
-      const result = Some(2).and(None); // Use singleton
+    test("Some(value).and(None()) should return None singleton", () => {
+      const result = Some(2).and(None()); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.and(Some(value)) should return None singleton", () => {
-      const result = None.and(Some("late success")); // Use singleton
+    test("None().and(Some(value)) should return None singleton", () => {
+      const result = None().and(Some("late success")); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.and(None) should return None singleton", () => {
-      const result = None.and(None); // Use singleton
+    test("None().and(None()) should return None singleton", () => {
+      const result = None().and(None()); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
   describe("andThen", () => {
     const fnReturningSome = (x: number) => Some(x > 0);
-    const fnReturningNone = (_x: number) => None; // Return singleton
+    const fnReturningNone = (_x: number) => None();
     test("Some(value).andThen(fnReturningSome) should return result of fnReturningSome", () => {
       const result = Some(5).andThen(fnReturningSome);
       expect(result.isSome()).toBe(true);
@@ -226,15 +227,15 @@ describe("Option", () => {
     test("Some(value).andThen(fnReturningNone) should return None singleton", () => {
       const result = Some(5).andThen(fnReturningNone);
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
-    });
-    test("None.andThen(fn) should return None singleton", () => {
-      const result = None.andThen(fnReturningSome); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
-      const result2 = None.andThen(fnReturningNone); // Use singleton
+    });
+    test("None().andThen(fn) should return None singleton", () => {
+      const result = None().andThen(fnReturningSome); // Use singleton
+      expect(result.isNone()).toBe(true);
+      expect(result.isNone()).toBe(true);
+      const result2 = None().andThen(fnReturningNone); // Use singleton
       expect(result2.isNone()).toBe(true);
-      expect(result2).toBe(None); // Check for singleton
+      expect(result2.isNone()).toBe(true);
     });
   });
 
@@ -244,63 +245,63 @@ describe("Option", () => {
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
-    test("Some(value).or(None) should return Some(value)", () => {
-      const result = Some(5).or(None);
+    test("Some(value).or(None()) should return Some(value)", () => {
+      const result = Some(5).or(None());
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
-    test("None.or(Some(value)) should return Some(value)", () => {
-      const result = None.or(Some(10));
+    test("None().or(Some(value)) should return Some(value)", () => {
+      const result = None().or(Some(10));
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(10);
     });
-    test("None.or(None) should return None singleton", () => {
-      const result = None.or(None);
+    test("None().or(None()) should return None singleton", () => {
+      const result = None().or(None());
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None);
+      expect(result.isNone()).toBe(true);
     });
   });
 
   describe("orElse", () => {
     const fnReturningSome = () => Some(0);
-    const fnReturningNone = () => None;
+    const fnReturningNone = () => None();
     test("Some(value).orElse(fn) should return Some(value)", () => {
       const opt = Some(5);
       const result = opt.orElse(fnReturningSome);
       expect(result).toBe(opt);
     });
-    test("None.orElse(fnReturningSome) should return result of fnReturningSome", () => {
-      const result = None.orElse(fnReturningSome);
+    test("None().orElse(fnReturningSome) should return result of fnReturningSome", () => {
+      const result = None().orElse(fnReturningSome);
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(0);
     });
-    test("None.orElse(fnReturningNone) should return None singleton", () => {
-      const result = None.orElse(fnReturningNone); // Use singleton
+    test("None().orElse(fnReturningNone) should return None singleton", () => {
+      const result = None().orElse(fnReturningNone); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
   describe("xor", () => {
-    test("Some(value).xor(None) should return Some(value)", () => {
-      const result = Some(1).xor(None); // Use singleton
+    test("Some(value).xor(None()) should return Some(value)", () => {
+      const result = Some(1).xor(None()); // Use singleton
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(1);
     });
-    test("None.xor(Some(otherValue)) should return Some(otherValue)", () => {
-      const result = None.xor(Some(2)); // Use singleton
+    test("None().xor(Some(otherValue)) should return Some(otherValue)", () => {
+      const result = None().xor(Some(2)); // Use singleton
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe(2);
     });
     test("Some(value).xor(Some(otherValue)) should return None singleton", () => {
       const result = Some(1).xor(Some(2));
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
-    });
-    test("None.xor(None) should return None singleton", () => {
-      const result = None.xor(None); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+    });
+    test("None().xor(None()) should return None singleton", () => {
+      const result = None().xor(None()); // Use singleton
+      expect(result.isNone()).toBe(true);
+      expect(result.isNone()).toBe(true);
     });
   });
 
@@ -321,11 +322,11 @@ describe("Option", () => {
       expect(clonedValue).not.toBe(obj);
       expect(clonedValue.b).not.toBe(obj.b);
     });
-    test("None.cloned() should return None singleton (no actual cloning occurs)", () => {
-      const opt = None; // Use singleton
+    test("None().cloned() should return None singleton (no actual cloning occurs)", () => {
+      const opt = None();
       const clonedOpt = opt.cloned();
       expect(clonedOpt.isNone()).toBe(true);
-      expect(clonedOpt).toBe(None); // Should return the singleton itself
+      expect(clonedOpt.isNone()).toBe(true);
     });
   });
 
@@ -335,20 +336,20 @@ describe("Option", () => {
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toEqual([1, "a"]);
     });
-    test("Some(a).zip(None) should return None singleton", () => {
-      const result = Some(1).zip(None); // Use singleton
+    test("Some(a).zip(None()) should return None singleton", () => {
+      const result = Some(1).zip(None()); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.zip(Some(b)) should return None singleton", () => {
-      const result = None.zip(Some("a")); // Use singleton
+    test("None().zip(Some(b)) should return None singleton", () => {
+      const result = None().zip(Some("a")); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.zip(None) should return None singleton", () => {
-      const result = None.zip(None); // Use singleton
+    test("None().zip(None()) should return None singleton", () => {
+      const result = None().zip(None()); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
@@ -359,20 +360,20 @@ describe("Option", () => {
       expect(result.isSome()).toBe(true);
       expect(result.unwrap()).toBe("1a");
     });
-    test("Some(a).zipWith(None, fn) should return None singleton", () => {
-      const result = Some(1).zipWith(None, zipFn); // Use singleton
+    test("Some(a).zipWith(None(), fn) should return None singleton", () => {
+      const result = Some(1).zipWith(None(), zipFn); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.zipWith(Some(b), fn) should return None singleton", () => {
-      const result = None.zipWith(Some("a"), zipFn as any); // Use singleton
+    test("None().zipWith(Some(b), fn) should return None singleton", () => {
+      const result = None().zipWith(Some("a"), zipFn as any); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
-    test("None.zipWith(None, fn) should return None singleton", () => {
-      const result = None.zipWith(None, zipFn as any); // Use singleton
+    test("None().zipWith(None(), fn) should return None singleton", () => {
+      const result = None().zipWith(None(), zipFn as any); // Use singleton
       expect(result.isNone()).toBe(true);
-      expect(result).toBe(None); // Check for singleton
+      expect(result.isNone()).toBe(true);
     });
   });
 
@@ -383,8 +384,8 @@ describe("Option", () => {
       const result = Some(10).match({ Some: someHandler, None: noneHandler });
       expect(result).toBe("Success: 10");
     });
-    test("None.match({ Some: s => ..., None: () => ... }) should execute the None handler", () => {
-      const result = None.match({ Some: someHandler as any, None: noneHandler }); // Use singleton
+    test("None().match({ Some: s => ..., None: () => ... }) should execute the None handler", () => {
+      const result = None().match({ Some: someHandler as any, None: noneHandler }); // Use singleton
       expect(result).toBe("It was None");
     });
   });
@@ -398,7 +399,7 @@ describe("Option", () => {
       expect(result).toEqual(arr);
     });
     test("None completes iteration immediately", () => {
-      const opt = None; // Use singleton
+      const opt = None();
       let count = 0;
       for (const _item of opt) { count++; }
       expect(count).toBe(0);
@@ -414,15 +415,15 @@ describe("Option", () => {
       expect(flattened.unwrap()).toBe(5);
     });
     test("Some(None).flatten() should return None singleton", () => {
-      const nested = Some(None);
+      const nested = Some(None());
       const flattened = nested.flatten();
       expect(flattened.isNone()).toBe(true);
-      expect(flattened).toBe(None);
-    });
-    test("None.flatten() should return None singleton", () => {
-      const flattened = None.flatten();
       expect(flattened.isNone()).toBe(true);
-      expect(flattened).toBe(None);
+    });
+    test("None().flatten() should return None singleton", () => {
+      const flattened = None().flatten();
+      expect(flattened.isNone()).toBe(true);
+      expect(flattened.isNone()).toBe(true);
     });
   });
 
@@ -437,12 +438,12 @@ describe("Option", () => {
       const opt = Some(5);
       const filtered = opt.filter(x => x > 10);
       expect(filtered.isNone()).toBe(true);
-      expect(filtered).toBe(None);
-    });
-    test("None.filter(predicate) should return None singleton", () => {
-      const filtered = None.filter((x: any) => x > 3);
       expect(filtered.isNone()).toBe(true);
-      expect(filtered).toBe(None);
+    });
+    test("None().filter(predicate) should return None singleton", () => {
+      const filtered = None().filter((x: any) => x > 3);
+      expect(filtered.isNone()).toBe(true);
+      expect(filtered.isNone()).toBe(true);
     });
   });
 
@@ -453,8 +454,8 @@ describe("Option", () => {
       expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
-    test("None.okOr(err) should return Err(err)", () => {
-      const result = None.okOr("error");
+    test("None().okOr(err) should return Err(err)", () => {
+      const result = None().okOr("error");
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe("error");
     });
@@ -469,9 +470,9 @@ describe("Option", () => {
       expect(result.unwrap()).toBe(5);
       expect(errorFn).not.toHaveBeenCalled();
     });
-    test("None.okOrElse(fn) should return Err(fn())", () => {
+    test("None().okOrElse(fn) should return Err(fn())", () => {
       const errorFn = mock(() => "computed error");
-      const result = None.okOrElse(errorFn);
+      const result = None().okOrElse(errorFn);
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe("computed error");
       expect(errorFn).toHaveBeenCalledTimes(1);
@@ -493,11 +494,11 @@ describe("Option", () => {
       expect(transposed.isErr()).toBe(true);
       expect(transposed.unwrapErr()).toBe("error");
     });
-    test("None.transpose() should return Ok(None)", () => {
-      const transposed = None.transpose();
+    test("None().transpose() should return Ok(None)", () => {
+      const transposed = None().transpose();
       expect(transposed.isOk()).toBe(true);
       expect(transposed.unwrap().isNone()).toBe(true);
-      expect(transposed.unwrap()).toBe(None);
+      expect(transposed.unwrap().isNone()).toBe(true);
     });
   });
 
@@ -506,16 +507,11 @@ describe("Option", () => {
   describe("unwrapOrDefault", () => {
     test("Some(value).unwrapOrDefault() should return value", () => {
       const opt = Some(5);
-      const value = opt.unwrapOrDefault(0);
+      const value = opt.unwrapOrDefault();
       expect(value).toBe(5);
     });
-    test("None.unwrapOrDefault() should return default value for number", () => {
-      const value = None.unwrapOrDefault(0);
-      expect(value).toBe(0);
-    });
-    test("None.unwrapOrDefault() should return default value for string", () => {
-      const value = None.unwrapOrDefault("");
-      expect(value).toBe("");
+    test("None().unwrapOrDefault() should throw error (no Default trait in TypeScript)", () => {
+      expect(() => None().unwrapOrDefault()).toThrow("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
     });
   });
 });

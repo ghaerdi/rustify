@@ -25,7 +25,7 @@ describe('Result', () => {
     test('err should return None', () => {
       const errValue = okResult.err();
       expect(errValue.isNone()).toBeTrue();
-      expect(errValue).toBe(None);
+      expect(errValue.isNone()).toBe(true);
     });
 
     test('unwrap should return the value', () => {
@@ -269,7 +269,7 @@ describe('Result', () => {
     test('ok should return None', () => {
       const okValue = errResult.ok();
       expect(okValue.isNone()).toBeTrue();
-      expect(okValue).toBe(None);
+      expect(okValue.isNone()).toBe(true);
     });
 
     test('err should return Some with the error', () => {
@@ -627,10 +627,10 @@ describe('Result', () => {
         expect(transposed.unwrap().unwrap()).toBe(5);
       });
       test("Ok(None).transpose() should return None", () => {
-        const result = Ok(None);
+        const result = Ok(None());
         const transposed = result.transpose();
         expect(transposed.isNone()).toBe(true);
-        expect(transposed).toBe(None);
+        expect(transposed.isNone()).toBe(true);
       });
     });
     describe("Err variant", () => {
@@ -650,20 +650,14 @@ describe('Result', () => {
     describe("Ok variant", () => {
       test("Ok(value).unwrapOrDefault() should return value", () => {
         const result = Ok(5);
-        const value = result.unwrapOrDefault(0);
+        const value = result.unwrapOrDefault();
         expect(value).toBe(5);
       });
     });
     describe("Err variant", () => {
-      test("Err(error).unwrapOrDefault() should return default value for number", () => {
+      test("Err(error).unwrapOrDefault() should throw error (no Default trait in TypeScript)", () => {
         const result = Err("error");
-        const value = result.unwrapOrDefault(0);
-        expect(value).toBe(0);
-      });
-      test("Err(error).unwrapOrDefault() should return default value for string", () => {
-        const result = Err("error");
-        const value = result.unwrapOrDefault("");
-        expect(value).toBe("");
+        expect(() => result.unwrapOrDefault()).toThrow("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
       });
     });
   });

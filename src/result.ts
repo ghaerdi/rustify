@@ -214,30 +214,27 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
 
   /**
    * Returns the contained Ok value or a provided default value.
-   * @template U The type of the default value (can be different from T).
    * @param defaultValue The default value to return if the result is Err.
    * @returns The Ok value or `defaultValue`.
    * @example
    * ```typescript
    * Ok(5).unwrapOr(0); // 5
    * Err("error").unwrapOr(0); // 0
-   * Err("error").unwrapOr("default"); // "default"
    * ```
    */
-  unwrapOr<U>(defaultValue: U): T | U;
+  unwrapOr(defaultValue: T): T;
 
   /**
    * Returns the contained Ok value or computes it from a closure.
-   * @template U The type of the value returned by the closure `fn` (can be different from T).
    * @param fn The closure to compute the default value from the Err value.
    * @returns The Ok value or the value computed by `fn(Err_value)`.
    * @example
    * ```typescript
    * Ok(5).unwrapOrElse(() => 0); // 5
-   * Err("error").unwrapOrElse(e => e.length); // 5
+   * Err("error").unwrapOrElse(e => 0); // 0
    * ```
    */
-  unwrapOrElse<U>(fn: (value: E) => U): T | U;
+  unwrapOrElse(fn: (value: E) => T): T;
 
   /**
    * Returns `res` if the result is Ok, otherwise returns the Err value of self.
@@ -416,7 +413,7 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * @example
    * ```typescript
    * Ok(Some(5)).transpose().unwrap().unwrap(); // 5
-   * Ok(None).transpose().isNone(); // true
+   * Ok(None()).transpose().isNone(); // true
    * Err("error").transpose().unwrap().unwrapErr(); // "error"
    * ```
    */
@@ -425,16 +422,18 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
 
 
   /**
-   * Returns the contained Ok value or a default value.
-   * @param defaultValue The default value to return if Err.
-   * @returns The Ok value or defaultValue.
+   * Returns the contained Ok value or a default value for the type.
+   * Note: Unlike Rust, TypeScript doesn't have a Default trait, so this method
+   * will throw an error. Use unwrapOr(defaultValue) instead.
+   * @returns The Ok value or throws an error.
+   * @throws {Error} Always throws for Err since TypeScript has no Default trait.
    * @example
    * ```typescript
-   * Ok(5).unwrapOrDefault(0); // 5
-   * Err("error").unwrapOrDefault(0); // 0
+   * Ok(5).unwrapOrDefault(); // 5
+   * Err("error").unwrapOrDefault(); // throws Error
    * ```
    */
-  unwrapOrDefault<U>(defaultValue: U): T | U;
+  unwrapOrDefault(): T;
 
   /**
    * Applies a function to the contained Ok value, or returns a default value if Err.
@@ -487,7 +486,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   isErr(): false { return false; }
   isErrAnd(_fn: (value: E) => boolean): false { return false; }
   ok(): Option<T> { return Some(this.#value); }
-  err(): Option<E> { return None; }
+  err(): Option<E> { return None(); }
 
   map<U>(fn: (value: T) => U): Result<U, E> {
     return Ok(fn(this.#value));
@@ -522,11 +521,11 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return this.#value;
   }
 
-  unwrapOr<U>(_defaultValue: U): T {
+  unwrapOr(_defaultValue: T): T {
     return this.#value;
   }
 
-  unwrapOrElse<U>(_fn: (value: E) => U): T {
+  unwrapOrElse(_fn: (value: E) => T): T {
     return this.#value;
   }
 
@@ -578,13 +577,13 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     if (option.isSome()) {
       return Some(Ok(option.unwrap()));
     } else {
-      return None;
+      return None();
     }
   }
 
 
 
-  unwrapOrDefault<U>(_defaultValue: U): T {
+  unwrapOrDefault(): T {
     return this.#value;
   }
 
@@ -672,7 +671,7 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   isOkAnd(_fn: (value: T) => boolean): false { return false; }
   isErr(): true { return true; }
   isErrAnd(fn: (value: E) => boolean): boolean { return fn(this.#value); }
-  ok(): Option<T> { return None; }
+  ok(): Option<T> { return None(); }
   err(): Option<E> { return Some(this.#value); }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
@@ -708,11 +707,11 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.getStack()}`);
   }
 
-  unwrapOr<U>(defaultValue: U): U {
+  unwrapOr(defaultValue: T): T {
     return defaultValue;
   }
 
-  unwrapOrElse<U>(fn: (value: E) => U): U {
+  unwrapOrElse(fn: (value: E) => T): T {
     return fn(this.#value);
   }
 
@@ -759,8 +758,8 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
 
 
-  unwrapOrDefault<U>(defaultValue: U): U {
-    return defaultValue;
+  unwrapOrDefault(): T {
+    throw new Error("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
   }
 
   mapOrDefault<U>(defaultValue: U, _fn: (value: T) => U): U {

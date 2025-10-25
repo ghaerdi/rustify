@@ -30,7 +30,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).isSome(); // true
-   * None.isSome(); // false
+   * None().isSome(); // false
    * ```
    */
   isSome(): boolean;
@@ -43,7 +43,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(5).isSomeAnd(x => x > 3); // true
    * Some(5).isSomeAnd(x => x < 3); // false
-   * None.isSomeAnd(x => x > 3); // false
+   * None().isSomeAnd(x => x > 3); // false
    * ```
    */
   isSomeAnd(fn: (value: T) => boolean): boolean;
@@ -53,7 +53,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @returns True if the option is None, false otherwise.
    * @example
    * ```typescript
-   * None.isNone(); // true
+   * None().isNone(); // true
    * Some(5).isNone(); // false
    * ```
    */
@@ -88,30 +88,27 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
 
   /**
    * Returns the contained Some value or a provided default value.
-   * @template U The type of the default value (can be different from T).
    * @param defaultValue The default value to return if the option is None.
    * @returns The Some value or `defaultValue`.
    * @example
    * ```typescript
    * Some(5).unwrapOr(0); // 5
-   * None.unwrapOr(0); // 0
-   * None.unwrapOr("default"); // "default"
+   * None().unwrapOr(0); // 0
    * ```
    */
-  unwrapOr<U>(defaultValue: U): T | U;
+  unwrapOr(defaultValue: T): T;
 
   /**
    * Returns the contained Some value or computes it from a closure.
-   * @template U The type of the value returned by the closure `fn` (can be different from T).
    * @param fn The closure to compute the default value.
    * @returns The Some value or the value computed by `fn()`.
    * @example
    * ```typescript
    * Some(5).unwrapOrElse(() => 0); // 5
-   * None.unwrapOrElse(() => 0); // 0
+   * None().unwrapOrElse(() => 0); // 0
    * ```
    */
-  unwrapOrElse<U>(fn: () => U): T | U;
+  unwrapOrElse(fn: () => T): T;
 
   /**
    * Maps an `Option<T>` to `Option<U>` by applying a function to a contained Some value,
@@ -122,7 +119,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).map(x => x.toString()).unwrap(); // "5"
-   * None.map((x:any) => x.toString()).isNone(); // true
+   * None().map((x:any) => x.toString()).isNone(); // true
    * ```
    */
   map<U>(fn: (value: T) => U): Option<U>;
@@ -136,7 +133,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some("foo").mapOr("bar", v => v.length); // 3
-   * None.mapOr("bar", (v:any) => v.length); // "bar"
+   * None().mapOr("bar", (v:any) => v.length); // "bar"
    * ```
    */
   mapOr<U>(defaultValue: U, fn: (value: T) => U): U;
@@ -150,7 +147,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).mapOrElse(() => "None!", x => `Some: ${x}`); // "Some: 5"
-   * None.mapOrElse(() => "None!", (x:any) => `Some: ${x}`); // "None!"
+   * None().mapOrElse(() => "None!", (x:any) => `Some: ${x}`); // "None!"
    * ```
    */
   mapOrElse<U>(defaultFn: () => U, fn: (value: T) => U): U;
@@ -163,7 +160,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).inspect(x => console.log(x)); // Logs 5, returns Some(5)
-   * None.inspect(x => console.log(x)); // Returns None
+   * None().inspect(x => console.log(x)); // Returns None
    * ```
    */
   inspect(fn: (value: T) => void): Option<T>;
@@ -176,7 +173,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(2).and(Some("late success")).unwrap(); // "late success"
-   * None.and(Some("late success")).isNone(); // true
+   * None().and(Some("late success")).isNone(); // true
    * Some(2).and(None).isNone(); // true
    * ```
    */
@@ -193,7 +190,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(5).andThen(x => Some(x > 0)).unwrap(); // true
    * Some(-1).andThen(x => x > 0 ? Some(x) : None).isNone(); // true
-   * None.andThen((x:any) => Some(x > 0)).isNone(); // true
+   * None().andThen((x:any) => Some(x > 0)).isNone(); // true
    * ```
    */
   andThen<U>(fn: (value: T) => Option<U>): Option<U>; // flatMap
@@ -205,8 +202,8 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).or(Some(10)).unwrap(); // 5
-   * None.or(Some(10)).unwrap(); // 10
-   * None.or(None).isNone(); // true
+   * None().or(Some(10)).unwrap(); // 10
+   * None().or(None()).isNone(); // true
    * ```
    */
   or(res: Option<T>): Option<T>;
@@ -218,8 +215,8 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).orElse(() => Some(0)).unwrap(); // 5
-   * None.orElse(() => Some(0)).unwrap(); // 0
-   * None.orElse(() => None).isNone(); // true
+   * None().orElse(() => Some(0)).unwrap(); // 0
+   * None().orElse(() => None()).isNone(); // true
    * ```
    */
   orElse(fn: () => Option<T>): Option<T>;
@@ -233,10 +230,10 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @returns An Option containing the value of the single Some, or None.
    * @example
    * ```typescript
-   * Some(1).xor(None).unwrap(); // 1
-   * None.xor(Some(2)).unwrap(); // 2
+   * Some(1).xor(None()).unwrap(); // 1
+   * None().xor(Some(2)).unwrap(); // 2
    * Some(1).xor(Some(2)).isNone(); // true
-   * None.xor(None).isNone(); // true
+   * None().xor(None()).isNone(); // true
    * ```
    */
   xor(optb: Option<T>): Option<T>;
@@ -250,7 +247,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some({ a: 1 }).cloned().unwrap(); // { a: 1 } (new object)
-   * None.cloned().isNone(); // true
+   * None().cloned().isNone(); // true
    * ```
    */
   cloned(): Option<T>;
@@ -266,7 +263,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(1).zip(Some("a")).unwrap(); // [1, "a"]
    * Some(1).zip(None).isNone(); // true
-   * None.zip(Some("a")).isNone(); // true
+   * None().zip(Some("a")).isNone(); // true
    * ```
    */
   zip<U>(other: Option<U>): Option<[T, U]>;
@@ -322,7 +319,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(Some(5)).flatten().unwrap(); // 5
    * Some(None).flatten().isNone(); // true
-   * None.flatten().isNone(); // true
+   * None().flatten().isNone(); // true
    * ```
    */
   flatten<U>(this: Option<Option<U>>): Option<U>;
@@ -337,7 +334,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(5).filter(x => x > 3).unwrap(); // 5
    * Some(5).filter(x => x > 10).isNone(); // true
-   * None.filter(x => x > 3).isNone(); // true
+   * None().filter(x => x > 3).isNone(); // true
    * ```
    */
   filter(predicate: (value: T) => boolean): Option<T>;
@@ -350,7 +347,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).okOr("error").unwrap(); // 5
-   * None.okOr("error").unwrapErr(); // "error"
+   * None().okOr("error").unwrapErr(); // "error"
    * ```
    */
   okOr<E>(err: E): import("./result.ts").Result<T, E>;
@@ -363,7 +360,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * @example
    * ```typescript
    * Some(5).okOrElse(() => "error").unwrap(); // 5
-   * None.okOrElse(() => "error").unwrapErr(); // "error"
+   * None().okOrElse(() => "error").unwrapErr(); // "error"
    * ```
    */
   okOrElse<E>(fn: () => E): import("./result.ts").Result<T, E>;
@@ -378,22 +375,24 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```typescript
    * Some(Ok(5)).transpose().unwrap().unwrap(); // 5
    * Some(Err("error")).transpose().unwrapErr(); // "error"
-   * None.transpose().unwrap().isNone(); // true
+   * None().transpose().unwrap().isNone(); // true
    * ```
    */
   transpose<U, E>(this: Option<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E>;
 
   /**
-   * Returns the contained Some value or a default value.
-   * @param defaultValue The default value to return if None.
-   * @returns The Some value or defaultValue.
+   * Returns the contained Some value or a default value for the type.
+   * Note: Unlike Rust, TypeScript doesn't have a Default trait, so this method
+   * will throw an error. Use unwrapOr(defaultValue) instead.
+   * @returns The Some value or throws an error.
+   * @throws {Error} Always throws for None since TypeScript has no Default trait.
    * @example
    * ```typescript
-   * Some(5).unwrapOrDefault(0); // 5
-   * None.unwrapOrDefault(0); // 0
+   * Some(5).unwrapOrDefault(); // 5
+   * None().unwrapOrDefault(); // throws Error
    * ```
    */
-  unwrapOrDefault<U>(defaultValue: U): T | U;
+  unwrapOrDefault(): T;
 }
 
 /**
@@ -421,11 +420,11 @@ class SomeImpl<T> implements BaseOption<T> {
     return this.#value;
   }
 
-  unwrapOr<U>(_defaultValue: U): T {
+  unwrapOr(_defaultValue: T): T {
     return this.#value;
   }
 
-  unwrapOrElse<U>(_fn: () => U): T {
+  unwrapOrElse(_fn: () => T): T {
     return this.#value;
   }
 
@@ -464,7 +463,7 @@ class SomeImpl<T> implements BaseOption<T> {
 
   xor(optb: Option<T>): Option<T> {
     if (optb.isSome()) {
-      return None; // Return singleton
+      return None();
     }
     return this;
   }
@@ -483,14 +482,14 @@ class SomeImpl<T> implements BaseOption<T> {
     if (other.isSome()) {
       return Some([this.#value, other.unwrap()] as [T, U]);
     }
-    return None; // Return singleton
+    return None();
   }
 
   zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R> {
     if (other.isSome()) {
       return Some(fn(this.#value, other.unwrap()));
     }
-    return None; // Return singleton
+    return None();
   }
   
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
@@ -505,7 +504,7 @@ class SomeImpl<T> implements BaseOption<T> {
     if (predicate(this.#value)) {
       return this;
     }
-    return None;
+    return None();
   }
 
   okOr<E>(_err: E): import("./result.ts").Result<T, E> {
@@ -518,9 +517,6 @@ class SomeImpl<T> implements BaseOption<T> {
     return Ok(this.#value);
   }
 
-
-
-
   transpose<U, E>(this: SomeImpl<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E> {
     const result = this.#value as any;
     if (result.isOk()) {
@@ -532,7 +528,7 @@ class SomeImpl<T> implements BaseOption<T> {
     }
   }
 
-  unwrapOrDefault<U>(_defaultValue: U): T {
+  unwrapOrDefault(): T {
     return this.#value;
   }
   
@@ -593,16 +589,16 @@ class NoneImpl<T = never> implements BaseOption<T> {
     throw new Error(`Tried to unwrap a None value\n${stackLines.slice(firstRelevantFrame).join('\n')}`);
   }
 
-  unwrapOr<U>(defaultValue: U): U {
+  unwrapOr(defaultValue: T): T {
     return defaultValue;
   }
 
-  unwrapOrElse<U>(fn: () => U): U {
+  unwrapOrElse(fn: () => T): T {
     return fn();
   }
 
   map<U>(_fn: (value: T) => U): Option<U> {
-    return None;
+    return None();
   }
 
   mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
@@ -614,15 +610,15 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
   
   inspect(_fn: (value: T) => void): Option<T> {
-    return None;
+    return None();
   }
 
   and<U>(_res: Option<U>): Option<U> {
-    return None;
+    return None();
   }
 
   andThen<U>(_fn: (value: T) => Option<U>): Option<U> {
-    return None;
+    return None();
   }
 
   or<U>(res: Option<U>): Option<U> {
@@ -638,15 +634,15 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
 
   cloned(): Option<T> {
-    return None;
+    return None();
   }
 
   zip<U>(_other: Option<U>): Option<[T, U]> {
-    return None
+    return None()
   }
 
   zipWith<U, R>(_other: Option<U>, _fn: (s: T, o: U) => R): Option<R> {
-    return None
+    return None()
   }
   
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
@@ -654,11 +650,11 @@ class NoneImpl<T = never> implements BaseOption<T> {
   }
 
   flatten<U>(): Option<U> {
-    return None;
+    return None();
   }
 
   filter(_predicate: (value: T) => boolean): Option<T> {
-    return None;
+    return None();
   }
 
   okOr<E>(err: E): import("./result.ts").Result<T, E> {
@@ -671,16 +667,13 @@ class NoneImpl<T = never> implements BaseOption<T> {
     return Err(fn());
   }
 
-
-
-
   transpose<U, E>(): import("./result.ts").Result<Option<U>, E> {
     const { Ok } = require("./result.ts");
-    return Ok(None);
+    return Ok(None());
   }
 
-  unwrapOrDefault<U>(defaultValue: U): U {
-    return defaultValue;
+  unwrapOrDefault(): T {
+    throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
   }
   
   [Symbol.iterator](): Iterator<never> {
@@ -707,29 +700,25 @@ export const Some = <T>(value: T): Some<T> => new SomeImpl(value);
 
 /**
  * Represents the absence of a value (`None`) in an {@link Option}.
- * This is a singleton instance.
+ * @template T The type parameter for the Option
  * @example
  * ```typescript
- * None.isNone(); // true
- * const noValue: Option<number> = None;
- * if (myOption === None) {
- *   // ...
- * }
+ * None().isNone(); // true
+ * const noValue: Option<number> = None<number>();
+ * // Or with type inference:
+ * const noValue: Option<number> = None();
  * ```
  */
-export const None = new NoneImpl<never>();;
-/**
- * The type of the `None` singleton.
- */
-export type NoneType = typeof None;
+export type None<T = never> = NoneImpl<T>;
+export const None = <T = never>(): None<T> => new NoneImpl<T>();
 
 
 /**
  * `Option<T>` is a type that represents an optional value: 
- * every `Option` is either `Some` and contains a value, or `None` (the singleton) and does not.
+ * every `Option` is either `Some` and contains a value, or `None` and does not.
  * @template T The type of the value that might be contained.
  */
-export type Option<T> = Some<T> | NoneType;
+export type Option<T> = Some<T> | None<T>;
 
 interface OptionTypeStatics {
   /**
@@ -772,11 +761,11 @@ export const Option: OptionTypeStatics = {
   fromNullable<T>(fn: () => T | null | undefined): Option<NonNullable<T>> {
     const value = fn();
     if (value === null || value === undefined) {
-      return None; // Return singleton
+      return None();
     }
     return Some(value as NonNullable<T>);
   },
   isOption<T>(value: unknown): value is Option<T> {
-    return value instanceof SomeImpl || value === None; // Check against singleton
+    return value instanceof SomeImpl || value instanceof NoneImpl;
   }
 };
