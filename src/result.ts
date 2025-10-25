@@ -628,7 +628,6 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
  */
 class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   readonly #value!: E;
-  #stack?: string;
 
   /**
    * @internal Creates an Err instance.
@@ -642,22 +641,6 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     this.#value = value;
   }
 
-  private getStack(): string {
-    if (this.#stack === undefined) {
-      const stackLines = (new Error().stack || '').split('\n');
-      let firstRelevantFrame = 1;
-      while (
-        stackLines[firstRelevantFrame] &&
-        (stackLines[firstRelevantFrame].includes('ErrImpl') || 
-         stackLines[firstRelevantFrame].includes(' Err ') ||
-         stackLines[firstRelevantFrame].includes('getStack'))
-      ) {
-        firstRelevantFrame++;
-      }
-      this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
-    }
-    return this.#stack;
-  }
 
   asTuple(): [E, undefined] {
     return [this.#value, undefined];
@@ -700,11 +683,11 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   expect(message: string): T {
-    throw new Error(`${message}: ${toString(this.#value)}\n${this.getStack()}`);
+    throw new Error(`${message}: ${toString(this.#value)}`);
   }
 
   unwrap(): T {
-    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.getStack()}`);
+    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}`);
   }
 
   unwrapOr(defaultValue: T): T {

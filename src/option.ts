@@ -560,33 +560,11 @@ class NoneImpl<T = never> implements BaseOption<T> {
   isNone(): true { return true; }
 
   expect(message: string): T {
-    const callSiteError = new Error();
-    const stackLines = (callSiteError.stack || '').split('\n');
-    let firstRelevantFrame = 1;
-     while (
-      stackLines[firstRelevantFrame] &&
-      (stackLines[firstRelevantFrame].includes('NoneImpl') || // expect method itself
-       stackLines[firstRelevantFrame].includes(' expect ') // handle cases where it might be bound or proxied
-      )
-    ) {
-      firstRelevantFrame++;
-    }
-    throw new Error(`${message}\n${stackLines.slice(firstRelevantFrame).join('\n')}`);
+    throw new Error(message);
   }
 
   unwrap(): T {
-    const callSiteError = new Error();
-    const stackLines = (callSiteError.stack || '').split('\n');
-     let firstRelevantFrame = 1;
-     while (
-      stackLines[firstRelevantFrame] &&
-      (stackLines[firstRelevantFrame].includes('NoneImpl') || // unwrap method itself
-       stackLines[firstRelevantFrame].includes(' unwrap ') 
-      )
-    ) {
-      firstRelevantFrame++;
-    }
-    throw new Error(`Tried to unwrap a None value\n${stackLines.slice(firstRelevantFrame).join('\n')}`);
+    throw new Error('Tried to unwrap a None value');
   }
 
   unwrapOr(defaultValue: T): T {

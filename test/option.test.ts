@@ -95,7 +95,6 @@ describe("Option", () => {
         throw new Error("Test failed: expect did not throw");
       } catch (e: any) {
         expect(e.message.startsWith(msg)).toBe(true);
-        expect(e.message.includes("\n")).toBe(true); // Stack trace check
       }
     });
   });
@@ -110,7 +109,6 @@ describe("Option", () => {
         throw new Error("Test failed: unwrap did not throw");
       } catch (e: any) {
         expect(e.message.startsWith("Tried to unwrap a None value")).toBe(true);
-        expect(e.message.includes("\n")).toBe(true); // Stack trace check
       }
     });
   });
