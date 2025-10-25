@@ -1,4 +1,5 @@
-import { Result, Err, Ok, wrapInResult } from "../src/result.ts";
+import { Result, Err, Ok } from "../src/result.ts";
+import { Some, None, Option } from "../src/option.ts";
 import { describe, test, expect, mock } from "bun:test";
 
 
@@ -15,12 +16,16 @@ describe('Result', () => {
       expect(okResult.isErr()).toBeFalse();
     });
 
-    test('ok should return the value', () => {
-      expect(okResult.ok()).toBe(value);
+    test('ok should return Some with the value', () => {
+      const okValue = okResult.ok();
+      expect(okValue.isSome()).toBeTrue();
+      expect(okValue.unwrap()).toBe(value);
     });
 
-    test('err should return undefined', () => {
-      expect(okResult.err()).toBeUndefined();
+    test('err should return None', () => {
+      const errValue = okResult.err();
+      expect(errValue.isNone()).toBeTrue();
+      expect(errValue.isNone()).toBe(true);
     });
 
     test('unwrap should return the value', () => {
@@ -124,7 +129,7 @@ describe('Result', () => {
       const compatibleAndOk: Result<number, string> = Ok(99);
       const compatibleAndErr: Result<number, string> = Err("compatible error");
       expect(okResult.and(compatibleAndOk).unwrap()).toBe(99);
-      expect(okResult.and(compatibleAndErr).err()).toBe("compatible error");
+      expect(okResult.and(compatibleAndErr).err().unwrap()).toBe("compatible error");
     });
 
     test('or should return self if Ok', () => {
@@ -261,12 +266,16 @@ describe('Result', () => {
       expect(errResult.isErr()).toBeTrue();
     });
 
-    test('ok should return undefined', () => {
-      expect(errResult.ok()).toBeUndefined();
+    test('ok should return None', () => {
+      const okValue = errResult.ok();
+      expect(okValue.isNone()).toBeTrue();
+      expect(okValue.isNone()).toBe(true);
     });
 
-    test('err should return the error', () => {
-      expect(errResult.err()).toBe(error);
+    test('err should return Some with the error', () => {
+      const errValue = errResult.err();
+      expect(errValue.isSome()).toBeTrue();
+      expect(errValue.unwrap()).toBe(error);
     });
 
     test('unwrap should throw', () => {
@@ -285,7 +294,7 @@ describe('Result', () => {
       const mapFn = mock((val: string) => val.length);
       const mapped = errResult.map(mapFn);
       expect(mapped.isErr()).toBeTrue();
-      expect(mapped.err()).toBe(error);
+      expect(mapped.err().unwrap()).toBe(error);
       expect(mapFn).not.toHaveBeenCalled();
     });
 
@@ -302,7 +311,7 @@ describe('Result', () => {
       const andThenFn = mock((val: string) => Ok(val.length));
       const andThenResult = errResult.andThen(andThenFn);
       expect(andThenResult.isErr()).toBeTrue();
-      expect(andThenResult.err()).toBe(error);
+      expect(andThenResult.err().unwrap()).toBe(error);
       expect(andThenFn).not.toHaveBeenCalled();
     });
 
@@ -374,22 +383,22 @@ describe('Result', () => {
     });
 
     test('and should return self if Err', () => {
-      expect(errResult.and(Ok(99)).err()).toBe(error);
-      expect(errResult.and(Err("another error")).err()).toBe(error);
+      expect(errResult.and(Ok(99)).err().unwrap()).toBe(error);
+      expect(errResult.and(Err("another error")).err().unwrap()).toBe(error);
     });
 
     test('or should return the other result if Err', () => {
       const compatibleOrOk: Result<string, number> = Ok("fallback success");
       const compatibleOrErr: Result<string, number> = Err(500);
       expect(errResult.or(compatibleOrOk).unwrap()).toBe("fallback success");
-      expect(errResult.or(compatibleOrErr).err()).toBe(500);
+      expect(errResult.or(compatibleOrErr).err().unwrap()).toBe(500);
     });
 
     test('cloned should return self (Err is not cloned)', () => {
       const errObj = Err({ code: 500, msg: 'server error' });
       const cloned = errObj.cloned();
       expect(cloned.isErr()).toBeTrue();
-      expect(cloned.err()).toBe(errObj.err());
+      expect(cloned.err().unwrap()).toBe(errObj.err().unwrap());
       expect(cloned).toBe(errObj);
     });
 
@@ -582,48 +591,112 @@ describe('Result', () => {
     });
   });
 
-  describe('wrapInResult (Deprecated)', () => {
-    test('should return Ok with the result for a function that succeeds', () => {
-      const add = (a: number, b: number) => a + b;
-      const wrappedAdd = wrapInResult(add);
-      const result = wrappedAdd(2, 3);
-      expect(result.isOk()).toBeTrue();
-      expect(result.unwrap()).toBe(5);
+  // Tests for new missing methods
+  describe("flatten", () => {
+    describe("Ok variant", () => {
+      test("Ok(Ok(value)).flatten() should return Ok(value)", () => {
+        const nested = Ok(Ok(5));
+        const flattened = nested.flatten();
+        expect(flattened.isOk()).toBe(true);
+        expect(flattened.unwrap()).toBe(5);
+      });
+      test("Ok(Err(error)).flatten() should return Err(error)", () => {
+        const nested = Ok(Err("inner error"));
+        const flattened = nested.flatten();
+        expect(flattened.isErr()).toBe(true);
+        expect(flattened.unwrapErr()).toBe("inner error");
+      });
     });
-
-    test('should return Err with the error message for a function that throws an Error', () => {
-      const throwError = () => { throw new Error('Something went wrong'); };
-      const wrappedThrow = wrapInResult(throwError);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toBe('Something went wrong');
-    });
-
-    test('should return Err with the thrown value if it is not an Error', () => {
-      const throwValue = () => { throw 'just a string error'; };
-      const wrappedThrow = wrapInResult(throwValue);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toBe('just a string error');
-    });
-
-    test('should use errorTransform function if provided', () => {
-      const throwError = () => { throw new Error('Original error'); };
-      const transform = mock((err: unknown) => ({ message: `Transformed: ${err instanceof Error ? err.message : String(err)}`, code: 500 }));
-      const wrappedThrow = wrapInResult(throwError, transform);
-      const result = wrappedThrow();
-      expect(result.isErr()).toBeTrue();
-      expect(result.unwrapErr()).toEqual({ message: 'Transformed: Original error', code: 500 });
-      expect(transform).toHaveBeenCalledTimes(1);
-    });
-
-    test('should pass arguments correctly to the wrapped function', () => {
-      const subtract = (a: number, b: number) => a - b;
-      const wrappedSubtract = wrapInResult(subtract);
-      const result = wrappedSubtract(10, 4);
-      expect(result.isOk()).toBeTrue();
-      expect(result.unwrap()).toBe(6);
+    describe("Err variant", () => {
+      test("Err(error).flatten() should return Err(error)", () => {
+        const nested = Err("outer error");
+        const flattened = nested.flatten();
+        expect(flattened.isErr()).toBe(true);
+        expect(flattened.unwrapErr()).toBe("outer error");
+      });
     });
   });
+
+  describe("transpose", () => {
+    describe("Ok variant", () => {
+      test("Ok(Some(value)).transpose() should return Some(Ok(value))", () => {
+        const result = Ok(Some(5));
+        const transposed = result.transpose();
+        expect(transposed.isSome()).toBe(true);
+        expect(transposed.unwrap().isOk()).toBe(true);
+        expect(transposed.unwrap().unwrap()).toBe(5);
+      });
+      test("Ok(None).transpose() should return None", () => {
+        const result = Ok(None());
+        const transposed = result.transpose();
+        expect(transposed.isNone()).toBe(true);
+        expect(transposed.isNone()).toBe(true);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).transpose() should return Some(Err(error))", () => {
+        const result = Err("error");
+        const transposed = result.transpose();
+        expect(transposed.isSome()).toBe(true);
+        expect(transposed.unwrap().isErr()).toBe(true);
+        expect(transposed.unwrap().unwrapErr()).toBe("error");
+      });
+    });
+  });
+
+
+
+  describe("unwrapOrDefault", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).unwrapOrDefault() should return value", () => {
+        const result = Ok(5);
+        const value = result.unwrapOrDefault();
+        expect(value).toBe(5);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).unwrapOrDefault() should throw error (no Default trait in TypeScript)", () => {
+        const result = Err("error");
+        expect(() => result.unwrapOrDefault()).toThrow("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+      });
+    });
+  });
+
+  describe("mapOrDefault", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).mapOrDefault(default, fn) should return fn(value)", () => {
+        const result = Ok(5);
+        const mapped = result.mapOrDefault(0, x => x * 2);
+        expect(mapped).toBe(10);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).mapOrDefault(default, fn) should return default", () => {
+        const result = Err("error");
+        const mapped = result.mapOrDefault(0, (x: number) => x * 2);
+        expect(mapped).toBe(0);
+      });
+    });
+  });
+
+  describe("iter", () => {
+    describe("Ok variant", () => {
+      test("Ok(value).iter() should yield the value once", () => {
+        const result = Ok(5);
+        const iter = result.iter();
+        const values = [...iter];
+        expect(values).toEqual([5]);
+      });
+    });
+    describe("Err variant", () => {
+      test("Err(error).iter() should yield nothing", () => {
+        const result = Err("error");
+        const iter = result.iter();
+        const values = [...iter];
+        expect(values).toEqual([]);
+      });
+    });
+  });
+
 });
 

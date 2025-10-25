@@ -1,4 +1,6 @@
 import { toString } from "./utils.ts";
+import type { Option } from "./option.ts";
+import { Some, None } from "./option.ts";
 
 /**
  * Interface defining the structure for the pattern matching handlers used by the `match` method.
@@ -80,25 +82,25 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
 
   /**
    * Returns the contained Ok value, if present.
-   * @returns The Ok value, or undefined if the result is Err.
+   * @returns The Ok value as Some, or None if the result is Err.
    * @example
    * ```typescript
-   * Ok(5).ok(); // 5
-   * Err("error").ok(); // undefined
+   * Ok(5).ok(); // Some(5)
+   * Err("error").ok(); // None
    * ```
    */
-  ok(): T | undefined;
+  ok(): Option<T>;
 
   /**
    * Returns the contained Err value, if present.
-   * @returns The Err value, or undefined if the result is Ok.
+   * @returns The Err value as Some, or None if the result is Ok.
    * @example
    * ```typescript
-   * Err("error").err(); // "error"
-   * Ok(5).err(); // undefined
+   * Err("error").err(); // Some("error")
+   * Ok(5).err(); // None
    * ```
    */
-  err(): E | undefined;
+  err(): Option<E>;
 
   /**
    * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained Ok value,
@@ -212,30 +214,27 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
 
   /**
    * Returns the contained Ok value or a provided default value.
-   * @template U The type of the default value (can be different from T).
    * @param defaultValue The default value to return if the result is Err.
    * @returns The Ok value or `defaultValue`.
    * @example
    * ```typescript
    * Ok(5).unwrapOr(0); // 5
    * Err("error").unwrapOr(0); // 0
-   * Err("error").unwrapOr("default"); // "default"
    * ```
    */
-  unwrapOr<U>(defaultValue: U): T | U;
+  unwrapOr(defaultValue: T): T;
 
   /**
    * Returns the contained Ok value or computes it from a closure.
-   * @template U The type of the value returned by the closure `fn` (can be different from T).
    * @param fn The closure to compute the default value from the Err value.
    * @returns The Ok value or the value computed by `fn(Err_value)`.
    * @example
    * ```typescript
    * Ok(5).unwrapOrElse(() => 0); // 5
-   * Err("error").unwrapOrElse(e => e.length); // 5
+   * Err("error").unwrapOrElse(e => 0); // 0
    * ```
    */
-  unwrapOrElse<U>(fn: (value: E) => U): T | U;
+  unwrapOrElse(fn: (value: E) => T): T;
 
   /**
    * Returns `res` if the result is Ok, otherwise returns the Err value of self.
@@ -395,6 +394,70 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * ```
    */
   asObject(): { error: E, value: undefined } | { error: undefined, value: T };
+
+  /**
+   * Flattens a `Result<Result<T, E>, E>` to `Result<T, E>`.
+   * @returns Ok(value) if the result is Ok(Ok(value)), otherwise the error.
+   * @example
+   * ```typescript
+   * Ok(Ok(5)).flatten().unwrap(); // 5
+   * Ok(Err("inner")).flatten().unwrapErr(); // "inner"
+   * Err("outer").flatten().unwrapErr(); // "outer"
+   * ```
+   */
+  flatten<U, F>(this: Result<Result<U, F>, E>): Result<U, E | F>;
+
+  /**
+   * Transposes a Result of an Option into an Option of a Result.
+   * @returns Option<Result<T, E>> based on the inner Option.
+   * @example
+   * ```typescript
+   * Ok(Some(5)).transpose().unwrap().unwrap(); // 5
+   * Ok(None()).transpose().isNone(); // true
+   * Err("error").transpose().unwrap().unwrapErr(); // "error"
+   * ```
+   */
+  transpose<U>(this: Result<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>>;
+
+
+
+  /**
+   * Returns the contained Ok value or a default value for the type.
+   * Note: Unlike Rust, TypeScript doesn't have a Default trait, so this method
+   * will throw an error. Use unwrapOr(defaultValue) instead.
+   * @returns The Ok value or throws an error.
+   * @throws {Error} Always throws for Err since TypeScript has no Default trait.
+   * @example
+   * ```typescript
+   * Ok(5).unwrapOrDefault(); // 5
+   * Err("error").unwrapOrDefault(); // throws Error
+   * ```
+   */
+  unwrapOrDefault(): T;
+
+  /**
+   * Applies a function to the contained Ok value, or returns a default value if Err.
+   * @param defaultValue The default value to return if Err.
+   * @param fn The function to apply to the Ok value.
+   * @returns The result of fn(Ok_value) or defaultValue.
+   * @example
+   * ```typescript
+   * Ok(5).mapOrDefault(0, x => x * 2); // 10
+   * Err("error").mapOrDefault(0, x => x * 2); // 0
+   * ```
+   */
+  mapOrDefault<U>(defaultValue: U, fn: (value: T) => U): U;
+
+  /**
+   * Returns an iterator over the possibly contained value.
+   * @returns Iterable yielding the Ok value if present, nothing if Err.
+   * @example
+   * ```typescript
+   * [...Ok(5).iter()]; // [5]
+   * [...Err("error").iter()]; // []
+   * ```
+   */
+  iter(): Iterable<T>;
 }
 
 /**
@@ -422,8 +485,8 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   isOkAnd(fn: (value: T) => boolean): boolean { return fn(this.#value); }
   isErr(): false { return false; }
   isErrAnd(_fn: (value: E) => boolean): false { return false; }
-  ok(): T { return this.#value; }
-  err(): undefined { return undefined; }
+  ok(): Option<T> { return Some(this.#value); }
+  err(): Option<E> { return None(); }
 
   map<U>(fn: (value: T) => U): Result<U, E> {
     return Ok(fn(this.#value));
@@ -438,7 +501,6 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   mapErr<F>(_fn: (value: E) => F): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
@@ -459,11 +521,11 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return this.#value;
   }
 
-  unwrapOr<U>(_defaultValue: U): T {
+  unwrapOr(_defaultValue: T): T {
     return this.#value;
   }
 
-  unwrapOrElse<U>(_fn: (value: E) => U): T {
+  unwrapOrElse(_fn: (value: E) => T): T {
     return this.#value;
   }
 
@@ -476,12 +538,10 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   or<F>(_res: Result<T, F>): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
   orElse<F>(_fn: (value: E) => Result<T, F>): Result<T, F> {
-    // Type assertion is safe because the E type parameter is unused in OkImpl.
     return this as unknown as Result<T, F>;
   }
 
@@ -507,6 +567,48 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     return matcher.Ok(this.#value);
   }
 
+  flatten<U, F>(this: OkImpl<Result<U, F>, E>): Result<U, E | F> {
+    return this.#value as any;
+  }
+
+  transpose<U>(this: OkImpl<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>> {
+    const { Some, None } = require("./option.ts");
+    const option = this.#value as any;
+    if (option.isSome()) {
+      return Some(Ok(option.unwrap()));
+    } else {
+      return None();
+    }
+  }
+
+
+
+  unwrapOrDefault(): T {
+    return this.#value;
+  }
+
+  mapOrDefault<U>(_defaultValue: U, fn: (value: T) => U): U {
+    return fn(this.#value);
+  }
+
+  iter(): Iterable<T> {
+    const value = this.#value;
+    return {
+      [Symbol.iterator](): Iterator<T> {
+        let done = false;
+        return {
+          next(): IteratorResult<T> {
+            if (!done) {
+              done = true;
+              return { done: false, value };
+            }
+            return { done: true, value: undefined! };
+          }
+        };
+      }
+    };
+  }
+
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
     if (value !== null && value !== undefined && typeof (value as any)[Symbol.iterator] === "function") {
@@ -525,13 +627,10 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
  * @internal Implementation of the Err case for Result. Users should use the `Err` factory function.
  */
 class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
-  readonly #stack!: string;
   readonly #value!: E;
 
   /**
    * @internal Creates an Err instance.
-   * Captures a stack trace at the point of creation, omitting the ErrImpl constructor frames
-   * for better debugging experience when unwrapping/expecting.
    * @param value The error value.
    */
   constructor(value: E) {
@@ -539,18 +638,9 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
       return new ErrImpl(value);
     }
 
-    const stackLines = (new Error().stack || '').split('\n');
-    let firstRelevantFrame = 1;
-    while (
-      stackLines[firstRelevantFrame] &&
-      (stackLines[firstRelevantFrame].includes('ErrImpl') || stackLines[firstRelevantFrame].includes(' Err '))
-    ) {
-      firstRelevantFrame++;
-    }
-
-    this.#stack = stackLines.slice(firstRelevantFrame).join('\n');
     this.#value = value;
   }
+
 
   asTuple(): [E, undefined] {
     return [this.#value, undefined];
@@ -564,11 +654,10 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   isOkAnd(_fn: (value: T) => boolean): false { return false; }
   isErr(): true { return true; }
   isErrAnd(fn: (value: E) => boolean): boolean { return fn(this.#value); }
-  ok(): undefined { return undefined; }
-  err(): E { return this.#value; }
+  ok(): Option<T> { return None(); }
+  err(): Option<E> { return Some(this.#value); }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
-    // Type assertion is safe because the T type parameter is unused in ErrImpl.
     return this as unknown as Result<U, E>;
   }
 
@@ -594,28 +683,26 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   expect(message: string): T {
-    throw new Error(`${message}: ${toString(this.#value)}\n${this.#stack}`);
+    throw new Error(`${message}: ${toString(this.#value)}`);
   }
 
   unwrap(): T {
-    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}\n${this.#stack}`);
+    throw new Error(`Tried to unwrap Error: ${toString(this.#value)}`);
   }
 
-  unwrapOr<U>(defaultValue: U): U {
+  unwrapOr(defaultValue: T): T {
     return defaultValue;
   }
 
-  unwrapOrElse<U>(fn: (value: E) => U): U {
+  unwrapOrElse(fn: (value: E) => T): T {
     return fn(this.#value);
   }
 
   and<U>(_res: Result<U, E>): Result<U, E> {
-    // Type assertion is safe as T is unused.
     return this as unknown as Result<U, E>;
   }
 
   andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
-    // Type assertion is safe as T is unused.
     return this as unknown as Result<U, E>;
   }
 
@@ -641,6 +728,37 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
     return matcher.Err(this.#value);
+  }
+
+  flatten<U, F>(): Result<U, E | F> {
+    return this as unknown as Result<U, E | F>;
+  }
+
+  transpose<U>(): import("./option.ts").Option<Result<U, E>> {
+    const { Some } = require("./option.ts");
+    return Some(Err(this.#value));
+  }
+
+
+
+  unwrapOrDefault(): T {
+    throw new Error("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+  }
+
+  mapOrDefault<U>(defaultValue: U, _fn: (value: T) => U): U {
+    return defaultValue;
+  }
+
+  iter(): Iterable<T> {
+    return {
+      [Symbol.iterator](): Iterator<T> {
+        return {
+          next(): IteratorResult<T> {
+            return { done: true, value: undefined! };
+          }
+        };
+      }
+    };
   }
 
   [Symbol.iterator](): Iterator<never> {
@@ -703,39 +821,6 @@ function defaultErrorTransform<E = unknown>(error: unknown): E {
   return (error instanceof Error ? error.message : error) as E;
 }
 
-/**
- * @deprecated Use {@link Result.from `Result.from(() => fn(...args))`} instead. This function will be removed in a future version.
- * Wraps a function that might throw an error, returning its result as a `Result<T, E>`.
- * This deprecated version returns a *new function* that wraps the original.
- *
- * @template A The argument types of the function `fn`.
- * @template T The type of the successful result of `fn`.
- * @template E The type of the error value in the returned `Err`. Defaults to `unknown`.
- * @param fn The function to wrap.
- * @param errorTransform An optional function to transform a caught error into the desired error type `E`.
- * Defaults to extracting `error.message` if it's an Error instance, otherwise uses the error directly.
- * @returns A new function that takes the same arguments as `fn` but returns a `Result<T, E>`.
- * @note Not a standard Rust Result method. Provides a way to adapt throwing functions.
- * @example
- * ```typescript
- * const safeParse = wrapInResult(JSON.parse);
- * safeParse('{"a":1}').unwrap(); // {a: 1}
- * safeParse('invalid').isErr(); // true
- * ```
- */
-export function wrapInResult<A extends any[], T, E = unknown>(
-  fn: (...args: A) => T,
-  errorTransform?: (error: unknown) => E
-): (...args: A) => Result<T, E> {
-  const transformFn = errorTransform ?? defaultErrorTransform;
-  return (...args: A): Result<T, E> => {
-    try {
-      return Ok(fn(...args));
-    } catch (error) {
-      return Err(transformFn(error));
-    }
-  };
-}
 
 interface ResultTypeStatics {
   /**
