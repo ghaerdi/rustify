@@ -458,37 +458,100 @@ class OptionImpl<T> implements OptionInstance<T> {
     this.#inner = inner;
   }
 
-  /** @internal */ get _inner(): BaseOptionStrategy<T> { return this.#inner; }
+  /** @internal */ get _inner(): BaseOptionStrategy<T> {
+    return this.#inner;
+  }
 
-  /** @inheritDoc */ isSome(): boolean { return this.#inner.isSome(); }
-  /** @inheritDoc */ isSomeAnd(fn: (value: T) => boolean): boolean { return this.#inner.isSomeAnd(fn); }
-  /** @inheritDoc */ isNone(): boolean { return this.#inner.isNone(); }
-  /** @inheritDoc */ expect(message: string): T { return this.#inner.expect(message); }
-  /** @inheritDoc */ unwrap(): T { return this.#inner.unwrap(); }
-  /** @inheritDoc */ unwrapOr(defaultValue: T): T { return this.#inner.unwrapOr(defaultValue); }
-  /** @inheritDoc */ unwrapOrElse(fn: () => T): T { return this.#inner.unwrapOrElse(fn); }
-  /** @inheritDoc */ map<U>(fn: (value: T) => U): Option<U> { return new OptionImpl(this.#inner.map(fn)); }
-  /** @inheritDoc */ mapOr<U>(defaultValue: U, fn: (value: T) => U): U { return this.#inner.mapOr(defaultValue, fn); }
-  /** @inheritDoc */ mapOrElse<U>(defaultFn: () => U, fn: (value: T) => U): U { return this.#inner.mapOrElse(defaultFn, fn); }
-  /** @inheritDoc */ inspect(fn: (value: T) => void): Option<T> { this.#inner.inspect(fn); return this; }
-  /** @inheritDoc */ and<U>(res: Option<U>): Option<U> { return new OptionImpl(this.#inner.and(res._inner)); }
-  /** @inheritDoc */ andThen<U>(fn: (value: T) => Option<U>): Option<U> { return new OptionImpl(this.#inner.andThen((v) => fn(v)._inner)); }
-  /** @inheritDoc */ or(res: Option<T>): Option<T> { return this.#inner.isSome() ? this : res; }
-  /** @inheritDoc */ orElse(fn: () => Option<T>): Option<T> { return this.#inner.isSome() ? this : fn(); }
-  /** @inheritDoc */ xor(optb: Option<T>): Option<T> { return new OptionImpl(this.#inner.xor(optb._inner)); }
-  /** @inheritDoc */ cloned(): Option<T> { return new OptionImpl(this.#inner.cloned()); }
-  /** @inheritDoc */ zip<U>(other: Option<U>): Option<[T, U]> { return new OptionImpl(this.#inner.zip(other._inner)); }
-  /** @inheritDoc */ zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R> { return new OptionImpl(this.#inner.zipWith(other._inner, fn)); }
-  /** @inheritDoc */ match<U, V>(matcher: OptionMatcher<T, U, V>): U | V { return this.#inner.match(matcher); }
-  /** @inheritDoc */ flatten<U>(): Option<U> { return new OptionImpl(this.#inner.flatten()); }
+  /** @inheritDoc */ isSome(): boolean {
+    return this.#inner.isSome();
+  }
+  /** @inheritDoc */ isSomeAnd(fn: (value: T) => boolean): boolean {
+    return this.#inner.isSomeAnd(fn);
+  }
+  /** @inheritDoc */ isNone(): boolean {
+    return this.#inner.isNone();
+  }
+  /** @inheritDoc */ expect(message: string): T {
+    return this.#inner.expect(message);
+  }
+  /** @inheritDoc */ unwrap(): T {
+    return this.#inner.unwrap();
+  }
+  /** @inheritDoc */ unwrapOr(defaultValue: T): T {
+    return this.#inner.unwrapOr(defaultValue);
+  }
+  /** @inheritDoc */ unwrapOrElse(fn: () => T): T {
+    return this.#inner.unwrapOrElse(fn);
+  }
+  /** @inheritDoc */ map<U>(fn: (value: T) => U): Option<U> {
+    return new OptionImpl(this.#inner.map(fn));
+  }
+  /** @inheritDoc */ mapOr<U>(defaultValue: U, fn: (value: T) => U): U {
+    return this.#inner.mapOr(defaultValue, fn);
+  }
+  /** @inheritDoc */ mapOrElse<U>(defaultFn: () => U, fn: (value: T) => U): U {
+    return this.#inner.mapOrElse(defaultFn, fn);
+  }
+  /** @inheritDoc */ inspect(fn: (value: T) => void): Option<T> {
+    this.#inner.inspect(fn);
+    return this;
+  }
+  /** @inheritDoc */ and<U>(res: Option<U>): Option<U> {
+    return new OptionImpl(this.#inner.and(res._inner));
+  }
+  /** @inheritDoc */ andThen<U>(fn: (value: T) => Option<U>): Option<U> {
+    return new OptionImpl(this.#inner.andThen((v) => fn(v)._inner));
+  }
+  /** @inheritDoc */ or(res: Option<T>): Option<T> {
+    return this.#inner.isSome() ? this : res;
+  }
+  /** @inheritDoc */ orElse(fn: () => Option<T>): Option<T> {
+    return this.#inner.isSome() ? this : fn();
+  }
+  /** @inheritDoc */ xor(optb: Option<T>): Option<T> {
+    return new OptionImpl(this.#inner.xor(optb._inner));
+  }
+  /** @inheritDoc */ cloned(): Option<T> {
+    return new OptionImpl(this.#inner.cloned());
+  }
+  /** @inheritDoc */ zip<U>(other: Option<U>): Option<[T, U]> {
+    return new OptionImpl(this.#inner.zip(other._inner));
+  }
+  /** @inheritDoc */ zipWith<U, R>(
+    other: Option<U>,
+    fn: (s: T, o: U) => R,
+  ): Option<R> {
+    return new OptionImpl(this.#inner.zipWith(other._inner, fn));
+  }
+  /** @inheritDoc */ match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
+    return this.#inner.match(matcher);
+  }
+  /** @inheritDoc */ flatten<U>(): Option<U> {
+    return new OptionImpl(this.#inner.flatten());
+  }
   /** @inheritDoc */ filter(predicate: (value: T) => boolean): Option<T> {
     if (this.#inner.isSome() && predicate(this.#inner.unwrap())) return this;
     return new OptionImpl(new NoneStrategy<T>());
   }
-  /** @inheritDoc */ okOr<E>(err: E): import("../result/index.ts").Result<T, E> { return this.#inner.okOr(err); }
-  /** @inheritDoc */ okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E> { return this.#inner.okOrElse(fn); }
-  /** @inheritDoc */ transpose<U, E>(): import("../result/index.ts").Result<Option<U>, E> {
-    const result = this.#inner.transpose() as import("../result/index.ts").Result<BaseOptionStrategy<U>, E>;
+  /** @inheritDoc */ okOr<E>(
+    err: E,
+  ): import("../result/index.ts").Result<T, E> {
+    return this.#inner.okOr(err);
+  }
+  /** @inheritDoc */ okOrElse<E>(
+    fn: () => E,
+  ): import("../result/index.ts").Result<T, E> {
+    return this.#inner.okOrElse(fn);
+  }
+  /** @inheritDoc */ transpose<U, E>(): import("../result/index.ts").Result<
+    Option<U>,
+    E
+  > {
+    const result = this.#inner
+      .transpose() as import("../result/index.ts").Result<
+        BaseOptionStrategy<U>,
+        E
+      >;
     if (result.isOk()) {
       const { Ok } = require("../result/index.ts");
       return Ok(new OptionImpl(result.unwrap()));
@@ -497,7 +560,9 @@ class OptionImpl<T> implements OptionInstance<T> {
       return Err(result.unwrapErr());
     }
   }
-  /** @inheritDoc */ unwrapOrDefault(): T { return this.#inner.unwrapOrDefault(); }
+  /** @inheritDoc */ unwrapOrDefault(): T {
+    return this.#inner.unwrapOrDefault();
+  }
 
   /** @inheritDoc */ getOrInsert(value: T): T {
     if (this.#inner.isNone()) this.#inner = new SomeStrategy(value);
@@ -523,17 +588,35 @@ class OptionImpl<T> implements OptionInstance<T> {
     }
     return new OptionImpl(new NoneStrategy<T>());
   }
-  /** @inheritDoc */ contains(value: T): boolean { return this.#inner.contains(value); }
+  /** @inheritDoc */ contains(value: T): boolean {
+    return this.#inner.contains(value);
+  }
 
-  /** @inheritDoc */ [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
+  /** @inheritDoc */ [Symbol.iterator](): Iterator<
+    T extends Iterable<infer U> ? U : never
+  > {
     if (!this.#inner.isSome()) {
-      return { next(): IteratorResult<T extends Iterable<infer U> ? U : never> { return { done: true, value: undefined! }; } } as Iterator<T extends Iterable<infer U> ? U : never>;
+      return {
+        next(): IteratorResult<T extends Iterable<infer U> ? U : never> {
+          return { done: true, value: undefined! };
+        },
+      } as Iterator<T extends Iterable<infer U> ? U : never>;
     }
     const value = this.#inner.unwrap() as T;
-    if (value !== null && value !== undefined && typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] === "function") {
-      return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
+    if (
+      value !== null && value !== undefined &&
+      typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] ===
+        "function"
+    ) {
+      return (value as unknown as Iterable<
+        T extends Iterable<infer U> ? U : never
+      >)[Symbol.iterator]();
     }
-    return { next(): IteratorResult<T extends Iterable<infer U> ? U : never> { return { done: true, value: undefined! }; } } as Iterator<T extends Iterable<infer U> ? U : never>;
+    return {
+      next(): IteratorResult<T extends Iterable<infer U> ? U : never> {
+        return { done: true, value: undefined! };
+      },
+    } as Iterator<T extends Iterable<infer U> ? U : never>;
   }
 
   /**
@@ -549,7 +632,9 @@ class OptionImpl<T> implements OptionInstance<T> {
    * OptionImpl.fromNullable(() => null).isNone(); // true
    * ```
    */
-  static fromNullable<T>(fn: () => T | null | undefined): Option<NonNullable<T>> {
+  static fromNullable<T>(
+    fn: () => T | null | undefined,
+  ): Option<NonNullable<T>> {
     const value = fn();
     if (value === null || value === undefined) return None<NonNullable<T>>();
     return Some(value as NonNullable<T>);
@@ -589,7 +674,8 @@ class OptionImpl<T> implements OptionInstance<T> {
  * x.isSome(); // true
  * ```
  */
-export const Some = <T>(value: T): Option<T> => new OptionImpl(new SomeStrategy(value));
+export const Some = <T>(value: T): Option<T> =>
+  new OptionImpl(new SomeStrategy(value));
 
 /**
  * Creates a new `None` option representing the absence of a value.
@@ -616,8 +702,8 @@ export const None = <T>(): Option<T> => new OptionImpl(new NoneStrategy<T>());
  * @see {@link Option} for the interface itself
  */
 export namespace Option {
-  /** @inheritDoc */ 
+  /** @inheritDoc */
   export const fromNullable = OptionImpl.fromNullable;
-  /** @inheritDoc */ 
+  /** @inheritDoc */
   export const isOption = OptionImpl.isOption;
 }

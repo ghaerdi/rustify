@@ -1,6 +1,6 @@
-import { expect, test, describe, mock } from "bun:test";
-import { Some, None, Option } from "../src/option/index"; // Path to src/option.ts
-import { Ok, Err } from "../src/result"; // Path to src/result.ts
+import { describe, expect, mock, test } from "bun:test";
+import { None, Option, Some } from "../src/option/index"; // Path to src/option.ts
+import { Err, Ok } from "../src/result"; // Path to src/result.ts
 
 describe("Option", () => {
   describe("Creation & Basic Checks", () => {
@@ -9,7 +9,8 @@ describe("Option", () => {
       const opt = Some(value);
       test("isSome should be true", () => expect(opt.isSome()).toBe(true));
       test("isNone should be false", () => expect(opt.isNone()).toBe(false));
-      test("unwrap should return the value", () => expect(opt.unwrap()).toBe(value));
+      test("unwrap should return the value", () =>
+        expect(opt.unwrap()).toBe(value));
     });
 
     describe("None Function", () => {
@@ -55,29 +56,38 @@ describe("Option", () => {
         expect(option.isNone()).toBe(true);
       });
       test("should return None instance for a function returning undefined", () => {
-        const option = Option.fromNullable(() => { return; });
+        const option = Option.fromNullable(() => {
+          return;
+        });
         expect(option.isNone()).toBe(true);
         expect(option.isNone()).toBe(true);
       });
     });
 
     describe("Option.isOption", () => {
-      test("should return true for Some", () => expect(Option.isOption(Some(1))).toBe(true));
-      test("should return true for None instance", () => expect(Option.isOption(None())).toBe(true));
-      test("should return false for null", () => expect(Option.isOption(null)).toBe(false));
-      test("should return false for undefined", () => expect(Option.isOption(undefined)).toBe(false));
-      test("should return false for a plain object", () => expect(Option.isOption({})).toBe(false));
-      test("should return false for a number", () => expect(Option.isOption(123)).toBe(false));
-      test("should return false for a string", () => expect(Option.isOption("string")).toBe(false));
+      test("should return true for Some", () =>
+        expect(Option.isOption(Some(1))).toBe(true));
+      test("should return true for None instance", () =>
+        expect(Option.isOption(None())).toBe(true));
+      test("should return false for null", () =>
+        expect(Option.isOption(null)).toBe(false));
+      test("should return false for undefined", () =>
+        expect(Option.isOption(undefined)).toBe(false));
+      test("should return false for a plain object", () =>
+        expect(Option.isOption({})).toBe(false));
+      test("should return false for a number", () =>
+        expect(Option.isOption(123)).toBe(false));
+      test("should return false for a string", () =>
+        expect(Option.isOption("string")).toBe(false));
     });
   });
 
   describe("isSomeAnd", () => {
     test("Some(value).isSomeAnd(predicate) should be true if predicate is true", () => {
-      expect(Some(5).isSomeAnd(x => x > 3)).toBe(true);
+      expect(Some(5).isSomeAnd((x) => x > 3)).toBe(true);
     });
     test("Some(value).isSomeAnd(predicate) should be false if predicate is false", () => {
-      expect(Some(5).isSomeAnd(x => x < 3)).toBe(false);
+      expect(Some(5).isSomeAnd((x) => x < 3)).toBe(false);
     });
     test("None().isSomeAnd(predicate) should be false", () => {
       expect(None().isSomeAnd((x: any) => x > 3)).toBe(false); // Use singleton
@@ -176,14 +186,14 @@ describe("Option", () => {
 
   describe("inspect", () => {
     test("Some(value).inspect(fn) should call fn(value) and return Some(value)", () => {
-      const mockFn = mock((_x: number) => { });
+      const mockFn = mock((_x: number) => {});
       const opt = Some(5);
       const result = opt.inspect(mockFn);
       expect(mockFn).toHaveBeenCalledWith(5);
       expect(result).toBe(opt);
     });
     test("None().inspect(fn) should not call fn and return None singleton", () => {
-      const mockFn = mock((_x: any) => { });
+      const mockFn = mock((_x: any) => {});
       const opt = None();
       const result = opt.inspect(mockFn);
       expect(mockFn).not.toHaveBeenCalled();
@@ -378,7 +388,10 @@ describe("Option", () => {
       expect(result).toBe("Success: 10");
     });
     test("None().match({ Some: s => ..., None: () => ... }) should execute the None handler", () => {
-      const result = None<number>().match({ Some: someHandler, None: noneHandler });
+      const result = None<number>().match({
+        Some: someHandler,
+        None: noneHandler,
+      });
       expect(result).toBe("It was None");
     });
   });
@@ -388,13 +401,13 @@ describe("Option", () => {
       const arr = [1, 2, 3];
       const opt = Some(arr);
       const result: number[] = [];
-      for (const item of opt) { result.push(item); }
+      for (const item of opt) result.push(item);
       expect(result).toEqual(arr);
     });
     test("None completes iteration immediately", () => {
       const opt = None();
       let count = 0;
-      for (const _item of opt) { count++; }
+      for (const _item of opt) count++;
       expect(count).toBe(0);
     });
   });
@@ -423,13 +436,13 @@ describe("Option", () => {
   describe("filter", () => {
     test("Some(value).filter(predicate) should return Some(value) if predicate is true", () => {
       const opt = Some(5);
-      const filtered = opt.filter(x => x > 3);
+      const filtered = opt.filter((x) => x > 3);
       expect(filtered.isSome()).toBe(true);
       expect(filtered.unwrap()).toBe(5);
     });
     test("Some(value).filter(predicate) should return None if predicate is false", () => {
       const opt = Some(5);
-      const filtered = opt.filter(x => x > 10);
+      const filtered = opt.filter((x) => x > 10);
       expect(filtered.isNone()).toBe(true);
       expect(filtered.isNone()).toBe(true);
     });
@@ -484,7 +497,6 @@ describe("Option", () => {
     });
   });
 
-
   describe("transpose", () => {
     test("Some(Ok(value)).transpose() should return Ok(Some(value))", () => {
       const opt = Some(Ok(5));
@@ -507,8 +519,6 @@ describe("Option", () => {
     });
   });
 
-
-
   describe("unwrapOrDefault", () => {
     test("Some(value).unwrapOrDefault() should return value", () => {
       const opt = Some(5);
@@ -516,7 +526,9 @@ describe("Option", () => {
       expect(value).toBe(5);
     });
     test("None().unwrapOrDefault() should throw error (no Default trait in TypeScript)", () => {
-      expect(() => None().unwrapOrDefault()).toThrow("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+      expect(() => None().unwrapOrDefault()).toThrow(
+        "Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.",
+      );
     });
   });
 
@@ -557,8 +569,14 @@ describe("Option", () => {
     test("None().getOrInsertWith() should only compute once", () => {
       const x = None<number>();
       let calls = 0;
-      x.getOrInsertWith(() => { calls++; return 10; });
-      x.getOrInsertWith(() => { calls++; return 20; });
+      x.getOrInsertWith(() => {
+        calls++;
+        return 10;
+      });
+      x.getOrInsertWith(() => {
+        calls++;
+        return 20;
+      });
       expect(calls).toBe(1);
       expect(x.unwrap()).toBe(10);
     });
@@ -583,20 +601,20 @@ describe("Option", () => {
   describe("takeIf", () => {
     test("Some(value).takeIf(predicate) should return Some when predicate is true", () => {
       const x = Some(5);
-      const y = x.takeIf(value => value === 5);
+      const y = x.takeIf((value) => value === 5);
       expect(x.isNone()).toBe(true);
       expect(y.isSome()).toBe(true);
       expect(y.unwrap()).toBe(5);
     });
     test("Some(value).takeIf(predicate) should return None when predicate is false", () => {
       const x = Some(5);
-      const y = x.takeIf(value => value === 4);
+      const y = x.takeIf((value) => value === 4);
       expect(x.isSome()).toBe(true);
       expect(y.isNone()).toBe(true);
     });
     test("None().takeIf(predicate) should return None", () => {
       const x = None<number>();
-      const y = x.takeIf(value => value === 5);
+      const y = x.takeIf((value) => value === 5);
       expect(x.isNone()).toBe(true);
       expect(y.isNone()).toBe(true);
     });

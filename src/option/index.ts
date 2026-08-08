@@ -10,4 +10,4 @@
  * @see {@link Option} for the full API reference
  */
 
-export { Option, Some, None } from "./option.ts";
+export { None, Option, Some } from "./option.ts";

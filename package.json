@@ -1,53 +1,53 @@
 {
-	"name": "@ghaerdi/rustify",
-	"version": "2.1.1",
-	"description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
-	"module": "src/index.ts",
-	"type": "module",
-	"main": "src/index.ts",
-	"exports": {
-		".": "./src/index.ts",
-		"./option": "./src/option/index.ts",
-		"./result": "./src/result/index.ts"
-	},
-	"files": [
-		"src",
-		"README.md",
-		"LICENSE"
-	],
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/ghaerdi/rustify.git"
-	},
-	"bugs": {
-		"url": "https://github.com/ghaerdi/rustify/issues"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"keywords": [
-		"typescript",
-		"rust",
-		"monad",
-		"option",
-		"result",
-		"error handling",
-		"functional programming",
-		"type-safe",
-		"null safety",
-		"maybe"
-	],
-	"author": "ghaerdi",
-	"license": "MIT",
-	"devDependencies": {
-		"@types/bun": "latest",
-		"typescript": "^5.0.0"
-	},
-	"peerDependencies": {
-		"typescript": "^5.0.0"
-	},
-	"scripts": {
-		"check": "tsc --noEmit",
-		"prepublishOnly": "bun run check && bun test"
-	}
+  "name": "@ghaerdi/rustify",
+  "version": "2.1.1",
+  "description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
+  "module": "src/index.ts",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./option": "./src/option/index.ts",
+    "./result": "./src/result/index.ts"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghaerdi/rustify.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ghaerdi/rustify/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "typescript",
+    "rust",
+    "monad",
+    "option",
+    "result",
+    "error handling",
+    "functional programming",
+    "type-safe",
+    "null safety",
+    "maybe"
+  ],
+  "author": "ghaerdi",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepublishOnly": "bun run check && bun test"
+  }
 }

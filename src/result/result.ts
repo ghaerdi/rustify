@@ -148,7 +148,7 @@ interface ResultTypeStatics {
    */
   from<T, E = unknown>(
     fn: () => T | Result<T, any>,
-    errorTransform?: (error: unknown) => E
+    errorTransform?: (error: unknown) => E,
   ): Result<T, E>;
 
   /**
@@ -176,7 +176,7 @@ interface ResultTypeStatics {
    */
   fromAsync<T, E = unknown>(
     fn: () => Promise<T | Result<T, any>>,
-    errorTransform?: (error: unknown) => E
+    errorTransform?: (error: unknown) => E,
   ): Promise<Result<T, E>>;
 
   /**
@@ -203,7 +203,7 @@ export const Result: ResultTypeStatics = {
   /** @inheritDoc */
   from<T, E = unknown>(
     fn: () => T | Result<T, any>,
-    errorTransform: (error: unknown) => E = defaultErrorTransform
+    errorTransform: (error: unknown) => E = defaultErrorTransform,
   ): Result<T, E> {
     try {
       const value = fn();
@@ -219,7 +219,7 @@ export const Result: ResultTypeStatics = {
   /** @inheritDoc */
   async fromAsync<T, E = unknown>(
     fn: () => Promise<T | Result<T, any>>,
-    errorTransform: (error: unknown) => E = defaultErrorTransform
+    errorTransform: (error: unknown) => E = defaultErrorTransform,
   ): Promise<Result<T, E>> {
     try {
       const value = await fn();
@@ -235,5 +235,5 @@ export const Result: ResultTypeStatics = {
   /** @inheritDoc */
   isResult<T, E>(value: unknown): value is Result<T, E> {
     return value instanceof OkImpl || value instanceof ErrImpl;
-  }
+  },
 };

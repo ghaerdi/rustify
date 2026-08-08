@@ -34,7 +34,8 @@ export interface ResultMatcher<T, E, U, V> {
  * @template T The type of the successful value.
  * @template E The type of the error value.
  */
-export interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : never> {
+export interface BaseResult<T, E>
+  extends Iterable<T extends Iterable<infer U> ? U : never> {
   /**
    * Checks if the result is Ok.
    * @returns True if the result is Ok, false otherwise.
@@ -396,7 +397,7 @@ export interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ?
    * const { error: err2, value: val2 } = Err("fail").asObject(); // err2 is "fail", val2 is undefined
    * ```
    */
-  asObject(): { error: E, value: undefined } | { error: undefined, value: T };
+  asObject(): { error: E; value: undefined } | { error: undefined; value: T };
 
   /**
    * Flattens a `Result<Result<T, E>, E>` to `Result<T, E>`.

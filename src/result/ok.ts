@@ -1,7 +1,7 @@
 import type { BaseResult, ResultMatcher } from "./types.ts";
 import type { Option } from "../option/index.ts";
-import { Some, None } from "../option/index.ts";
-import { Ok, Err } from "./result.ts";
+import { None, Some } from "../option/index.ts";
+import { Err, Ok } from "./result.ts";
 import type { Result } from "./result.ts";
 import { toString } from "../utils.ts";
 
@@ -25,22 +25,34 @@ export class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
-  asObject(): { error: undefined; value: T; } {
+  asObject(): { error: undefined; value: T } {
     return { error: undefined, value: this.#value };
   }
 
   /** @inheritDoc */
-  isOk(): true { return true; }
+  isOk(): true {
+    return true;
+  }
   /** @inheritDoc */
-  isOkAnd(fn: (value: T) => boolean): boolean { return fn(this.#value); }
+  isOkAnd(fn: (value: T) => boolean): boolean {
+    return fn(this.#value);
+  }
   /** @inheritDoc */
-  isErr(): false { return false; }
+  isErr(): false {
+    return false;
+  }
   /** @inheritDoc */
-  isErrAnd(_fn: (value: E) => boolean): false { return false; }
+  isErrAnd(_fn: (value: E) => boolean): false {
+    return false;
+  }
   /** @inheritDoc */
-  ok(): Option<T> { return Some(this.#value); }
+  ok(): Option<T> {
+    return Some(this.#value);
+  }
   /** @inheritDoc */
-  err(): Option<E> { return None(); }
+  err(): Option<E> {
+    return None();
+  }
 
   /** @inheritDoc */
   map<U>(fn: (value: T) => U): Result<U, E> {
@@ -182,9 +194,9 @@ export class OkImpl<T, E = never> implements BaseResult<T, E> {
               return { done: false, value };
             }
             return { done: true, value: undefined! };
-          }
+          },
         };
-      }
+      },
     };
   }
 
@@ -201,13 +213,19 @@ export class OkImpl<T, E = never> implements BaseResult<T, E> {
    */
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
-    if (value !== null && value !== undefined && typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] === "function") {
-      return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
+    if (
+      value !== null && value !== undefined &&
+      typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] ===
+        "function"
+    ) {
+      return (value as unknown as Iterable<
+        T extends Iterable<infer U> ? U : never
+      >)[Symbol.iterator]();
     } else {
       return {
         next(): IteratorResult<T extends Iterable<infer U> ? U : never> {
           return { done: true, value: undefined! };
-        }
+        },
       } as Iterator<T extends Iterable<infer U> ? U : never>;
     }
   }

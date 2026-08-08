@@ -24,13 +24,19 @@ export interface BaseOptionStrategy<T> {
   xor(optb: BaseOptionStrategy<T>): BaseOptionStrategy<T>;
   cloned(): BaseOptionStrategy<T>;
   zip<U>(other: BaseOptionStrategy<U>): BaseOptionStrategy<[T, U]>;
-  zipWith<U, R>(other: BaseOptionStrategy<U>, fn: (s: T, o: U) => R): BaseOptionStrategy<R>;
+  zipWith<U, R>(
+    other: BaseOptionStrategy<U>,
+    fn: (s: T, o: U) => R,
+  ): BaseOptionStrategy<R>;
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V;
   flatten<U>(): BaseOptionStrategy<U>;
   filter(predicate: (value: T) => boolean): BaseOptionStrategy<T>;
   okOr<E>(err: E): import("../result/index.ts").Result<T, E>;
   okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E>;
-  transpose<U, E>(): import("../result/index.ts").Result<BaseOptionStrategy<U>, E>;
+  transpose<U, E>(): import("../result/index.ts").Result<
+    BaseOptionStrategy<U>,
+    E
+  >;
   unwrapOrDefault(): T;
   getOrInsert(value: T): T;
   getOrInsertWith(f: () => T): T;

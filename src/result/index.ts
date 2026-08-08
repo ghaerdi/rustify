@@ -10,4 +10,4 @@
  * @see {@link Result} for the full API reference
  */
 
-export { Ok, Err, Result } from "./result.ts";
+export { Err, Ok, Result } from "./result.ts";

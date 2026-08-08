@@ -3,24 +3,36 @@
 [![npm version](https://img.shields.io/npm/v/@ghaerdi/rustify.svg)](https://www.npmjs.com/package/@ghaerdi/rustify)
 [![JSR version](https://jsr.io/badges/@ghaerdi/rustify)](https://jsr.io/@ghaerdi/rustify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<br>
-A TypeScript library inspired by Rust, providing `Result` and `Option` types for safe error handling and null management with functional programming patterns.
+<br> A TypeScript library inspired by Rust, providing `Result` and `Option`
+types for safe error handling and null management with functional programming
+patterns.
 
 ## Why rustify?
 
-JavaScript/TypeScript error handling often relies on `try...catch` blocks or nullable return types, which can be verbose or hide potential errors. `rustify` brings Rust-inspired monads like `Result` and `Option` to TypeScript, enabling functional programming patterns for safer code. This allows you to:
+JavaScript/TypeScript error handling often relies on `try...catch` blocks or
+nullable return types, which can be verbose or hide potential errors. `rustify`
+brings Rust-inspired monads like `Result` and `Option` to TypeScript, enabling
+functional programming patterns for safer code. This allows you to:
 
-* **Handle errors explicitly:** Functions return a `Result` which is either `Ok(value)` for success or `Err(error)` for failure.
-* **Manage nullable values safely:** Use `Option` to represent values that may or may not exist, eliminating null/undefined errors.
-* **Improve type safety:** Both `Result<T, E>` and `Option<T>` types are tracked by the type system.
-* **Chain operations safely:** Monadic methods like `andThen`, `map`, and `orElse` allow elegant functional composition.
-* **Perform exhaustive checks:** The `match` method ensures you handle all cases explicitly.
-* **Easily wrap unsafe functions:** `Result.from` and `Option.fromNullable` provide simple ways to convert potentially unsafe operations.
-* **Destructure results easily:** Use `asTuple()` for Go-style `[err, val]` destructuring, or `asObject()` if you prefer `{ error, value }` destructuring.
+- **Handle errors explicitly:** Functions return a `Result` which is either
+  `Ok(value)` for success or `Err(error)` for failure.
+- **Manage nullable values safely:** Use `Option` to represent values that may
+  or may not exist, eliminating null/undefined errors.
+- **Improve type safety:** Both `Result<T, E>` and `Option<T>` types are tracked
+  by the type system.
+- **Chain operations safely:** Monadic methods like `andThen`, `map`, and
+  `orElse` allow elegant functional composition.
+- **Perform exhaustive checks:** The `match` method ensures you handle all cases
+  explicitly.
+- **Easily wrap unsafe functions:** `Result.from` and `Option.fromNullable`
+  provide simple ways to convert potentially unsafe operations.
+- **Destructure results easily:** Use `asTuple()` for Go-style `[err, val]`
+  destructuring, or `asObject()` if you prefer `{ error, value }` destructuring.
 
 ## Installation
 
-You can install `rustify` using your favorite package manager or directly from jsr.
+You can install `rustify` using your favorite package manager or directly from
+jsr.
 
 **npm:**
 
@@ -47,11 +59,14 @@ deno add @ghaerdi/rustify
 Import `Ok`, `Err`, `Result`, `Some`, `None`, and `Option` from the library.
 
 ```typescript
-import { Result, Ok, Err, Option, Some, None } from "@ghaerdi/rustify";
+import { Err, None, Ok, Option, Result, Some } from "@ghaerdi/rustify";
 
 // --- Creating a function that returns a Result ---
 
-function divide(numerator: number, denominator: number): Result<number, string> {
+function divide(
+  numerator: number,
+  denominator: number,
+): Result<number, string> {
   if (denominator === 0) {
     return Err("Cannot divide by zero");
   }
@@ -90,121 +105,160 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
 
 ## Core Concepts
 
-* **`Result<T, E>`:** Represents either success (`Ok<T>`) or failure (`Err<E>`).
-    * `Ok<T>`: Contains a success value. Becomes iterable if `T` is iterable.
-    * `Err<E>`: Contains an error value.
-* **`Option<T>`:** Represents an optional value, either `Some<T>` or `None`.
-    * `Some<T>`: Contains a value. Becomes iterable if `T` is iterable.
-    * `None()`: Represents the absence of a value. Call `None()` to create a None instance.
+- **`Result<T, E>`:** Represents either success (`Ok<T>`) or failure (`Err<E>`).
+  - `Ok<T>`: Contains a success value. Becomes iterable if `T` is iterable.
+  - `Err<E>`: Contains an error value.
+- **`Option<T>`:** Represents an optional value, either `Some<T>` or `None`.
+  - `Some<T>`: Contains a value. Becomes iterable if `T` is iterable.
+  - `None()`: Represents the absence of a value. Call `None()` to create a None
+    instance.
 
 ## API Overview
 
 ### Result\<T, E\>
 
-* **Checking:**
-    * `isOk()`: Returns `true` if `Ok`.
-    * `isErr()`: Returns `true` if `Err`.
-    * `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies `fn`.
-    * `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies `fn`.
-    * `contains(value)`: Returns `true` if `Ok` and the value equals `value`.
-* **Extracting Values:**
-    * `ok()`: Returns the `Ok` value as `Some(value)` or `None`.
-    * `err()`: Returns the `Err` value as `Some(error)` or `None`.
-    * `unwrap()`: Returns the `Ok` value, throws if `Err`. **Use with caution.**
-    * `unwrapErr()`: Returns the `Err` value, throws if `Ok`.
-    * `expect(message)`: Returns `Ok` value, throws `message` if `Err`.
-    * `expectErr(message)`: Returns `Err` value, throws `message` if `Ok`.
-    * `unwrapOr(defaultValue)`: Returns `Ok` value or `defaultValue` if `Err`.
-    * `unwrapOrElse(fn)`: Returns `Ok` value or computes default using `fn(errorValue)` if `Err`.
-    * `unwrapOrDefault()`: Returns `Ok` value or throws (no `Default` trait in TypeScript).
-* **Mapping & Transformation:**
-    * `map(fn)`: Maps `Ok<T>` to `Ok<U>`. Leaves `Err` untouched.
-    * `mapErr(fn)`: Maps `Err<E>` to `Err<F>`. Leaves `Ok` untouched.
-    * `mapOr(defaultValue, fn)`: Applies `fn` to `Ok` value, returns `defaultValue` if `Err`.
-    * `mapOrElse(defaultFn, fn)`: Applies `fn` to `Ok` value, applies `defaultFn` to `Err` value.
-    * `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Ok` value, returns `defaultValue` if `Err`.
-* **Chaining & Side Effects:**
-    * `and(res)`: Returns `res` if `Ok`, else returns self (`Err`).
-    * `andThen(fn)`: Calls `fn(okValue)` if `Ok`, returns the resulting `Result`.
-    * `or(res)`: Returns `res` if `Err`, else returns self (`Ok`).
-    * `orElse(fn)`: Calls `fn(errValue)` if `Err`, returns the resulting `Result`.
-    * `inspect(fn)`: Calls `fn(okValue)` if `Ok`, returns original `Result`.
-    * `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns original `Result`.
-* **Flattening & Transposing:**
-    * `flatten()`: Converts `Result<Result<T, E>, E>` to `Result<T, E>`.
-    * `transpose()`: Transposes `Result<Option<T>, E>` into `Option<Result<T, E>>`.
-* **Pattern Matching:**
-    * `match(matcher)`: Executes `matcher.Ok(value)` or `matcher.Err(error)`, returning the result.
-* **Cloning:**
-    * `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value (using `structuredClone`). `Err` values are not cloned.
-* **Destructuring:**
-    * `asTuple()`: Returns `[undefined, T]` for `Ok` or `[E, undefined]` for `Err`.
-    * `asObject()`: Returns `{ error: undefined, value: T }` for `Ok` or `{ error: E, value: undefined }` for `Err`.
-* **Iteration:**
-    * `iter()`: Returns an iterator that yields the `Ok` value once, or nothing if `Err`.
-    * `[Symbol.iterator]()`: Iterator protocol — yields the `Ok` value if it is iterable.
-* **Static Methods on `Result`:**
-    * `Result.from(fn, errorTransform?)`: Wraps a sync function that might throw. Returns `Ok(result)` or `Err(error)`.
-    * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function returning a Promise. Returns `Promise<Result>`.
-    * `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or `Err`.
+- **Checking:**
+  - `isOk()`: Returns `true` if `Ok`.
+  - `isErr()`: Returns `true` if `Err`.
+  - `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies `fn`.
+  - `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies `fn`.
+  - `contains(value)`: Returns `true` if `Ok` and the value equals `value`.
+- **Extracting Values:**
+  - `ok()`: Returns the `Ok` value as `Some(value)` or `None`.
+  - `err()`: Returns the `Err` value as `Some(error)` or `None`.
+  - `unwrap()`: Returns the `Ok` value, throws if `Err`. **Use with caution.**
+  - `unwrapErr()`: Returns the `Err` value, throws if `Ok`.
+  - `expect(message)`: Returns `Ok` value, throws `message` if `Err`.
+  - `expectErr(message)`: Returns `Err` value, throws `message` if `Ok`.
+  - `unwrapOr(defaultValue)`: Returns `Ok` value or `defaultValue` if `Err`.
+  - `unwrapOrElse(fn)`: Returns `Ok` value or computes default using
+    `fn(errorValue)` if `Err`.
+  - `unwrapOrDefault()`: Returns `Ok` value or throws (no `Default` trait in
+    TypeScript).
+- **Mapping & Transformation:**
+  - `map(fn)`: Maps `Ok<T>` to `Ok<U>`. Leaves `Err` untouched.
+  - `mapErr(fn)`: Maps `Err<E>` to `Err<F>`. Leaves `Ok` untouched.
+  - `mapOr(defaultValue, fn)`: Applies `fn` to `Ok` value, returns
+    `defaultValue` if `Err`.
+  - `mapOrElse(defaultFn, fn)`: Applies `fn` to `Ok` value, applies `defaultFn`
+    to `Err` value.
+  - `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Ok` value, returns
+    `defaultValue` if `Err`.
+- **Chaining & Side Effects:**
+  - `and(res)`: Returns `res` if `Ok`, else returns self (`Err`).
+  - `andThen(fn)`: Calls `fn(okValue)` if `Ok`, returns the resulting `Result`.
+  - `or(res)`: Returns `res` if `Err`, else returns self (`Ok`).
+  - `orElse(fn)`: Calls `fn(errValue)` if `Err`, returns the resulting `Result`.
+  - `inspect(fn)`: Calls `fn(okValue)` if `Ok`, returns original `Result`.
+  - `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns original `Result`.
+- **Flattening & Transposing:**
+  - `flatten()`: Converts `Result<Result<T, E>, E>` to `Result<T, E>`.
+  - `transpose()`: Transposes `Result<Option<T>, E>` into
+    `Option<Result<T, E>>`.
+- **Pattern Matching:**
+  - `match(matcher)`: Executes `matcher.Ok(value)` or `matcher.Err(error)`,
+    returning the result.
+- **Cloning:**
+  - `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value
+    (using `structuredClone`). `Err` values are not cloned.
+- **Destructuring:**
+  - `asTuple()`: Returns `[undefined, T]` for `Ok` or `[E, undefined]` for
+    `Err`.
+  - `asObject()`: Returns `{ error: undefined, value: T }` for `Ok` or
+    `{ error: E, value: undefined }` for `Err`.
+- **Iteration:**
+  - `iter()`: Returns an iterator that yields the `Ok` value once, or nothing if
+    `Err`.
+  - `[Symbol.iterator]()`: Iterator protocol — yields the `Ok` value if it is
+    iterable.
+- **Static Methods on `Result`:**
+  - `Result.from(fn, errorTransform?)`: Wraps a sync function that might throw.
+    Returns `Ok(result)` or `Err(error)`.
+  - `Result.fromAsync(fn, errorTransform?)`: Wraps an async function returning a
+    Promise. Returns `Promise<Result>`.
+  - `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or
+    `Err`.
 
 ### Option\<T\>
 
-* **Checking:**
-    * `isSome()`: Returns `true` if `Some`.
-    * `isNone()`: Returns `true` if `None`.
-    * `isSomeAnd(fn)`: Returns `true` if `Some` and the value satisfies `fn`.
-    * `contains(value)`: Returns `true` if `Some` and the value equals `value`.
-* **Extracting Values:**
-    * `unwrap()`: Returns the `Some` value, throws if `None`. **Use with caution.**
-    * `expect(message)`: Returns the `Some` value, throws `message` if `None`.
-    * `unwrapOr(defaultValue)`: Returns the `Some` value or `defaultValue` if `None`.
-    * `unwrapOrElse(fn)`: Returns the `Some` value or computes default using `fn()` if `None`.
-    * `unwrapOrDefault()`: Returns the `Some` value or throws (no `Default` trait in TypeScript).
-* **Mapping & Transformation:**
-    * `map(fn)`: Maps `Some<T>` to `Some<U>`. Leaves `None` untouched.
-    * `mapOr(defaultValue, fn)`: Applies `fn` to `Some` value, returns `defaultValue` if `None`.
-    * `mapOrElse(defaultFn, fn)`: Applies `fn` to `Some` value, applies `defaultFn` if `None`.
-    * `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Some` value, returns `defaultValue` if `None`.
-* **Chaining & Side Effects:**
-    * `and(res)`: Returns `res` if `Some`, else returns `None`.
-    * `andThen(fn)`: Calls `fn(someValue)` if `Some`, returns the resulting `Option`.
-    * `or(res)`: Returns self if `Some`, else returns `res`.
-    * `orElse(fn)`: Returns self if `Some`, else calls `fn()` and returns the result.
-    * `xor(other)`: Returns `Some` if exactly one of self or `other` is `Some`, else `None`.
-    * `inspect(fn)`: Calls `fn(someValue)` if `Some`, returns original `Option`.
-* **Filtering:**
-    * `filter(predicate)`: Returns `Some(value)` if `Some` and predicate passes, else `None`.
-* **Flattening & Transposing:**
-    * `flatten()`: Converts `Option<Option<T>>` to `Option<T>`.
-    * `transpose()`: Transposes `Option<Result<T, E>>` into `Result<Option<T>, E>`.
-* **Inserting & Taking (Mutating):**
-    * `getOrInsert(value)`: Returns the contained value. If `None`, inserts and returns `value`.
-    * `getOrInsertWith(fn)`: Returns the contained value. If `None`, computes and inserts `fn()`.
-    * `take()`: Extracts the value, leaving the option as `None`. Returns the value as `Some`.
-    * `takeIf(predicate)`: Extracts the value if `Some` and predicate passes, leaving `None`.
-* **Pattern Matching:**
-    * `match(matcher)`: Executes `matcher.Some(value)` or `matcher.None()`, returning the result.
-* **Cloning:**
-    * `cloned()`: Returns a new `Option` with a deep clone of the `Some` value (using `structuredClone`).
-* **Zipping:**
-    * `zip(other)`: Zips `Some(a)` with `Some(b)` into `Some([a, b])`, else `None`.
-    * `zipWith(other, fn)`: Zips `Some(a)` with `Some(b)` using `fn(a, b)` into `Some(result)`, else `None`.
-* **Iteration:**
-    * `[Symbol.iterator]()`: Iterator protocol — yields the `Some` value if it is iterable.
-* **Converting to Result:**
-    * `okOr(err)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(err)`.
-    * `okOrElse(fn)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(fn())`.
-* **Static Methods on `Option`:**
-    * `Option.fromNullable(fn)`: Wraps a function that might return `null` or `undefined`. Returns `Some(value)` or `None`.
-    * `Option.isOption(value)`: Type guard, returns `true` if `value` is `Some` or `None`.
+- **Checking:**
+  - `isSome()`: Returns `true` if `Some`.
+  - `isNone()`: Returns `true` if `None`.
+  - `isSomeAnd(fn)`: Returns `true` if `Some` and the value satisfies `fn`.
+  - `contains(value)`: Returns `true` if `Some` and the value equals `value`.
+- **Extracting Values:**
+  - `unwrap()`: Returns the `Some` value, throws if `None`. **Use with
+    caution.**
+  - `expect(message)`: Returns the `Some` value, throws `message` if `None`.
+  - `unwrapOr(defaultValue)`: Returns the `Some` value or `defaultValue` if
+    `None`.
+  - `unwrapOrElse(fn)`: Returns the `Some` value or computes default using
+    `fn()` if `None`.
+  - `unwrapOrDefault()`: Returns the `Some` value or throws (no `Default` trait
+    in TypeScript).
+- **Mapping & Transformation:**
+  - `map(fn)`: Maps `Some<T>` to `Some<U>`. Leaves `None` untouched.
+  - `mapOr(defaultValue, fn)`: Applies `fn` to `Some` value, returns
+    `defaultValue` if `None`.
+  - `mapOrElse(defaultFn, fn)`: Applies `fn` to `Some` value, applies
+    `defaultFn` if `None`.
+  - `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Some` value, returns
+    `defaultValue` if `None`.
+- **Chaining & Side Effects:**
+  - `and(res)`: Returns `res` if `Some`, else returns `None`.
+  - `andThen(fn)`: Calls `fn(someValue)` if `Some`, returns the resulting
+    `Option`.
+  - `or(res)`: Returns self if `Some`, else returns `res`.
+  - `orElse(fn)`: Returns self if `Some`, else calls `fn()` and returns the
+    result.
+  - `xor(other)`: Returns `Some` if exactly one of self or `other` is `Some`,
+    else `None`.
+  - `inspect(fn)`: Calls `fn(someValue)` if `Some`, returns original `Option`.
+- **Filtering:**
+  - `filter(predicate)`: Returns `Some(value)` if `Some` and predicate passes,
+    else `None`.
+- **Flattening & Transposing:**
+  - `flatten()`: Converts `Option<Option<T>>` to `Option<T>`.
+  - `transpose()`: Transposes `Option<Result<T, E>>` into
+    `Result<Option<T>, E>`.
+- **Inserting & Taking (Mutating):**
+  - `getOrInsert(value)`: Returns the contained value. If `None`, inserts and
+    returns `value`.
+  - `getOrInsertWith(fn)`: Returns the contained value. If `None`, computes and
+    inserts `fn()`.
+  - `take()`: Extracts the value, leaving the option as `None`. Returns the
+    value as `Some`.
+  - `takeIf(predicate)`: Extracts the value if `Some` and predicate passes,
+    leaving `None`.
+- **Pattern Matching:**
+  - `match(matcher)`: Executes `matcher.Some(value)` or `matcher.None()`,
+    returning the result.
+- **Cloning:**
+  - `cloned()`: Returns a new `Option` with a deep clone of the `Some` value
+    (using `structuredClone`).
+- **Zipping:**
+  - `zip(other)`: Zips `Some(a)` with `Some(b)` into `Some([a, b])`, else
+    `None`.
+  - `zipWith(other, fn)`: Zips `Some(a)` with `Some(b)` using `fn(a, b)` into
+    `Some(result)`, else `None`.
+- **Iteration:**
+  - `[Symbol.iterator]()`: Iterator protocol — yields the `Some` value if it is
+    iterable.
+- **Converting to Result:**
+  - `okOr(err)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(err)`.
+  - `okOrElse(fn)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(fn())`.
+- **Static Methods on `Option`:**
+  - `Option.fromNullable(fn)`: Wraps a function that might return `null` or
+    `undefined`. Returns `Some(value)` or `None`.
+  - `Option.isOption(value)`: Type guard, returns `true` if `value` is `Some` or
+    `None`.
 
 ## Examples
 
 ### Chaining with Result
 
 ```typescript
-import { Result, Ok, Err } from "@ghaerdi/rustify";
+import { Err, Ok, Result } from "@ghaerdi/rustify";
 
 function parseAge(input: string): Result<number, string> {
   const num = parseInt(input, 10);
@@ -215,8 +269,8 @@ function parseAge(input: string): Result<number, string> {
 }
 
 const result = parseAge("25")
-  .map(age => age + 1)             // Ok(26)
-  .andThen(age => Ok(age.toString())); // Ok("26")
+  .map((age) => age + 1) // Ok(26)
+  .andThen((age) => Ok(age.toString())); // Ok("26")
 
 console.log(result.unwrap()); // "26"
 ```
@@ -224,14 +278,17 @@ console.log(result.unwrap()); // "26"
 ### Chaining with Option
 
 ```typescript
-import { Some, None, Option } from "@ghaerdi/rustify";
+import { None, Option, Some } from "@ghaerdi/rustify";
 
-const config: Option<Record<string, string>> = Some({ theme: "dark", lang: "en" });
+const config: Option<Record<string, string>> = Some({
+  theme: "dark",
+  lang: "en",
+});
 
 const theme = config
-  .map(c => c.theme)         // Some("dark")
-  .filter(t => t === "dark") // Some("dark")
-  .unwrapOr("light");        // "dark"
+  .map((c) => c.theme) // Some("dark")
+  .filter((t) => t === "dark") // Some("dark")
+  .unwrapOr("light"); // "dark"
 
 console.log(theme);
 ```
@@ -239,7 +296,7 @@ console.log(theme);
 ### Converting throwing functions
 
 ```typescript
-import { Result, Option } from "@ghaerdi/rustify";
+import { Option, Result } from "@ghaerdi/rustify";
 
 // Result.from catches thrown errors
 const parsed = Result.from(() => JSON.parse('{"valid": true}'));
@@ -257,28 +314,28 @@ const element = Option.fromNullable(() => document.getElementById("app"));
 
 This project uses Bun.
 
-* **Install Dependencies:**
-    ```bash
-    bun install
-    ```
-* **Type Checking:**
-    ```bash
-    bun run check --watch
-    ```
-* **Run Tests:**
-    ```bash
-    bun test --watch
-    ```
+- **Install Dependencies:**
+  ```bash
+  bun install
+  ```
+- **Type Checking:**
+  ```bash
+  bun run check --watch
+  ```
+- **Run Tests:**
+  ```bash
+  bun test --watch
+  ```
 
 ## Contributing
 
 Contributions welcome! Please submit issues and pull requests.
 
-1.  Fork the repository.
-2.  Create your feature branch.
-3.  Commit your changes.
-4.  Push to the branch.
-5.  Open a Pull Request.
+1. Fork the repository.
+2. Create your feature branch.
+3. Commit your changes.
+4. Push to the branch.
+5. Open a Pull Request.
 
 ## License
 
@@ -286,5 +343,5 @@ MIT License - see the LICENSE file for details.
 
 ## Links
 
-* [GitHub Repository](https://github.com/ghaerdi/rustify)
-* [Issue Tracker](https://github.com/ghaerdi/rustify/issues)
+- [GitHub Repository](https://github.com/ghaerdi/rustify)
+- [Issue Tracker](https://github.com/ghaerdi/rustify/issues)

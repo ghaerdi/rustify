@@ -1,6 +1,6 @@
 import type { BaseResult, ResultMatcher } from "./types.ts";
 import type { Option } from "../option/index.ts";
-import { Some, None } from "../option/index.ts";
+import { None, Some } from "../option/index.ts";
 import { Err } from "./result.ts";
 import type { Result } from "./result.ts";
 import { toString } from "../utils.ts";
@@ -30,22 +30,34 @@ export class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
-  asObject(): { error: E, value: undefined } {
+  asObject(): { error: E; value: undefined } {
     return { error: this.#value, value: undefined };
   }
 
   /** @inheritDoc */
-  isOk(): false { return false; }
+  isOk(): false {
+    return false;
+  }
   /** @inheritDoc */
-  isOkAnd(_fn: (value: T) => boolean): false { return false; }
+  isOkAnd(_fn: (value: T) => boolean): false {
+    return false;
+  }
   /** @inheritDoc */
-  isErr(): true { return true; }
+  isErr(): true {
+    return true;
+  }
   /** @inheritDoc */
-  isErrAnd(fn: (value: E) => boolean): boolean { return fn(this.#value); }
+  isErrAnd(fn: (value: E) => boolean): boolean {
+    return fn(this.#value);
+  }
   /** @inheritDoc */
-  ok(): Option<T> { return None(); }
+  ok(): Option<T> {
+    return None();
+  }
   /** @inheritDoc */
-  err(): Option<E> { return Some(this.#value); }
+  err(): Option<E> {
+    return Some(this.#value);
+  }
 
   /** @inheritDoc */
   map<U>(_fn: (value: T) => U): Result<U, E> {
@@ -150,7 +162,9 @@ export class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
   /** @inheritDoc */
   unwrapOrDefault(): T {
-    throw new Error("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+    throw new Error(
+      "Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.",
+    );
   }
 
   /** @inheritDoc */
@@ -170,9 +184,9 @@ export class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
         return {
           next(): IteratorResult<T> {
             return { done: true, value: undefined! };
-          }
+          },
         };
-      }
+      },
     };
   }
 
@@ -189,7 +203,7 @@ export class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     return {
       next(): IteratorResult<never> {
         return { done: true, value: undefined! };
-      }
+      },
     };
   }
 }
