@@ -1,3 +1,52 @@
+/**
+ * @module result
+ *
+ * Provides the `Result` type for representing operations that may succeed or fail.
+ *
+ * A `Result<T, E>` is either `Ok(value)` (containing a success value of type `T`)
+ * or `Err(error)` (containing a failure value of type `E`). This enables explicit
+ * error handling without throwing exceptions.
+ *
+ * ## Creating Results
+ *
+ * ```typescript
+ * import { Ok, Err, Result } from "@ghaerdi/rustify/result";
+ *
+ * const success: Result<number, string> = Ok(42);
+ * const failure: Result<number, string> = Err("something went wrong");
+ *
+ * // From a throwing function
+ * const parsed = Result.from(() => JSON.parse("{\"x\": 1}"));
+ *
+ * // From an async function
+ * const data = await Result.fromAsync(() => fetch("/api/data"));
+ * ```
+ *
+ * ## Working with Results
+ *
+ * Results support functional chaining for error propagation:
+ *
+ * ```typescript
+ * Ok(5)
+ *   .map(x => x * 2)          // Ok(10)
+ *   .andThen(x => x > 15 ? Err("too large") : Ok(x)) // Ok(10)
+ *   .mapErr(e => new Error(e)) // Ok(10)
+ *   .unwrap();                 // 10
+ * ```
+ *
+ * ## Pattern Matching
+ *
+ * ```typescript
+ * const message = result.match({
+ *   Ok: (value) => `Success: ${value}`,
+ *   Err: (error) => `Failed: ${error}`,
+ * });
+ * ```
+ *
+ * @see {@link Ok} to create a success value
+ * @see {@link Err} to create a failure value
+ */
+
 import { toString } from "./utils.ts";
 import type { Option } from "./option.ts";
 import { Some, None } from "./option.ts";

@@ -1,4 +1,48 @@
 /**
+ * @module option
+ *
+ * Provides the `Option` type for representing optional values in a type-safe way.
+ *
+ * An `Option<T>` is either `Some(value)` (containing a value of type `T`) or `None`
+ * (representing the absence of a value). This eliminates the need for `null` and
+ * `undefined` checks and makes missing values explicit in the type system.
+ *
+ * ## Creating Options
+ *
+ * ```typescript
+ * import { Some, None, Option } from "@ghaerdi/rustify/option";
+ *
+ * const some: Option<number> = Some(5);
+ * const none: Option<number> = None();
+ * const fromNull: Option<string> = Option.fromNullable(() => maybeGetValue());
+ * ```
+ *
+ * ## Working with Options
+ *
+ * Options support a rich set of combinators for chaining operations:
+ *
+ * ```typescript
+ * Some(5)
+ *   .map(x => x * 2)        // Some(10)
+ *   .filter(x => x > 8)     // Some(10)
+ *   .andThen(x => Some(x + 1)) // Some(11)
+ *   .unwrap();               // 11
+ * ```
+ *
+ * ## Pattern Matching
+ *
+ * ```typescript
+ * const result = some.match({
+ *   Some: (value) => `Got: ${value}`,
+ *   None: () => "Nothing",
+ * });
+ * ```
+ *
+ * @see {@link Some} to create a present value
+ * @see {@link None} to represent an absent value
+ */
+
+/**
  * Interface defining the structure for the pattern matching handlers used by the `match` method.
  * @template T The type of the value.
  * @template U The return type of the Some handler.
