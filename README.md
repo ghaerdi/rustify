@@ -4,7 +4,7 @@
 [![JSR version](https://jsr.io/badges/@ghaerdi/rustify)](https://jsr.io/@ghaerdi/rustify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <br>
-A TypeScript monad library inspired by Rust, providing `Result` and `Option` types for safe error handling and null management with functional programming patterns.
+A TypeScript library inspired by Rust, providing `Result` and `Option` types for safe error handling and null management with functional programming patterns.
 
 ## Why rustify?
 
@@ -51,60 +51,41 @@ import { Result, Ok, Err, Option, Some, None } from "@ghaerdi/rustify";
 
 // --- Creating a function that returns a Result ---
 
-// Example: A function that performs division but returns Err for division by zero
 function divide(numerator: number, denominator: number): Result<number, string> {
   if (denominator === 0) {
-    return Err("Cannot divide by zero"); // Failure case
+    return Err("Cannot divide by zero");
   }
-  const result = numerator / denominator;
-  return Ok(result); // Success case
+  return Ok(numerator / denominator);
 }
 
 // --- Using the function and handling the Result ---
 
-const result = divide(10, 2); // Try change 2 to 0 for an Err case
+const result = divide(10, 2);
 
 // Use 'match' to exhaustively handle both Ok and Err cases.
-// This is often the clearest way to ensure all possibilities are handled.
-const messageFromResult = result.match({
-  Ok: (value) => {
-    // This runs only if result is Ok
-    console.log(`Match Ok (Result): Division successful, value is ${value}`);
-    return `Result: ${value}`;
-  },
-  Err: (errorMessage) => {
-    // This runs only if result is Err
-    console.error("Match Err (Result):", errorMessage);
-    return `Error: ${errorMessage}`;
-  }
+const message = result.match({
+  Ok: (value) => `Result: ${value}`,
+  Err: (error) => `Error: ${error}`,
 });
+console.log(message); // "Result: 5"
 
-console.log(messageFromResult);
-
-// Example with Option
-const anOptionalString: Option<string> = Some("Hello, Option!");
-const messageFromOption = anOptionalString.match({
-    Some: (value) => `Option has value: ${value}`,
-    None: () => "Option is None"
-});
-console.log(messageFromOption);
-
-
-// Working with ok() and err() methods that now return Option:
+// Working with ok() and err() methods that return Option:
 const okValue = result.ok(); // Returns Option<number>
 if (okValue.isSome()) {
   console.log(`Ok value: ${okValue.unwrap()}`);
 }
 
-const errValue = result.err(); // Returns Option<string> 
-if (errValue.isSome()) {
-  console.log(`Error: ${errValue.unwrap()}`);
-}
+// Example with Option
+const name: Option<string> = Some("Alice");
+const greeting = name.match({
+  Some: (value) => `Hello, ${value}!`,
+  None: () => "Hello, stranger!",
+});
+console.log(greeting); // "Hello, Alice!"
 
-// Other methods like Result.from, isOk, map, andThen, unwrapOrElse, asTuple etc.
-// and Option.fromNullable, isSome, map, unwrapOr etc.
-// allow for wrapping functions, specific checks, transformations, and handling patterns.
-// See the API Overview sections for more details.
+// Wrapping unsafe operations
+const parsed = Result.from(() => JSON.parse('{"x": 1}')); // Ok({x: 1})
+const nullable = Option.fromNullable(() => document.getElementById("app")); // Some(element) or None
 ```
 
 ## Core Concepts
@@ -114,18 +95,18 @@ if (errValue.isSome()) {
     * `Err<E>`: Contains an error value.
 * **`Option<T>`:** Represents an optional value, either `Some<T>` or `None`.
     * `Some<T>`: Contains a value. Becomes iterable if `T` is iterable.
-    * `None()`: Represents the absence of a value. Call `None()` to create a None instance. You can check if an option is None using the `.isNone()` method.
-
+    * `None()`: Represents the absence of a value. Call `None()` to create a None instance.
 
 ## API Overview
 
-The `Result` type provides numerous methods for handling and transformation:
+### Result\<T, E\>
 
 * **Checking:**
     * `isOk()`: Returns `true` if `Ok`.
     * `isErr()`: Returns `true` if `Err`.
     * `isOkAnd(fn)`: Returns `true` if `Ok` and the value satisfies `fn`.
     * `isErrAnd(fn)`: Returns `true` if `Err` and the error satisfies `fn`.
+    * `contains(value)`: Returns `true` if `Ok` and the value equals `value`.
 * **Extracting Values:**
     * `ok()`: Returns the `Ok` value as `Some(value)` or `None`.
     * `err()`: Returns the `Err` value as `Some(error)` or `None`.
@@ -135,11 +116,13 @@ The `Result` type provides numerous methods for handling and transformation:
     * `expectErr(message)`: Returns `Err` value, throws `message` if `Ok`.
     * `unwrapOr(defaultValue)`: Returns `Ok` value or `defaultValue` if `Err`.
     * `unwrapOrElse(fn)`: Returns `Ok` value or computes default using `fn(errorValue)` if `Err`.
+    * `unwrapOrDefault()`: Returns `Ok` value or throws (no `Default` trait in TypeScript).
 * **Mapping & Transformation:**
     * `map(fn)`: Maps `Ok<T>` to `Ok<U>`. Leaves `Err` untouched.
     * `mapErr(fn)`: Maps `Err<E>` to `Err<F>`. Leaves `Ok` untouched.
     * `mapOr(defaultValue, fn)`: Applies `fn` to `Ok` value, returns `defaultValue` if `Err`.
     * `mapOrElse(defaultFn, fn)`: Applies `fn` to `Ok` value, applies `defaultFn` to `Err` value.
+    * `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Ok` value, returns `defaultValue` if `Err`.
 * **Chaining & Side Effects:**
     * `and(res)`: Returns `res` if `Ok`, else returns self (`Err`).
     * `andThen(fn)`: Calls `fn(okValue)` if `Ok`, returns the resulting `Result`.
@@ -147,116 +130,128 @@ The `Result` type provides numerous methods for handling and transformation:
     * `orElse(fn)`: Calls `fn(errValue)` if `Err`, returns the resulting `Result`.
     * `inspect(fn)`: Calls `fn(okValue)` if `Ok`, returns original `Result`.
     * `inspectErr(fn)`: Calls `fn(errValue)` if `Err`, returns original `Result`.
+* **Flattening & Transposing:**
+    * `flatten()`: Converts `Result<Result<T, E>, E>` to `Result<T, E>`.
+    * `transpose()`: Transposes `Result<Option<T>, E>` into `Option<Result<T, E>>`.
 * **Pattern Matching:**
     * `match(matcher)`: Executes `matcher.Ok(value)` or `matcher.Err(error)`, returning the result.
 * **Cloning:**
     * `cloned()`: Returns a new `Result` with a deep clone of the `Ok` value (using `structuredClone`). `Err` values are not cloned.
-* **Destructuring / Representation:**
-    * `asTuple()`: Represents the Result's state as a tuple `[error, value]`. Returns `[undefined, T]` for `Ok(T)` and `[E, undefined]` for `Err(E)`.
-    * `asObject()`: Represents the Result's state as an object `{ error, value }`. Returns `{ error: undefined, value: T }` for `Ok(T)` and `{ error: E, value: undefined }` for `Err(E)`.
-* **Utilities (Static Methods on `Result`):**
-    * `Result.from(fn, errorTransform?)`: Wraps a sync function `fn` that might throw. Executes `fn`. Returns `Ok(result)` or `Err(error)`.
-    * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function `fn` returning a Promise. Returns `Promise<Result>`. Handles resolution/rejection.
+* **Destructuring:**
+    * `asTuple()`: Returns `[undefined, T]` for `Ok` or `[E, undefined]` for `Err`.
+    * `asObject()`: Returns `{ error: undefined, value: T }` for `Ok` or `{ error: E, value: undefined }` for `Err`.
+* **Iteration:**
+    * `iter()`: Returns an iterator that yields the `Ok` value once, or nothing if `Err`.
+    * `[Symbol.iterator]()`: Iterator protocol — yields the `Ok` value if it is iterable.
+* **Static Methods on `Result`:**
+    * `Result.from(fn, errorTransform?)`: Wraps a sync function that might throw. Returns `Ok(result)` or `Err(error)`.
+    * `Result.fromAsync(fn, errorTransform?)`: Wraps an async function returning a Promise. Returns `Promise<Result>`.
     * `Result.isResult(value)`: Type guard, returns `true` if `value` is `Ok` or `Err`.
 
-## Option Monad (`Option<T>`)
+### Option\<T\>
 
-The `Option<T>` type represents an optional value: every `Option` is either `Some` and contains a value, or `None` and does not. It's useful for handling cases where a value might be absent, without resorting to `null` or `undefined` directly, thus making potential absences explicit.
+* **Checking:**
+    * `isSome()`: Returns `true` if `Some`.
+    * `isNone()`: Returns `true` if `None`.
+    * `isSomeAnd(fn)`: Returns `true` if `Some` and the value satisfies `fn`.
+    * `contains(value)`: Returns `true` if `Some` and the value equals `value`.
+* **Extracting Values:**
+    * `unwrap()`: Returns the `Some` value, throws if `None`. **Use with caution.**
+    * `expect(message)`: Returns the `Some` value, throws `message` if `None`.
+    * `unwrapOr(defaultValue)`: Returns the `Some` value or `defaultValue` if `None`.
+    * `unwrapOrElse(fn)`: Returns the `Some` value or computes default using `fn()` if `None`.
+    * `unwrapOrDefault()`: Returns the `Some` value or throws (no `Default` trait in TypeScript).
+* **Mapping & Transformation:**
+    * `map(fn)`: Maps `Some<T>` to `Some<U>`. Leaves `None` untouched.
+    * `mapOr(defaultValue, fn)`: Applies `fn` to `Some` value, returns `defaultValue` if `None`.
+    * `mapOrElse(defaultFn, fn)`: Applies `fn` to `Some` value, applies `defaultFn` if `None`.
+    * `mapOrDefault(defaultValue, fn)`: Applies `fn` to `Some` value, returns `defaultValue` if `None`.
+* **Chaining & Side Effects:**
+    * `and(res)`: Returns `res` if `Some`, else returns `None`.
+    * `andThen(fn)`: Calls `fn(someValue)` if `Some`, returns the resulting `Option`.
+    * `or(res)`: Returns self if `Some`, else returns `res`.
+    * `orElse(fn)`: Returns self if `Some`, else calls `fn()` and returns the result.
+    * `xor(other)`: Returns `Some` if exactly one of self or `other` is `Some`, else `None`.
+    * `inspect(fn)`: Calls `fn(someValue)` if `Some`, returns original `Option`.
+* **Filtering:**
+    * `filter(predicate)`: Returns `Some(value)` if `Some` and predicate passes, else `None`.
+* **Flattening & Transposing:**
+    * `flatten()`: Converts `Option<Option<T>>` to `Option<T>`.
+    * `transpose()`: Transposes `Option<Result<T, E>>` into `Result<Option<T>, E>`.
+* **Inserting & Taking (Mutating):**
+    * `getOrInsert(value)`: Returns the contained value. If `None`, inserts and returns `value`.
+    * `getOrInsertWith(fn)`: Returns the contained value. If `None`, computes and inserts `fn()`.
+    * `take()`: Extracts the value, leaving the option as `None`. Returns the value as `Some`.
+    * `takeIf(predicate)`: Extracts the value if `Some` and predicate passes, leaving `None`.
+* **Pattern Matching:**
+    * `match(matcher)`: Executes `matcher.Some(value)` or `matcher.None()`, returning the result.
+* **Cloning:**
+    * `cloned()`: Returns a new `Option` with a deep clone of the `Some` value (using `structuredClone`).
+* **Zipping:**
+    * `zip(other)`: Zips `Some(a)` with `Some(b)` into `Some([a, b])`, else `None`.
+    * `zipWith(other, fn)`: Zips `Some(a)` with `Some(b)` using `fn(a, b)` into `Some(result)`, else `None`.
+* **Iteration:**
+    * `[Symbol.iterator]()`: Iterator protocol — yields the `Some` value if it is iterable.
+* **Converting to Result:**
+    * `okOr(err)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(err)`.
+    * `okOrElse(fn)`: Converts `Some(v)` to `Ok(v)`, `None` to `Err(fn())`.
+* **Static Methods on `Option`:**
+    * `Option.fromNullable(fn)`: Wraps a function that might return `null` or `undefined`. Returns `Some(value)` or `None`.
+    * `Option.isOption(value)`: Type guard, returns `true` if `value` is `Some` or `None`.
 
-`Option<T>` can be either:
-*   `Some<T>`: Represents the presence of a value.
-*   `None`: Represents the absence of a value. `None` is a **singleton instance**. All operations or functions that result in an "empty" option will return this exact instance.
+## Examples
 
-### Creating Options
+### Chaining with Result
 
 ```typescript
-import { Some, None, Option } from "@ghaerdi/rustify"; // Assuming published package, or adjust path e.g. "./src"
+import { Result, Ok, Err } from "@ghaerdi/rustify";
 
-const someValue: Option<number> = Some(10);
-const noValue: Option<number> = None; // None is a singleton
-
-// From potentially null/undefined values
-function findConfig(key: string): { value: string } | undefined {
-  // ... some logic
-  if (key === "timeout") return { value: "3000" };
-  return undefined;
+function parseAge(input: string): Result<number, string> {
+  const num = parseInt(input, 10);
+  if (isNaN(num)) return Err("Not a number");
+  if (num < 0) return Err("Age cannot be negative");
+  if (num > 150) return Err("Unrealistic age");
+  return Ok(num);
 }
 
-const timeoutConfig: Option<{ value: string }> = Option.fromNullable(() => findConfig("timeout"));
-const missingConfig: Option<{ value: string }> = Option.fromNullable(() => findConfig("missing"));
+const result = parseAge("25")
+  .map(age => age + 1)             // Ok(26)
+  .andThen(age => Ok(age.toString())); // Ok("26")
 
-console.log(timeoutConfig.unwrapOr({ value: "default" })); // { value: "3000" }
-console.log(missingConfig.unwrapOr({ value: "default" })); // { value: "default" }
-console.log(missingConfig.isNone()); // true, because findConfig("missing") returns undefined
+console.log(result.unwrap()); // "26"
 ```
 
-### Working with Options
-
-Options provide a variety of methods to work with potential values safely. You can check if an option is `None` by using `myOption.isNone()`.
+### Chaining with Option
 
 ```typescript
-// Unwrapping (getting the value)
-const val = Some(5).unwrapOr(0); // val is 5
-const valOr = None().unwrapOr(0); // valOr is 0
-console.log(`val: ${val}, valOr: ${valOr}`);
+import { Some, None, Option } from "@ghaerdi/rustify";
 
-const valElse = None().unwrapOrElse(() => Math.random()); // valElse is a random number
-console.log(`valElse: ${valElse}`);
+const config: Option<Record<string, string>> = Some({ theme: "dark", lang: "en" });
 
-// Expect (unwrap with a custom error if None)
-// Some("data").expect("Data should be present"); // "data"
-// None().expect("Data should be present"); // Throws Error: "Data should be present"
-// console.log(Some("data").expect("Data should be present")); 
-// try { None().expect("Data should be present"); } catch (e:any) { console.error(e.message); }
+const theme = config
+  .map(c => c.theme)         // Some("dark")
+  .filter(t => t === "dark") // Some("dark")
+  .unwrapOr("light");        // "dark"
 
-
-// Mapping
-const lengthOpt = Some("hello").map(s => s.length); // Some(5)
-const noLengthOpt = None().map((s: string) => s.length); // None instance
-console.log(`lengthOpt: ${lengthOpt.unwrapOr(-1)}, noLengthOpt is None: ${noLengthOpt.isNone()}`);
-console.log(`Is noLengthOpt actually None? ${noLengthOpt.isNone()}`); // true
-
-
-// Chaining (andThen / flatMap)
-const parsed = Some("5").andThen(s => {
-  const num = parseInt(s, 10);
-  return isNaN(num) ? None : Some(num); // Return None singleton
-}); // Some(5)
-console.log(`parsed: ${parsed.unwrapOr(-1)}`);
-
-const notParsed = Some("abc").andThen(s => {
-  const num = parseInt(s, 10);
-  return isNaN(num) ? None : Some(num); // Return None singleton
-}); // None
-console.log(`notParsed is None: ${notParsed.isNone()}`);
-console.log(`Is notParsed actually None? ${notParsed.isNone()}`); // true
-
-
-// Matching
-const optionNumber = Some(42);
-const message = optionNumber.match({
-  Some: value => `The number is: ${value}`,
-  None: () => "No number provided" // Handler for the None singleton
-}); // "The number is: 42"
-console.log(message);
-
-const noOptionNumber: Option<number> = None; // Assign the None singleton
-const noMessage = noOptionNumber.match({
-  Some: value => `The number is: ${value}`,
-  None: () => "No number provided"
-}); // "No number provided"
-console.log(noMessage);
-
-// Direct comparison with None
-if (noOptionNumber.isNone()) {
-  console.log("noOptionNumber is indeed the None singleton.");
-}
+console.log(theme);
 ```
 
-The `Option` type helps avoid common errors like `TypeError: Cannot read property '...' of null/undefined` by making the absence of a value an explicit state that must be handled. Use `.isNone()` method to check for None values.
+### Converting throwing functions
 
-A full API overview for `Option` would be similar to `Result`'s, including methods like:
-`isSome`, `isNone`, `isSomeAnd`, `expect`, `unwrap`, `unwrapOr`, `unwrapOrElse`, `map`, `mapOr`, `mapOrElse`, `inspect`, `and`, `andThen` (flatMap), `or`, `orElse`, `xor`, `cloned`, `zip`, `zipWith`, and `match`. Refer to the source code or generated documentation for exhaustive details on each method's behavior and signature.
+```typescript
+import { Result, Option } from "@ghaerdi/rustify";
+
+// Result.from catches thrown errors
+const parsed = Result.from(() => JSON.parse('{"valid": true}'));
+// parsed is Ok({ valid: true })
+
+const failed = Result.from(() => JSON.parse("invalid"));
+// failed is Err("Unexpected token...")
+
+// Option.fromNullable handles null/undefined
+const element = Option.fromNullable(() => document.getElementById("app"));
+// element is Some(element) or None
+```
 
 ## Development
 
