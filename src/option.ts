@@ -516,70 +516,86 @@ class SomeImpl<T> implements BaseOption<T> {
     this.#value = value;
   }
 
+  /** @inheritDoc */
   isSome(): boolean { return !this.#taken; }
+  /** @inheritDoc */
   isSomeAnd(fn: (value: T) => boolean): boolean { return !this.#taken && fn(this.#value); }
+  /** @inheritDoc */
   isNone(): boolean { return this.#taken; }
 
+  /** @inheritDoc */
   expect(message: string): T {
     if (this.#taken) throw new Error(message);
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrap(): T {
     if (this.#taken) throw new Error('Tried to unwrap a None value');
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrapOr(_defaultValue: T): T {
     if (this.#taken) return _defaultValue;
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrapOrElse(fn: () => T): T {
     if (this.#taken) return fn();
     return this.#value;
   }
 
+  /** @inheritDoc */
   map<U>(fn: (value: T) => U): Option<U> {
     if (this.#taken) return None();
     return Some(fn(this.#value));
   }
 
+  /** @inheritDoc */
   mapOr<U>(_defaultValue: U, fn: (value: T) => U): U {
     if (this.#taken) return _defaultValue;
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   mapOrElse<U>(_defaultFn: () => U, fn: (value: T) => U): U {
     if (this.#taken) return _defaultFn();
     return fn(this.#value);
   }
   
+  /** @inheritDoc */
   inspect(fn: (value: T) => void): Option<T> {
     if (!this.#taken) fn(this.#value);
     return this;
   }
 
+  /** @inheritDoc */
   and<U>(res: Option<U>): Option<U> {
     if (this.#taken) return None();
     return res;
   }
 
+  /** @inheritDoc */
   andThen<U>(fn: (value: T) => Option<U>): Option<U> {
     if (this.#taken) return None();
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   or(_res: Option<T>): Option<T> {
     if (this.#taken) return _res;
     return this;
   }
 
+  /** @inheritDoc */
   orElse(fn: () => Option<T>): Option<T> {
     if (this.#taken) return fn();
     return this;
   }
 
+  /** @inheritDoc */
   xor(optb: Option<T>): Option<T> {
     if (this.#taken) return optb;
     if (optb.isSome()) {
@@ -588,6 +604,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return this;
   }
 
+  /** @inheritDoc */
   cloned(): Option<T> {
     if (this.#taken) return None();
     try {
@@ -599,6 +616,7 @@ class SomeImpl<T> implements BaseOption<T> {
     }
   }
 
+  /** @inheritDoc */
   zip<U>(other: Option<U>): Option<[T, U]> {
     if (this.#taken) return None();
     if (other.isSome()) {
@@ -607,6 +625,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return None();
   }
 
+  /** @inheritDoc */
   zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R> {
     if (this.#taken) return None();
     if (other.isSome()) {
@@ -615,16 +634,19 @@ class SomeImpl<T> implements BaseOption<T> {
     return None();
   }
   
+  /** @inheritDoc */
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
     if (this.#taken) return matcher.None();
     return matcher.Some(this.#value);
   }
 
+  /** @inheritDoc */
   flatten<U>(this: SomeImpl<Option<U>>): Option<U> {
     if (this.#taken) return None();
     return this.#value;
   }
 
+  /** @inheritDoc */
   filter(predicate: (value: T) => boolean): Option<T> {
     if (this.#taken) return None();
     if (predicate(this.#value)) {
@@ -633,6 +655,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return None();
   }
 
+  /** @inheritDoc */
   okOr<E>(_err: E): import("./result.ts").Result<T, E> {
     if (this.#taken) {
       const { Err } = require("./result.ts");
@@ -642,6 +665,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return Ok(this.#value);
   }
 
+  /** @inheritDoc */
   okOrElse<E>(_fn: () => E): import("./result.ts").Result<T, E> {
     if (this.#taken) {
       const { Err } = require("./result.ts");
@@ -651,6 +675,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return Ok(this.#value);
   }
 
+  /** @inheritDoc */
   transpose<U, E>(this: SomeImpl<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E> {
     if (this.#taken) {
       const { Ok } = require("./result.ts");
@@ -666,27 +691,32 @@ class SomeImpl<T> implements BaseOption<T> {
     }
   }
 
+  /** @inheritDoc */
   unwrapOrDefault(): T {
     if (this.#taken) throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
     return this.#value;
   }
 
+  /** @inheritDoc */
   getOrInsert(value: T): T {
     if (this.#taken) return value;
     return this.#value;
   }
 
+  /** @inheritDoc */
   getOrInsertWith(f: () => T): T {
     if (this.#taken) return f();
     return this.#value;
   }
 
+  /** @inheritDoc */
   take(): Option<T> {
     if (this.#taken) return None();
     this.#taken = true;
     return Some(this.#value);
   }
 
+  /** @inheritDoc */
   takeIf(predicate: (value: T) => boolean): Option<T> {
     if (this.#taken) return None();
     if (predicate(this.#value)) {
@@ -696,6 +726,7 @@ class SomeImpl<T> implements BaseOption<T> {
     return None();
   }
 
+  /** @inheritDoc */
   contains(value: T): boolean {
     if (this.#taken) return false;
     return this.#value === value;
@@ -731,121 +762,152 @@ class NoneImpl<T = never> implements BaseOption<T> {
   constructor() {
   }
 
+  /** @inheritDoc */
   isSome(): false { return false; }
+  /** @inheritDoc */
   isSomeAnd(_fn: (value: T) => boolean): false { return false; }
+  /** @inheritDoc */
   isNone(): true { return true; }
 
+  /** @inheritDoc */
   expect(message: string): T {
     throw new Error(message);
   }
 
+  /** @inheritDoc */
   unwrap(): T {
     throw new Error('Tried to unwrap a None value');
   }
 
+  /** @inheritDoc */
   unwrapOr(defaultValue: T): T {
     return defaultValue;
   }
 
+  /** @inheritDoc */
   unwrapOrElse(fn: () => T): T {
     return fn();
   }
 
+  /** @inheritDoc */
   map<U>(_fn: (value: T) => U): Option<U> {
     return None();
   }
 
+  /** @inheritDoc */
   mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
     return defaultValue;
   }
 
+  /** @inheritDoc */
   mapOrElse<U>(defaultFn: () => U, _fn: (value: T) => U): U {
     return defaultFn();
   }
   
+  /** @inheritDoc */
   inspect(_fn: (value: T) => void): Option<T> {
     return None();
   }
 
+  /** @inheritDoc */
   and<U>(_res: Option<U>): Option<U> {
     return None();
   }
 
+  /** @inheritDoc */
   andThen<U>(_fn: (value: T) => Option<U>): Option<U> {
     return None();
   }
 
+  /** @inheritDoc */
   or<U>(res: Option<U>): Option<U> {
     return res;
   }
 
+  /** @inheritDoc */
   orElse<U>(fn: () => Option<U>): Option<U> {
     return fn();
   }
   
+  /** @inheritDoc */
   xor<U>(optb: Option<U>): Option<U> {
     return optb;
   }
 
+  /** @inheritDoc */
   cloned(): Option<T> {
     return None();
   }
 
+  /** @inheritDoc */
   zip<U>(_other: Option<U>): Option<[T, U]> {
     return None()
   }
 
+  /** @inheritDoc */
   zipWith<U, R>(_other: Option<U>, _fn: (s: T, o: U) => R): Option<R> {
     return None()
   }
   
+  /** @inheritDoc */
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
     return matcher.None();
   }
 
+  /** @inheritDoc */
   flatten<U>(): Option<U> {
     return None();
   }
 
+  /** @inheritDoc */
   filter(_predicate: (value: T) => boolean): Option<T> {
     return None();
   }
 
+  /** @inheritDoc */
   okOr<E>(err: E): import("./result.ts").Result<T, E> {
     const { Err } = require("./result.ts");
     return Err(err);
   }
 
+  /** @inheritDoc */
   okOrElse<E>(fn: () => E): import("./result.ts").Result<T, E> {
     const { Err } = require("./result.ts");
     return Err(fn());
   }
 
+  /** @inheritDoc */
   transpose<U, E>(): import("./result.ts").Result<Option<U>, E> {
     const { Ok } = require("./result.ts");
     return Ok(None());
   }
 
+  /** @inheritDoc */
   unwrapOrDefault(): T {
     throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
   }
 
+  /** @inheritDoc */
   getOrInsert(value: T): T {
     return value;
   }
 
+  /** @inheritDoc */
   getOrInsertWith(f: () => T): T {
     return f();
   }
 
+  /** @inheritDoc */
   take(): Option<T> {
     return None();
   }
 
+  /** @inheritDoc */
   takeIf(_predicate: (value: T) => boolean): Option<T> {
     return None();
   }
 
+  /** @inheritDoc */
   contains(_value: T): boolean {
     return false;
   }
@@ -869,6 +931,7 @@ class NoneImpl<T = never> implements BaseOption<T> {
  * ```
  */
 export type Some<T> = SomeImpl<T>;
+/** Creates a new `Some` option containing the given value. */
 export const Some = <T>(value: T): Some<T> => new SomeImpl(value);
 
 
@@ -884,6 +947,7 @@ export const Some = <T>(value: T): Some<T> => new SomeImpl(value);
  * ```
  */
 export type None<T = never> = NoneImpl<T>;
+/** Creates a new `None` option representing the absence of a value. */
 export const None = <T = never>(): None<T> => new NoneImpl<T>();
 
 
@@ -894,6 +958,7 @@ export const None = <T = never>(): None<T> => new NoneImpl<T>();
  */
 export type Option<T> = Some<T> | None<T>;
 
+/** Static methods for creating and checking `Option` values. */
 interface OptionTypeStatics {
   /**
    * Wraps a function that might return null or undefined, converting its result to an `Option<T>`.
@@ -932,6 +997,7 @@ interface OptionTypeStatics {
  * Provides static methods for creating and handling Option instances.
  */
 export const Option: OptionTypeStatics = {
+  /** @inheritDoc */
   fromNullable<T>(fn: () => T | null | undefined): Option<NonNullable<T>> {
     const value = fn();
     if (value === null || value === undefined) {
@@ -939,6 +1005,7 @@ export const Option: OptionTypeStatics = {
     }
     return Some(value as NonNullable<T>);
   },
+  /** @inheritDoc */
   isOption<T>(value: unknown): value is Option<T> {
     return value instanceof SomeImpl || value instanceof NoneImpl;
   }

@@ -535,78 +535,101 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     this.#value = value;
   }
 
+  /** @inheritDoc */
   asTuple(): [undefined, T] {
     return [undefined, this.#value];
   }
 
+  /** @inheritDoc */
   asObject(): { error: undefined; value: T; } {
     return { error: undefined, value: this.#value };
   }
 
+  /** @inheritDoc */
   isOk(): true { return true; }
+  /** @inheritDoc */
   isOkAnd(fn: (value: T) => boolean): boolean { return fn(this.#value); }
+  /** @inheritDoc */
   isErr(): false { return false; }
+  /** @inheritDoc */
   isErrAnd(_fn: (value: E) => boolean): false { return false; }
+  /** @inheritDoc */
   ok(): Option<T> { return Some(this.#value); }
+  /** @inheritDoc */
   err(): Option<E> { return None(); }
 
+  /** @inheritDoc */
   map<U>(fn: (value: T) => U): Result<U, E> {
     return Ok(fn(this.#value));
   }
 
+  /** @inheritDoc */
   mapOr<U>(_defaultValue: U, fn: (value: T) => U): U {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   mapOrElse<U>(_defaultFn: (err: E) => U, fn: (value: T) => U): U {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   mapErr<F>(_fn: (value: E) => F): Result<T, F> {
     return this as unknown as Result<T, F>;
   }
 
+  /** @inheritDoc */
   inspect(fn: (value: T) => void): Result<T, E> {
     fn(this.#value);
     return this;
   }
 
+  /** @inheritDoc */
   inspectErr(_fn: (value: E) => void): Result<T, E> {
     return this;
   }
 
+  /** @inheritDoc */
   expect(_message: string): T {
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrap(): T {
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrapOr(_defaultValue: T): T {
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrapOrElse(_fn: (value: E) => T): T {
     return this.#value;
   }
 
+  /** @inheritDoc */
   and<U>(res: Result<U, E>): Result<U, E> {
     return res;
   }
 
+  /** @inheritDoc */
   andThen<U>(fn: (value: T) => Result<U, E>): Result<U, E> {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   or<F>(_res: Result<T, F>): Result<T, F> {
     return this as unknown as Result<T, F>;
   }
 
+  /** @inheritDoc */
   orElse<F>(_fn: (value: E) => Result<T, F>): Result<T, F> {
     return this as unknown as Result<T, F>;
   }
 
+  /** @inheritDoc */
   cloned(): Result<T, E> {
     try {
       const clonedValue = structuredClone(this.#value);
@@ -617,22 +640,27 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
     }
   }
 
+  /** @inheritDoc */
   expectErr(message: string): E {
     throw new Error(`${message}: ${toString(this.#value)}`);
   }
 
+  /** @inheritDoc */
   unwrapErr(): E {
     throw new Error(`Tried to unwrap Ok value: ${toString(this.#value)}`);
   }
 
+  /** @inheritDoc */
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
     return matcher.Ok(this.#value);
   }
 
+  /** @inheritDoc */
   flatten<U, F>(this: OkImpl<Result<U, F>, E>): Result<U, E | F> {
     return this.#value as Result<U, E | F>;
   }
 
+  /** @inheritDoc */
   transpose<U>(this: OkImpl<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>> {
     const { Some, None } = require("./option.ts");
     const option = this.#value as import("./option.ts").Option<U>;
@@ -645,18 +673,22 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
 
 
+  /** @inheritDoc */
   unwrapOrDefault(): T {
     return this.#value;
   }
 
+  /** @inheritDoc */
   mapOrDefault<U>(_defaultValue: U, fn: (value: T) => U): U {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   contains(value: T): boolean {
     return this.#value === value;
   }
 
+  /** @inheritDoc */
   iter(): Iterable<T> {
     const value = this.#value;
     return {
@@ -708,98 +740,126 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
 
+  /** @inheritDoc */
   asTuple(): [E, undefined] {
     return [this.#value, undefined];
   }
 
+  /** @inheritDoc */
   asObject(): { error: E, value: undefined } {
     return { error: this.#value, value: undefined };
   }
 
+  /** @inheritDoc */
   isOk(): false { return false; }
+  /** @inheritDoc */
   isOkAnd(_fn: (value: T) => boolean): false { return false; }
+  /** @inheritDoc */
   isErr(): true { return true; }
+  /** @inheritDoc */
   isErrAnd(fn: (value: E) => boolean): boolean { return fn(this.#value); }
+  /** @inheritDoc */
   ok(): Option<T> { return None(); }
+  /** @inheritDoc */
   err(): Option<E> { return Some(this.#value); }
 
+  /** @inheritDoc */
   map<U>(_fn: (value: T) => U): Result<U, E> {
     return this as unknown as Result<U, E>;
   }
 
+  /** @inheritDoc */
   mapOr<U>(defaultValue: U, _fn: (value: T) => U): U {
     return defaultValue;
   }
 
+  /** @inheritDoc */
   mapOrElse<U>(defaultFn: (err: E) => U, _fn: (value: T) => U): U {
     return defaultFn(this.#value);
   }
 
+  /** @inheritDoc */
   mapErr<F>(fn: (value: E) => F): Result<T, F> {
     return Err(fn(this.#value));
   }
 
+  /** @inheritDoc */
   inspect(_fn: (value: T) => void): Result<T, E> {
     return this;
   }
 
+  /** @inheritDoc */
   inspectErr(fn: (value: E) => void): Result<T, E> {
     fn(this.#value);
     return this;
   }
 
+  /** @inheritDoc */
   expect(message: string): T {
     throw new Error(`${message}: ${toString(this.#value)}`);
   }
 
+  /** @inheritDoc */
   unwrap(): T {
     throw new Error(`Tried to unwrap Error: ${toString(this.#value)}`);
   }
 
+  /** @inheritDoc */
   unwrapOr(defaultValue: T): T {
     return defaultValue;
   }
 
+  /** @inheritDoc */
   unwrapOrElse(fn: (value: E) => T): T {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   and<U>(_res: Result<U, E>): Result<U, E> {
     return this as unknown as Result<U, E>;
   }
 
+  /** @inheritDoc */
   andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
     return this as unknown as Result<U, E>;
   }
 
+  /** @inheritDoc */
   or<F>(res: Result<T, F>): Result<T, F> {
     return res;
   }
 
+  /** @inheritDoc */
   orElse<F>(fn: (value: E) => Result<T, F>): Result<T, F> {
     return fn(this.#value);
   }
 
+  /** @inheritDoc */
   cloned(): Result<T, E> {
     return this;
   }
 
+  /** @inheritDoc */
   expectErr(_message: string): E {
     return this.#value;
   }
 
+  /** @inheritDoc */
   unwrapErr(): E {
     return this.#value;
   }
 
+  /** @inheritDoc */
   match<U, V>(matcher: ResultMatcher<T, E, U, V>): U | V {
     return matcher.Err(this.#value);
   }
 
+  /** @inheritDoc */
   flatten<U, F>(): Result<U, E | F> {
     return this as unknown as Result<U, E | F>;
   }
 
+  /** @inheritDoc */
   transpose<U>(): import("./option.ts").Option<Result<U, E>> {
     const { Some } = require("./option.ts");
     return Some(Err(this.#value));
@@ -807,18 +867,22 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
 
 
+  /** @inheritDoc */
   unwrapOrDefault(): T {
     throw new Error("Cannot unwrap Err to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
   }
 
+  /** @inheritDoc */
   mapOrDefault<U>(defaultValue: U, _fn: (value: T) => U): U {
     return defaultValue;
   }
 
+  /** @inheritDoc */
   contains(_value: unknown): boolean {
     return false;
   }
 
+  /** @inheritDoc */
   iter(): Iterable<T> {
     return {
       [Symbol.iterator](): Iterator<T> {
@@ -851,6 +915,7 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
  * ```
  */
 export type Ok<T, E = never> = OkImpl<T, E>;
+/** Creates a new `Ok` result containing the given success value. */
 export const Ok = <T>(value: T): Ok<T, never> => new OkImpl(value);
 
 /**
@@ -864,6 +929,7 @@ export const Ok = <T>(value: T): Ok<T, never> => new OkImpl(value);
  * ```
  */
 export type Err<T = never, E = unknown> = ErrImpl<T, E>;
+/** Creates a new `Err` result containing the given error value. */
 export const Err = <E>(value: E): Err<never, E> => new ErrImpl(value);
 
 /**
@@ -888,10 +954,12 @@ export type Result<T, E> = Ok<T, E> | Err<T, E>;
  * ```
  */
 function defaultErrorTransform<E = unknown>(error: unknown): E {
+  /** @inheritDoc */
   return (error instanceof Error ? error.message : error) as E;
 }
 
 
+/** Static methods for creating and checking `Result` values. */
 interface ResultTypeStatics {
   /**
    * Wraps a synchronous function that might throw an error or return a Result,
@@ -969,6 +1037,7 @@ interface ResultTypeStatics {
  * Provides static methods for creating and handling Result instances.
  */
 export const Result: ResultTypeStatics = {
+  /** @inheritDoc */
   from<T, E = unknown>(
     fn: () => T | Result<T, any>,
     errorTransform: (error: unknown) => E = defaultErrorTransform
@@ -984,6 +1053,7 @@ export const Result: ResultTypeStatics = {
     }
   },
 
+  /** @inheritDoc */
   async fromAsync<T, E = unknown>(
     fn: () => Promise<T | Result<T, any>>,
     errorTransform: (error: unknown) => E = defaultErrorTransform
@@ -999,6 +1069,7 @@ export const Result: ResultTypeStatics = {
     }
   },
 
+  /** @inheritDoc */
   isResult<T, E>(value: unknown): value is Result<T, E> {
     return value instanceof OkImpl || value instanceof ErrImpl;
   }
