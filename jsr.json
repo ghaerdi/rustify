@@ -5,6 +5,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./option": "./src/option/index.ts",
-    "./result": "./src/result.ts"
+    "./result": "./src/result/index.ts"
   }
 }

@@ -17,7 +17,7 @@ interface OptionInstance<T> extends BaseOptionStrategy<T> {
   zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R>;
   flatten<U>(): Option<U>;
   filter(predicate: (value: T) => boolean): Option<T>;
-  transpose<U, E>(): import("../result.ts").Result<Option<U>, E>;
+  transpose<U, E>(): import("../result/index.ts").Result<Option<U>, E>;
   take(): Option<T>;
   takeIf(predicate: (value: T) => boolean): Option<T>;
   [Symbol.iterator](): Iterator<any>;
@@ -63,7 +63,12 @@ interface OptionInstance<T> extends BaseOptionStrategy<T> {
  * @see {@link None} to represent an absent value
  */
 export interface Option<T> {
-  /** @internal */ readonly _inner: BaseOptionStrategy<T>;
+  /**
+   * @internal
+   * The underlying strategy instance wrapped by this option.
+   * Used by the library for strategy swapping; not part of the public API.
+   */
+  readonly _inner: BaseOptionStrategy<T>;
 
   /**
    * Returns `true` if the option is a `Some` value.
@@ -333,7 +338,7 @@ export interface Option<T> {
    * None().okOr("fail").unwrapErr(); // "fail"
    * ```
    */
-  okOr<E>(err: E): import("../result.ts").Result<T, E>;
+  okOr<E>(err: E): import("../result/index.ts").Result<T, E>;
 
   /**
    * Converts to `Result<T, E>`: `Some(v)` becomes `Ok(v)`, `None` becomes `Err(fn())`.
@@ -344,7 +349,7 @@ export interface Option<T> {
    * None().okOrElse(() => "computed").unwrapErr(); // "computed"
    * ```
    */
-  okOrElse<E>(fn: () => E): import("../result.ts").Result<T, E>;
+  okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E>;
 
   /**
    * Transposes `Option<Result<T, E>>` into `Result<Option<T>, E>`.
@@ -356,7 +361,7 @@ export interface Option<T> {
    * None().transpose().unwrap().isNone(); // true
    * ```
    */
-  transpose<U, E>(): import("../result.ts").Result<Option<U>, E>;
+  transpose<U, E>(): import("../result/index.ts").Result<Option<U>, E>;
 
   /**
    * Returns the contained value or throws (no `Default` trait in TypeScript).
@@ -480,15 +485,15 @@ class OptionImpl<T> implements OptionInstance<T> {
     if (this.#inner.isSome() && predicate(this.#inner.unwrap())) return this;
     return new OptionImpl(new NoneStrategy<T>());
   }
-  /** @inheritDoc */ okOr<E>(err: E): import("../result.ts").Result<T, E> { return this.#inner.okOr(err); }
-  /** @inheritDoc */ okOrElse<E>(fn: () => E): import("../result.ts").Result<T, E> { return this.#inner.okOrElse(fn); }
-  /** @inheritDoc */ transpose<U, E>(): import("../result.ts").Result<Option<U>, E> {
-    const result = this.#inner.transpose() as import("../result.ts").Result<BaseOptionStrategy<U>, E>;
+  /** @inheritDoc */ okOr<E>(err: E): import("../result/index.ts").Result<T, E> { return this.#inner.okOr(err); }
+  /** @inheritDoc */ okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E> { return this.#inner.okOrElse(fn); }
+  /** @inheritDoc */ transpose<U, E>(): import("../result/index.ts").Result<Option<U>, E> {
+    const result = this.#inner.transpose() as import("../result/index.ts").Result<BaseOptionStrategy<U>, E>;
     if (result.isOk()) {
-      const { Ok } = require("../result.ts");
+      const { Ok } = require("../result/index.ts");
       return Ok(new OptionImpl(result.unwrap()));
     } else {
-      const { Err } = require("../result.ts");
+      const { Err } = require("../result/index.ts");
       return Err(result.unwrapErr());
     }
   }
@@ -603,6 +608,13 @@ export const None = <T>(): Option<T> => new OptionImpl(new NoneStrategy<T>());
 
 // ─── Static methods (namespace merge with Option interface) ────────────────
 
+/**
+ * Namespace containing static utility functions merged with the {@link Option} interface.
+ *
+ * These functions are accessible as `Option.fromNullable(...)` and `Option.isOption(...)`.
+ *
+ * @see {@link Option} for the interface itself
+ */
 export namespace Option {
   /** @inheritDoc */ 
   export const fromNullable = OptionImpl.fromNullable;

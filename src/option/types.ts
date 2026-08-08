@@ -28,9 +28,9 @@ export interface BaseOptionStrategy<T> {
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V;
   flatten<U>(): BaseOptionStrategy<U>;
   filter(predicate: (value: T) => boolean): BaseOptionStrategy<T>;
-  okOr<E>(err: E): import("../result.ts").Result<T, E>;
-  okOrElse<E>(fn: () => E): import("../result.ts").Result<T, E>;
-  transpose<U, E>(): import("../result.ts").Result<BaseOptionStrategy<U>, E>;
+  okOr<E>(err: E): import("../result/index.ts").Result<T, E>;
+  okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E>;
+  transpose<U, E>(): import("../result/index.ts").Result<BaseOptionStrategy<U>, E>;
   unwrapOrDefault(): T;
   getOrInsert(value: T): T;
   getOrInsertWith(f: () => T): T;

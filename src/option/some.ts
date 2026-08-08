@@ -34,11 +34,11 @@ export class SomeStrategy<T> implements BaseOptionStrategy<T> {
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V { return matcher.Some(this.#value); }
   flatten<U>(): BaseOptionStrategy<U> { return this.#value as unknown as BaseOptionStrategy<U>; }
   filter(predicate: (value: T) => boolean): BaseOptionStrategy<T> { return predicate(this.#value) ? this : new NoneStrategy<T>(); }
-  okOr<E>(_err: E): import("../result.ts").Result<T, E> { const { Ok } = require("../result.ts"); return Ok(this.#value); }
-  okOrElse<E>(_fn: () => E): import("../result.ts").Result<T, E> { const { Ok } = require("../result.ts"); return Ok(this.#value); }
-  transpose<U, E>(): import("../result.ts").Result<BaseOptionStrategy<U>, E> {
-    const { Ok, Err } = require("../result.ts");
-    const result = this.#value as unknown as import("../result.ts").Result<U, E>;
+  okOr<E>(_err: E): import("../result/index.ts").Result<T, E> { const { Ok } = require("../result/index.ts"); return Ok(this.#value); }
+  okOrElse<E>(_fn: () => E): import("../result/index.ts").Result<T, E> { const { Ok } = require("../result/index.ts"); return Ok(this.#value); }
+  transpose<U, E>(): import("../result/index.ts").Result<BaseOptionStrategy<U>, E> {
+    const { Ok, Err } = require("../result/index.ts");
+    const result = this.#value as unknown as import("../result/index.ts").Result<U, E>;
     return result.isOk() ? Ok(new SomeStrategy(result.unwrap())) : Err(result.unwrapErr());
   }
   unwrapOrDefault(): T { return this.#value; }

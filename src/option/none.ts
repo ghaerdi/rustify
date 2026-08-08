@@ -24,9 +24,9 @@ export class NoneStrategy<T> implements BaseOptionStrategy<T> {
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V { return matcher.None(); }
   flatten<U>(): BaseOptionStrategy<U> { return new NoneStrategy<U>(); }
   filter(_predicate: (value: T) => boolean): BaseOptionStrategy<T> { return this; }
-  okOr<E>(err: E): import("../result.ts").Result<T, E> { const { Err } = require("../result.ts"); return Err(err); }
-  okOrElse<E>(fn: () => E): import("../result.ts").Result<T, E> { const { Err } = require("../result.ts"); return Err(fn()); }
-  transpose<U, E>(): import("../result.ts").Result<BaseOptionStrategy<U>, E> { const { Ok } = require("../result.ts"); return Ok(new NoneStrategy<U>()); }
+  okOr<E>(err: E): import("../result/index.ts").Result<T, E> { const { Err } = require("../result/index.ts"); return Err(err); }
+  okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E> { const { Err } = require("../result/index.ts"); return Err(fn()); }
+  transpose<U, E>(): import("../result/index.ts").Result<BaseOptionStrategy<U>, E> { const { Ok } = require("../result/index.ts"); return Ok(new NoneStrategy<U>()); }
   unwrapOrDefault(): T { throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead."); }
   getOrInsert(_value: T): T { throw new Error("Cannot call getOrInsert on NoneStrategy — use OptionImpl.getOrInsert instead."); }
   getOrInsertWith(_f: () => T): T { throw new Error("Cannot call getOrInsertWith on NoneStrategy — use OptionImpl.getOrInsertWith instead."); }

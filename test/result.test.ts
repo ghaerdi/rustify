@@ -1,4 +1,4 @@
-import { Result, Err, Ok } from "../src/result.ts";
+import { Result, Err, Ok } from "../src/result/index.ts";
 import { Some, None, Option } from "../src/option/index.ts";
 import { describe, test, expect, mock } from "bun:test";
 

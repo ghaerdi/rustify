@@ -27,5 +27,5 @@
  * parsed.map(n => n * 2).unwrap(); // 84
  * ```
  */
-export * from "./result.ts";
+export * from "./result/index.ts";
 export * from "./option/index.ts";
