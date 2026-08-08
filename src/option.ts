@@ -656,7 +656,7 @@ class SomeImpl<T> implements BaseOption<T> {
       const { Ok } = require("./result.ts");
       return Ok(None());
     }
-    const result = this.#value as any;
+    const result = this.#value as import("./result.ts").Result<U, E>;
     if (result.isOk()) {
       const { Ok } = require("./result.ts");
       return Ok(Some(result.unwrap()));
@@ -710,7 +710,7 @@ class SomeImpl<T> implements BaseOption<T> {
       } as Iterator<T extends Iterable<infer U> ? U : never>;
     }
     const value = this.#value as T;
-    if (value !== null && value !== undefined && typeof (value as any)[Symbol.iterator] === "function") {
+    if (value !== null && value !== undefined && typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] === "function") {
       return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
     } else {
       return {

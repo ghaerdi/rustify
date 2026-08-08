@@ -630,12 +630,12 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   flatten<U, F>(this: OkImpl<Result<U, F>, E>): Result<U, E | F> {
-    return this.#value as any;
+    return this.#value as Result<U, E | F>;
   }
 
   transpose<U>(this: OkImpl<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>> {
     const { Some, None } = require("./option.ts");
-    const option = this.#value as any;
+    const option = this.#value as import("./option.ts").Option<U>;
     if (option.isSome()) {
       return Some(Ok(option.unwrap()));
     } else {
@@ -677,7 +677,7 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
     const value = this.#value as T;
-    if (value !== null && value !== undefined && typeof (value as any)[Symbol.iterator] === "function") {
+    if (value !== null && value !== undefined && typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] === "function") {
       return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
     } else {
       return {

@@ -157,7 +157,7 @@ describe("Option", () => {
       expect(Some(5).mapOr(defaultValue, mapFn)).toBe("5");
     });
     test("None().mapOr(defaultValue, fn) should return defaultValue", () => {
-      expect(None().mapOr(defaultValue, mapFn as any)).toBe(defaultValue); // Use singleton
+      expect(None<number>().mapOr(defaultValue, mapFn)).toBe(defaultValue);
     });
   });
 
@@ -169,7 +169,7 @@ describe("Option", () => {
     });
     test("None().mapOrElse(defaultFn, fn) should return defaultFn()", () => {
       const mockDefaultFn = mock(defaultFn);
-      expect(None().mapOrElse(mockDefaultFn, mapFn as any)).toBe("None!"); // Use singleton
+      expect(None<number>().mapOrElse(mockDefaultFn, mapFn)).toBe("None!");
       expect(mockDefaultFn).toHaveBeenCalledTimes(1);
     });
   });
@@ -364,13 +364,11 @@ describe("Option", () => {
       expect(result.isNone()).toBe(true);
     });
     test("None().zipWith(Some(b), fn) should return None singleton", () => {
-      const result = None().zipWith(Some("a"), zipFn as any); // Use singleton
-      expect(result.isNone()).toBe(true);
+      const result = None<number>().zipWith(Some("a"), zipFn);
       expect(result.isNone()).toBe(true);
     });
     test("None().zipWith(None(), fn) should return None singleton", () => {
-      const result = None().zipWith(None(), zipFn as any); // Use singleton
-      expect(result.isNone()).toBe(true);
+      const result = None<number>().zipWith(None<string>(), zipFn);
       expect(result.isNone()).toBe(true);
     });
   });
@@ -383,7 +381,7 @@ describe("Option", () => {
       expect(result).toBe("Success: 10");
     });
     test("None().match({ Some: s => ..., None: () => ... }) should execute the None handler", () => {
-      const result = None().match({ Some: someHandler as any, None: noneHandler }); // Use singleton
+      const result = None<number>().match({ Some: someHandler, None: noneHandler });
       expect(result).toBe("It was None");
     });
   });
