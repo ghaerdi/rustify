@@ -815,7 +815,7 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
     return defaultValue;
   }
 
-  contains(_value: T): boolean {
+  contains(_value: unknown): boolean {
     return false;
   }
 

@@ -453,7 +453,7 @@ describe("Option", () => {
       expect(Some(5).contains(10)).toBe(false);
     });
     test("None().contains(value) should return false", () => {
-      expect(None().contains(5)).toBe(false);
+      expect(None<number>().contains(5)).toBe(false);
     });
   });
 
@@ -530,7 +530,7 @@ describe("Option", () => {
       expect(Some(5).getOrInsert(10)).toBe(5);
     });
     test("None().getOrInsert() should return value", () => {
-      expect((None() as Option<number>).getOrInsert(10)).toBe(10);
+      expect(None<number>().getOrInsert(10)).toBe(10);
     });
   });
 
@@ -539,7 +539,7 @@ describe("Option", () => {
       expect(Some(5).getOrInsertWith(() => 10)).toBe(5);
     });
     test("None().getOrInsertWith() should return value", () => {
-      expect((None() as Option<number>).getOrInsertWith(() => 10)).toBe(10);
+      expect(None<number>().getOrInsertWith(() => 10)).toBe(10);
     });
   });
 
