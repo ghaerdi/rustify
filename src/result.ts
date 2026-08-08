@@ -449,6 +449,19 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
   mapOrDefault<U>(defaultValue: U, fn: (value: T) => U): U;
 
   /**
+   * Returns `true` if the result is `Ok` and the contained value equals `value`.
+   * @param value The value to compare against.
+   * @returns `true` if the result is `Ok` and equal to `value`.
+   * @example
+   * ```typescript
+   * Ok(5).contains(5);  // true
+   * Ok(5).contains(10); // false
+   * Err("error").contains(5); // false
+   * ```
+   */
+  contains(value: T): boolean;
+
+  /**
    * Returns an iterator over the possibly contained value.
    * @returns Iterable yielding the Ok value if present, nothing if Err.
    * @example
@@ -589,6 +602,10 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
 
   mapOrDefault<U>(_defaultValue: U, fn: (value: T) => U): U {
     return fn(this.#value);
+  }
+
+  contains(value: T): boolean {
+    return this.#value === value;
   }
 
   iter(): Iterable<T> {
@@ -747,6 +764,10 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
 
   mapOrDefault<U>(defaultValue: U, _fn: (value: T) => U): U {
     return defaultValue;
+  }
+
+  contains(_value: T): boolean {
+    return false;
   }
 
   iter(): Iterable<T> {

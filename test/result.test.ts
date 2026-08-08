@@ -679,6 +679,18 @@ describe('Result', () => {
     });
   });
 
+  describe("contains", () => {
+    test("Ok(value).contains(value) should return true", () => {
+      expect(Ok(5).contains(5)).toBe(true);
+    });
+    test("Ok(value).contains(differentValue) should return false", () => {
+      expect(Ok(5).contains(10)).toBe(false);
+    });
+    test("Err(error).contains(value) should return false", () => {
+      expect(Err("error").contains(5)).toBe(false);
+    });
+  });
+
   describe("iter", () => {
     describe("Ok variant", () => {
       test("Ok(value).iter() should yield the value once", () => {

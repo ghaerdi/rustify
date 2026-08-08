@@ -393,6 +393,69 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
    * ```
    */
   unwrapOrDefault(): T;
+
+  /**
+   * Inserts `value` into the option if it is `None`, then returns the contained value.
+   * If the option already contains a value, the old value is returned unchanged.
+   * @param value The value to insert if the option is None.
+   * @returns The contained value (existing or newly inserted).
+   * @example
+   * ```typescript
+   * Some(5).getOrInsert(10); // 5
+   * None().getOrInsert(10);  // 10
+   * ```
+   */
+  getOrInsert(value: T): T;
+
+  /**
+   * Inserts a value computed from `f` into the option if it is `None`,
+   * then returns the contained value.
+   * @param f The function to compute the default value if None.
+   * @returns The contained value (existing or computed).
+   * @example
+   * ```typescript
+   * Some(5).getOrInsertWith(() => 10); // 5
+   * None().getOrInsertWith(() => 10);  // 10
+   * ```
+   */
+  getOrInsertWith(f: () => T): T;
+
+  /**
+   * Takes the value out of the option, returning it.
+   * @returns The contained value if Some, or None if None.
+   * @example
+   * ```typescript
+   * const x = Some(5);
+   * const y = x.take(); // y is Some(5)
+   * ```
+   */
+  take(): Option<T>;
+
+  /**
+   * Takes the value out of the option if the predicate returns true.
+   * @param predicate The predicate to test the contained value.
+   * @returns Some(value) if predicate returns true, None otherwise.
+   * @example
+   * ```typescript
+   * Some(5).takeIf(v => v > 3); // Some(5)
+   * Some(5).takeIf(v => v > 10); // None
+   * None().takeIf(v => true); // None
+   * ```
+   */
+  takeIf(predicate: (value: T) => boolean): Option<T>;
+
+  /**
+   * Returns `true` if the option is `Some` and the contained value equals `value`.
+   * @param value The value to compare against.
+   * @returns `true` if the option is `Some` and equal to `value`.
+   * @example
+   * ```typescript
+   * Some(5).contains(5);  // true
+   * Some(5).contains(10); // false
+   * None().contains(5);   // false
+   * ```
+   */
+  contains(value: T): boolean;
 }
 
 /**
@@ -400,6 +463,7 @@ interface BaseOption<T> extends Iterable<T extends Iterable<infer U> ? U : never
  */
 class SomeImpl<T> implements BaseOption<T> {
   #value!: T;
+  #taken = false;
 
   constructor(value: T) {
     if (!(this instanceof SomeImpl)) {
@@ -408,60 +472,72 @@ class SomeImpl<T> implements BaseOption<T> {
     this.#value = value;
   }
 
-  isSome(): true { return true; }
-  isSomeAnd(fn: (value: T) => boolean): boolean { return fn(this.#value); }
-  isNone(): false { return false; }
+  isSome(): boolean { return !this.#taken; }
+  isSomeAnd(fn: (value: T) => boolean): boolean { return !this.#taken && fn(this.#value); }
+  isNone(): boolean { return this.#taken; }
 
-  expect(_message: string): T {
+  expect(message: string): T {
+    if (this.#taken) throw new Error(message);
     return this.#value;
   }
 
   unwrap(): T {
+    if (this.#taken) throw new Error('Tried to unwrap a None value');
     return this.#value;
   }
 
   unwrapOr(_defaultValue: T): T {
+    if (this.#taken) return _defaultValue;
     return this.#value;
   }
 
-  unwrapOrElse(_fn: () => T): T {
+  unwrapOrElse(fn: () => T): T {
+    if (this.#taken) return fn();
     return this.#value;
   }
 
   map<U>(fn: (value: T) => U): Option<U> {
+    if (this.#taken) return None();
     return Some(fn(this.#value));
   }
 
   mapOr<U>(_defaultValue: U, fn: (value: T) => U): U {
+    if (this.#taken) return _defaultValue;
     return fn(this.#value);
   }
 
   mapOrElse<U>(_defaultFn: () => U, fn: (value: T) => U): U {
+    if (this.#taken) return _defaultFn();
     return fn(this.#value);
   }
   
   inspect(fn: (value: T) => void): Option<T> {
-    fn(this.#value);
+    if (!this.#taken) fn(this.#value);
     return this;
   }
 
   and<U>(res: Option<U>): Option<U> {
+    if (this.#taken) return None();
     return res;
   }
 
   andThen<U>(fn: (value: T) => Option<U>): Option<U> {
+    if (this.#taken) return None();
     return fn(this.#value);
   }
 
   or(_res: Option<T>): Option<T> {
+    if (this.#taken) return _res;
     return this;
   }
 
-  orElse(_fn: () => Option<T>): Option<T> {
+  orElse(fn: () => Option<T>): Option<T> {
+    if (this.#taken) return fn();
     return this;
   }
 
   xor(optb: Option<T>): Option<T> {
+    if (this.#taken) return optb;
     if (optb.isSome()) {
       return None();
     }
@@ -469,6 +545,7 @@ class SomeImpl<T> implements BaseOption<T> {
   }
 
   cloned(): Option<T> {
+    if (this.#taken) return None();
     try {
       const clonedValue = structuredClone(this.#value);
       return Some(clonedValue);
@@ -479,6 +556,7 @@ class SomeImpl<T> implements BaseOption<T> {
   }
 
   zip<U>(other: Option<U>): Option<[T, U]> {
+    if (this.#taken) return None();
     if (other.isSome()) {
       return Some([this.#value, other.unwrap()] as [T, U]);
     }
@@ -486,6 +564,7 @@ class SomeImpl<T> implements BaseOption<T> {
   }
 
   zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R> {
+    if (this.#taken) return None();
     if (other.isSome()) {
       return Some(fn(this.#value, other.unwrap()));
     }
@@ -493,14 +572,17 @@ class SomeImpl<T> implements BaseOption<T> {
   }
   
   match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
+    if (this.#taken) return matcher.None();
     return matcher.Some(this.#value);
   }
 
   flatten<U>(this: SomeImpl<Option<U>>): Option<U> {
+    if (this.#taken) return None();
     return this.#value;
   }
 
   filter(predicate: (value: T) => boolean): Option<T> {
+    if (this.#taken) return None();
     if (predicate(this.#value)) {
       return this;
     }
@@ -508,16 +590,28 @@ class SomeImpl<T> implements BaseOption<T> {
   }
 
   okOr<E>(_err: E): import("./result.ts").Result<T, E> {
+    if (this.#taken) {
+      const { Err } = require("./result.ts");
+      return Err(_err);
+    }
     const { Ok } = require("./result.ts");
     return Ok(this.#value);
   }
 
   okOrElse<E>(_fn: () => E): import("./result.ts").Result<T, E> {
+    if (this.#taken) {
+      const { Err } = require("./result.ts");
+      return Err(_fn());
+    }
     const { Ok } = require("./result.ts");
     return Ok(this.#value);
   }
 
   transpose<U, E>(this: SomeImpl<import("./result.ts").Result<U, E>>): import("./result.ts").Result<Option<U>, E> {
+    if (this.#taken) {
+      const { Ok } = require("./result.ts");
+      return Ok(None());
+    }
     const result = this.#value as any;
     if (result.isOk()) {
       const { Ok } = require("./result.ts");
@@ -529,10 +623,48 @@ class SomeImpl<T> implements BaseOption<T> {
   }
 
   unwrapOrDefault(): T {
+    if (this.#taken) throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
     return this.#value;
+  }
+
+  getOrInsert(value: T): T {
+    if (this.#taken) return value;
+    return this.#value;
+  }
+
+  getOrInsertWith(f: () => T): T {
+    if (this.#taken) return f();
+    return this.#value;
+  }
+
+  take(): Option<T> {
+    if (this.#taken) return None();
+    this.#taken = true;
+    return Some(this.#value);
+  }
+
+  takeIf(predicate: (value: T) => boolean): Option<T> {
+    if (this.#taken) return None();
+    if (predicate(this.#value)) {
+      this.#taken = true;
+      return Some(this.#value);
+    }
+    return None();
+  }
+
+  contains(value: T): boolean {
+    if (this.#taken) return false;
+    return this.#value === value;
   }
   
   [Symbol.iterator](): Iterator<T extends Iterable<infer U> ? U : never> {
+    if (this.#taken) {
+      return {
+        next(): IteratorResult<T extends Iterable<infer U> ? U : never> {
+          return { done: true, value: undefined! };
+        }
+      } as Iterator<T extends Iterable<infer U> ? U : never>;
+    }
     const value = this.#value as T;
     if (value !== null && value !== undefined && typeof (value as any)[Symbol.iterator] === "function") {
       return (value as unknown as Iterable<T extends Iterable<infer U> ? U : never>)[Symbol.iterator]();
@@ -652,6 +784,26 @@ class NoneImpl<T = never> implements BaseOption<T> {
 
   unwrapOrDefault(): T {
     throw new Error("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+  }
+
+  getOrInsert(value: T): T {
+    return value;
+  }
+
+  getOrInsertWith(f: () => T): T {
+    return f();
+  }
+
+  take(): Option<T> {
+    return None();
+  }
+
+  takeIf(_predicate: (value: T) => boolean): Option<T> {
+    return None();
+  }
+
+  contains(_value: T): boolean {
+    return false;
   }
   
   [Symbol.iterator](): Iterator<never> {

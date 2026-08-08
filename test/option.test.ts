@@ -445,6 +445,18 @@ describe("Option", () => {
     });
   });
 
+  describe("contains", () => {
+    test("Some(value).contains(value) should return true", () => {
+      expect(Some(5).contains(5)).toBe(true);
+    });
+    test("Some(value).contains(differentValue) should return false", () => {
+      expect(Some(5).contains(10)).toBe(false);
+    });
+    test("None().contains(value) should return false", () => {
+      expect(None().contains(5)).toBe(false);
+    });
+  });
+
   describe("okOr", () => {
     test("Some(value).okOr(err) should return Ok(value)", () => {
       const opt = Some(5);
@@ -510,6 +522,62 @@ describe("Option", () => {
     });
     test("None().unwrapOrDefault() should throw error (no Default trait in TypeScript)", () => {
       expect(() => None().unwrapOrDefault()).toThrow("Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.");
+    });
+  });
+
+  describe("getOrInsert", () => {
+    test("Some(value).getOrInsert() should return value", () => {
+      expect(Some(5).getOrInsert(10)).toBe(5);
+    });
+    test("None().getOrInsert() should return value", () => {
+      expect((None() as Option<number>).getOrInsert(10)).toBe(10);
+    });
+  });
+
+  describe("getOrInsertWith", () => {
+    test("Some(value).getOrInsertWith() should return value", () => {
+      expect(Some(5).getOrInsertWith(() => 10)).toBe(5);
+    });
+    test("None().getOrInsertWith() should return value", () => {
+      expect((None() as Option<number>).getOrInsertWith(() => 10)).toBe(10);
+    });
+  });
+
+  describe("take", () => {
+    test("Some(value).take() should return Some with the value", () => {
+      const x = Some(5);
+      const y = x.take();
+      expect(x.isNone()).toBe(true);
+      expect(y.isSome()).toBe(true);
+      expect(y.unwrap()).toBe(5);
+    });
+    test("None().take() should return None", () => {
+      const x = None<number>();
+      const y = x.take();
+      expect(x.isNone()).toBe(true);
+      expect(y.isNone()).toBe(true);
+    });
+  });
+
+  describe("takeIf", () => {
+    test("Some(value).takeIf(predicate) should return Some when predicate is true", () => {
+      const x = Some(5);
+      const y = x.takeIf(value => value === 5);
+      expect(x.isNone()).toBe(true);
+      expect(y.isSome()).toBe(true);
+      expect(y.unwrap()).toBe(5);
+    });
+    test("Some(value).takeIf(predicate) should return None when predicate is false", () => {
+      const x = Some(5);
+      const y = x.takeIf(value => value === 4);
+      expect(x.isSome()).toBe(true);
+      expect(y.isNone()).toBe(true);
+    });
+    test("None().takeIf(predicate) should return None", () => {
+      const x = None<number>();
+      const y = x.takeIf(value => value === 5);
+      expect(x.isNone()).toBe(true);
+      expect(y.isNone()).toBe(true);
     });
   });
 });
