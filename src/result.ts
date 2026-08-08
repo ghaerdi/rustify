@@ -48,8 +48,8 @@
  */
 
 import { toString } from "./utils.ts";
-import type { Option } from "./option.ts";
-import { Some, None } from "./option.ts";
+import type { Option } from "./option/index.ts";
+import { Some, None } from "./option/index.ts";
 
 /**
  * Interface defining the structure for the pattern matching handlers used by the `match` method.
@@ -466,7 +466,7 @@ interface BaseResult<T, E> extends Iterable<T extends Iterable<infer U> ? U : ne
    * Err("error").transpose().unwrap().unwrapErr(); // "error"
    * ```
    */
-  transpose<U>(this: Result<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>>;
+  transpose<U>(this: Result<import("./option/index.ts").Option<U>, E>): import("./option/index.ts").Option<Result<U, E>>;
 
 
 
@@ -661,9 +661,9 @@ class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
-  transpose<U>(this: OkImpl<import("./option.ts").Option<U>, E>): import("./option.ts").Option<Result<U, E>> {
-    const { Some, None } = require("./option.ts");
-    const option = this.#value as import("./option.ts").Option<U>;
+  transpose<U>(this: OkImpl<import("./option/index.ts").Option<U>, E>): import("./option/index.ts").Option<Result<U, E>> {
+    const { Some, None } = require("./option/index.ts");
+    const option = this.#value as import("./option/index.ts").Option<U>;
     if (option.isSome()) {
       return Some(Ok(option.unwrap()));
     } else {
@@ -860,8 +860,8 @@ class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
-  transpose<U>(): import("./option.ts").Option<Result<U, E>> {
-    const { Some } = require("./option.ts");
+  transpose<U>(): import("./option/index.ts").Option<Result<U, E>> {
+    const { Some } = require("./option/index.ts");
     return Some(Err(this.#value));
   }
 

@@ -1,5 +1,5 @@
 import { expect, test, describe, mock } from "bun:test";
-import { Some, None, Option } from "../src/option"; // Path to src/option.ts
+import { Some, None, Option } from "../src/option/index"; // Path to src/option.ts
 import { Ok, Err } from "../src/result"; // Path to src/result.ts
 
 describe("Option", () => {
@@ -144,7 +144,7 @@ describe("Option", () => {
       expect(result.unwrap()).toBe("5");
     });
     test("None().map(fn) should return None singleton", () => {
-      const result = None().map(mapFn); // Use singleton, no generic needed for None
+      const result = None<number>().map(mapFn);
       expect(result.isNone()).toBe(true);
       expect(result.isNone()).toBe(true);
     });
@@ -228,11 +228,9 @@ describe("Option", () => {
       expect(result.isNone()).toBe(true);
     });
     test("None().andThen(fn) should return None singleton", () => {
-      const result = None().andThen(fnReturningSome); // Use singleton
+      const result = None<number>().andThen(fnReturningSome);
       expect(result.isNone()).toBe(true);
-      expect(result.isNone()).toBe(true);
-      const result2 = None().andThen(fnReturningNone); // Use singleton
-      expect(result2.isNone()).toBe(true);
+      const result2 = None<number>().andThen(fnReturningNone);
       expect(result2.isNone()).toBe(true);
     });
   });
@@ -359,8 +357,7 @@ describe("Option", () => {
       expect(result.unwrap()).toBe("1a");
     });
     test("Some(a).zipWith(None(), fn) should return None singleton", () => {
-      const result = Some(1).zipWith(None(), zipFn); // Use singleton
-      expect(result.isNone()).toBe(true);
+      const result = Some(1).zipWith(None<string>(), zipFn);
       expect(result.isNone()).toBe(true);
     });
     test("None().zipWith(Some(b), fn) should return None singleton", () => {
@@ -527,8 +524,20 @@ describe("Option", () => {
     test("Some(value).getOrInsert() should return value", () => {
       expect(Some(5).getOrInsert(10)).toBe(5);
     });
-    test("None().getOrInsert() should return value", () => {
+    test("None().getOrInsert() should return inserted value", () => {
       expect(None<number>().getOrInsert(10)).toBe(10);
+    });
+    test("None().getOrInsert() should mutate to Some", () => {
+      const x = None<number>();
+      x.getOrInsert(10);
+      expect(x.isSome()).toBe(true);
+      expect(x.unwrap()).toBe(10);
+    });
+    test("None().getOrInsert() should only insert once", () => {
+      const x = None<number>();
+      x.getOrInsert(10);
+      x.getOrInsert(20);
+      expect(x.unwrap()).toBe(10);
     });
   });
 
@@ -536,8 +545,22 @@ describe("Option", () => {
     test("Some(value).getOrInsertWith() should return value", () => {
       expect(Some(5).getOrInsertWith(() => 10)).toBe(5);
     });
-    test("None().getOrInsertWith() should return value", () => {
+    test("None().getOrInsertWith() should return inserted value", () => {
       expect(None<number>().getOrInsertWith(() => 10)).toBe(10);
+    });
+    test("None().getOrInsertWith() should mutate to Some", () => {
+      const x = None<number>();
+      x.getOrInsertWith(() => 10);
+      expect(x.isSome()).toBe(true);
+      expect(x.unwrap()).toBe(10);
+    });
+    test("None().getOrInsertWith() should only compute once", () => {
+      const x = None<number>();
+      let calls = 0;
+      x.getOrInsertWith(() => { calls++; return 10; });
+      x.getOrInsertWith(() => { calls++; return 20; });
+      expect(calls).toBe(1);
+      expect(x.unwrap()).toBe(10);
     });
   });
 
