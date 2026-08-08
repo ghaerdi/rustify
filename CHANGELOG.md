@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.1.1
+
+### Fixes
+
+- **`Option`**: `getOrInsert`/`getOrInsertWith` now actually store the value when called on `None`, fixing patterns like singletons where the inserted value was lost.
+- **`Option`**: `take`/`takeIf` now properly revert a `Some` to `None` by swapping the inner strategy.
+
+### Refactoring
+
+- Split `option.ts` into `option/` directory with separate files: `types.ts`, `some.ts`, `none.ts`, `option.ts`, `index.ts`.
+- Adopted Strategy pattern: `OptionImpl` wraps `SomeStrategy`/`NoneStrategy`, enabling in-place mutations via strategy swapping.
+- `OptionImpl` now implements the `Option<T>` interface.
+- Merged `Option.fromNullable` and `Option.isOption` into `OptionImpl` as static methods.
+- Full JSDoc with `@param`, `@returns`, `@throws`, `@example` on all public `Option<T>` interface methods.
+- Added `@inheritDoc` to all `OptionImpl` methods for IDE tooltip support.
+
 ## 2.1.0
 
 ### New Features
