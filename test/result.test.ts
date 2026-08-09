@@ -740,4 +740,81 @@ describe("Result", () => {
       });
     });
   });
+
+  describe("Rust std parity", () => {
+    describe("unwrapOrElse", () => {
+      test("passes the error to the closure (count example)", () => {
+        const count = (x: string) => x.length;
+        const ok: Result<number, string> = Ok(2);
+        const err: Result<number, string> = Err("foo");
+        expect(ok.unwrapOrElse(count)).toBe(2);
+        expect(err.unwrapOrElse(count)).toBe(3);
+      });
+    });
+
+    describe("mapErr", () => {
+      test("transforms the error type (stringify example)", () => {
+        const stringify = (x: number) => `error code: ${x}`;
+        const ok: Result<number, number> = Ok(2);
+        const err: Result<number, number> = Err(13);
+        expect(ok.mapErr(stringify).unwrap()).toBe(2);
+        expect(err.mapErr(stringify).unwrapErr()).toBe("error code: 13");
+      });
+    });
+
+    describe("mapOr", () => {
+      test("string-length example", () => {
+        const ok: Result<string, string> = Ok("foo");
+        const err: Result<string, string> = Err("bar");
+        expect(ok.mapOr(42, (v) => v.length)).toBe(3);
+        expect(err.mapOr(42, (v) => v.length)).toBe(42);
+      });
+    });
+
+    describe("isErrAnd", () => {
+      test("with error properties (ErrorKind example)", () => {
+        const notFound: Result<number, Error> = Err(new Error("not found"));
+        const denied: Result<number, Error> = Err(new Error("denied"));
+        const ok: Result<number, Error> = Ok(123);
+        expect(notFound.isErrAnd((e) => e.message === "not found")).toBe(true);
+        expect(denied.isErrAnd((e) => e.message === "not found")).toBe(false);
+        expect(ok.isErrAnd((e) => e.message === "not found")).toBe(false);
+      });
+    });
+
+    describe("andThen", () => {
+      test("sq_then_to_string overflow example", () => {
+        const sqThenToString = (x: number): Result<string, string> =>
+          x * x > 1000 ? Err("overflowed") : Ok(String(x * x));
+        const ok: Result<number, string> = Ok(2);
+        const big: Result<number, string> = Ok(1000);
+        const err: Result<number, string> = Err("not a number");
+        expect(ok.andThen(sqThenToString).unwrap()).toBe("4");
+        expect(big.andThen(sqThenToString).unwrapErr()).toBe("overflowed");
+        expect(err.andThen(sqThenToString).unwrapErr()).toBe("not a number");
+      });
+    });
+
+    describe("orElse", () => {
+      test("chaining (sq/err example)", () => {
+        const sq = (x: number): Result<number, number> => Ok(x * x);
+        const err = (x: number): Result<number, number> => Err(x);
+        const ok2: Result<number, number> = Ok(2);
+        const err3: Result<number, number> = Err(3);
+        expect(ok2.orElse(sq).orElse(sq).unwrap()).toBe(2);
+        expect(ok2.orElse(err).orElse(sq).unwrap()).toBe(2);
+        expect(err3.orElse(sq).orElse(err).unwrap()).toBe(9);
+        expect(err3.orElse(err).orElse(err).unwrapErr()).toBe(3);
+      });
+    });
+
+    describe("flatten", () => {
+      test("removes one level at a time", () => {
+        const x: Result<Result<Result<string, string>, string>, string> =
+          Ok(Ok(Ok("hello")));
+        expect(x.flatten().unwrap().unwrap()).toBe("hello");
+        expect(x.flatten().flatten().unwrap()).toBe("hello");
+      });
+    });
+  });
 });

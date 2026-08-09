@@ -619,4 +619,161 @@ describe("Option", () => {
       expect(y.isNone()).toBe(true);
     });
   });
+
+  describe("Rust std parity", () => {
+    describe("expect", () => {
+      test("None().expect(msg) should throw with exactly the custom message", () => {
+        expect(() => None<string>().expect("fruits are healthy")).toThrow(
+          "fruits are healthy",
+        );
+      });
+    });
+
+    describe("unwrap", () => {
+      test("None().unwrap() should throw 'Tried to unwrap a None value'", () => {
+        expect(() => None().unwrap()).toThrow("Tried to unwrap a None value");
+      });
+    });
+
+    describe("unwrapOr", () => {
+      test("car/bike example", () => {
+        expect(Some("car").unwrapOr("bike")).toBe("car");
+        expect(None<string>().unwrapOr("bike")).toBe("bike");
+      });
+    });
+
+    describe("unwrapOrElse", () => {
+      test("should NOT call the closure when Some (lazy evaluation)", () => {
+        let calls = 0;
+        const k = 10;
+        const result = Some(4).unwrapOrElse(() => {
+          calls++;
+          return 2 * k;
+        });
+        expect(result).toBe(4);
+        expect(calls).toBe(0);
+      });
+      test("should compute from the closure when None", () => {
+        const k = 10;
+        expect(None<number>().unwrapOrElse(() => 2 * k)).toBe(20);
+      });
+    });
+
+    describe("map", () => {
+      test("can change the contained type", () => {
+        expect(Some("foo").map((v) => v.length).unwrap()).toBe(3);
+      });
+    });
+
+    describe("mapOr", () => {
+      test("string-length example", () => {
+        expect(Some("foo").mapOr(42, (v) => v.length)).toBe(3);
+        expect(None<string>().mapOr(42, (v) => v.length)).toBe(42);
+      });
+    });
+
+    describe("andThen", () => {
+      test("sq_then_to_string overflow example", () => {
+        const sqThenToString = (x: number): Option<string> =>
+          x * x > 1000 ? None() : Some(String(x * x));
+        expect(Some(2).andThen(sqThenToString).unwrap()).toBe("4");
+        expect(Some(1000).andThen(sqThenToString).isNone()).toBe(true);
+        expect(None<number>().andThen(sqThenToString).isNone()).toBe(true);
+      });
+    });
+
+    describe("orElse", () => {
+      test("should NOT call the closure when Some (lazy evaluation)", () => {
+        let calls = 0;
+        const result = Some(4).orElse(() => {
+          calls++;
+          return Some(8);
+        });
+        expect(result.unwrap()).toBe(4);
+        expect(calls).toBe(0);
+      });
+    });
+
+    describe("filter", () => {
+      test("is_even example", () => {
+        const isEven = (n: number) => n % 2 === 0;
+        expect(None<number>().filter(isEven).isNone()).toBe(true);
+        expect(Some(3).filter(isEven).isNone()).toBe(true);
+        expect(Some(4).filter(isEven).unwrap()).toBe(4);
+      });
+    });
+
+    describe("inspect", () => {
+      test("chained before expect (list example)", () => {
+        const list = [1, 2, 3];
+        const seen: number[] = [];
+        const x = Some(list[1])
+          .inspect((v) => seen.push(v))
+          .expect("list should be long enough");
+        expect(x).toBe(2);
+        expect(seen).toEqual([2]);
+
+        const noneSeen: number[] = [];
+        None<number>().inspect((v) => noneSeen.push(v));
+        expect(noneSeen).toEqual([]);
+      });
+    });
+
+    describe("okOr", () => {
+      test("foo/0 example", () => {
+        const some = Some("foo").okOr(0);
+        expect(some.isOk()).toBe(true);
+        expect(some.unwrap()).toBe("foo");
+
+        const none = None<string>().okOr(0);
+        expect(none.isErr()).toBe(true);
+        expect(none.unwrapErr()).toBe(0);
+      });
+    });
+
+    describe("okOrElse", () => {
+      test("foo/0 example with lazy error", () => {
+        const some = Some("foo").okOrElse(() => 0);
+        expect(some.unwrap()).toBe("foo");
+
+        const none = None<string>().okOrElse(() => 0);
+        expect(none.unwrapErr()).toBe(0);
+      });
+    });
+
+    describe("zip", () => {
+      test("zips different types", () => {
+        const zipped = Some(1).zip(Some("hi"));
+        expect(zipped.isSome()).toBe(true);
+        expect(zipped.unwrap()).toEqual([1, "hi"]);
+        expect(Some(1).zip(None<string>()).isNone()).toBe(true);
+      });
+    });
+
+    describe("getOrInsert", () => {
+      test("does not overwrite an existing value", () => {
+        const x = None<number>();
+        expect(x.getOrInsert(5)).toBe(5);
+        expect(x.getOrInsert(7)).toBe(5);
+        expect(x.unwrap()).toBe(5);
+      });
+    });
+
+    describe("takeIf", () => {
+      test("Rust-style two-step sequence", () => {
+        const x = Some(42);
+
+        // predicate false → not taken, option unchanged
+        const prev1 = x.takeIf((v) => v !== 42);
+        expect(x.isSome()).toBe(true);
+        expect(prev1.isNone()).toBe(true);
+
+        // predicate true → taken, option becomes None
+        const prev2 = x.takeIf((v) => v === 42);
+        expect(x.isNone()).toBe(true);
+        expect(prev2.isSome()).toBe(true);
+        expect(prev2.unwrap()).toBe(42);
+      });
+    });
+  });
 });
