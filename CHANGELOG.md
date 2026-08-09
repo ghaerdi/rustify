@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.1.2
+
+### Refactoring
+
+- Split `result.ts` into a `src/result/` directory with dedicated files:
+  `types.ts`, `ok.ts`, `err.ts`, `result.ts`, and `index.ts` — mirroring the
+  `option/` structure. All internal imports and entrypoint exports were
+  updated to the new paths.
+- Replaced the lazy `require()` calls in `OkImpl.transpose` with clean static
+  imports.
+- Reformatted the codebase (README, CHANGELOG, package.json, and all source
+  files) for consistent style.
+
+### Improvements
+
+- **JSR documentation coverage is now 100%** (was ~75%):
+  - Documented the `Option` namespace declaration.
+  - Documented the `Option._inner` property.
+  - Documented `OkImpl.[Symbol.iterator]` and `ErrImpl.[Symbol.iterator]`.
+  - Documented `utils.ts` `toString` and removed a stray `@inheritDoc` from
+    `defaultErrorTransform`.
+- Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs
+  type checking, tests, and a JSR publish dry-run on push/PR to `main`.
+
+### Tests
+
+- Added 23 Rust standard library parity tests for `Option` and `Result`,
+  matching the documented doctests from Rust's std (lazy evaluation,
+  error message content, `sq_then_to_string` chaining, `or_else` chaining,
+  one-level-at-a-time `flatten`, and more).
+
 ## 2.1.1
 
 ### Fixes
