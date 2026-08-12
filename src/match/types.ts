@@ -88,7 +88,7 @@ export type MatchResult = { ok: true; value: unknown } | { ok: false };
  * `M` is a phantom "matched" type: the values the pattern can match. It is
  * used by `PatternToValue` so exhaustiveness accounting can remove exactly the
  * covered union members (e.g. `Option.some` is `ExtractPattern<"unwrap",
- * { tag: "some" }>` and only removes the `Some` member). It defaults to
+ * { __tag: "some" }>` and only removes the `Some` member). It defaults to
  * `unknown` — matching any input — for backward compatibility.
  */
 export interface ExtractPattern<
@@ -287,7 +287,7 @@ export type DescribeMissing<T> = T extends string
   : T extends null | undefined ? "null or undefined"
   : T extends { type: infer D extends PropertyKey } ? `{ type: ${D & string} }`
   : T extends { kind: infer D extends PropertyKey } ? `{ kind: ${D & string} }`
-  : T extends { tag: infer D extends PropertyKey } ? `{ tag: ${D & string} }`
+  : T extends { __tag: infer D extends PropertyKey } ? `{ __tag: ${D & string} }`
   : T extends { isOk(): infer B extends boolean } ? `{ isOk: ${B} }`
   : T extends object ? "an object"
   : "a value";

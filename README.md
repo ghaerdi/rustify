@@ -192,8 +192,8 @@ which hand the unwrapped value or error to the handler).
 
 ### Option\<T\>
 
-`Option<T>` is a **discriminated union** — every value exposes a literal `tag`:
-`"some"` or `"none"` — so you can narrow with `if (opt.tag === "some")` (or
+`Option<T>` is a **discriminated union** — every value exposes a literal `__tag`:
+`"some"` or `"none"` — so you can narrow with `if (opt.__tag === "some")` (or
 `isSome()` / `isNone()`).
 
 - **Checking:**
@@ -300,7 +300,7 @@ Import `match` and `P` from `@ghaerdi/rustify/match`.
   ```
   These patterns are **per-variant**: `.with(Option.some, ...).exhaustive()`
   alone is a compile error naming the missing variant
-  (`NeverCase<"NonExhaustive: unhandled case { tag: none }">`).
+  (`NeverCase<"NonExhaustive: unhandled case { __tag: none }">`).
 - **Patterns (the `P` namespace):**
   - `P.any` / `P._`: Matches anything (catch-all).
   - `P.string`, `P.number`, `P.boolean`, `P.bigint`, `P.symbol`: Matches

@@ -505,8 +505,8 @@ export interface OptionMethods<T> {
  * absence of a value). This eliminates the need for `null` and `undefined`
  * checks and makes missing values explicit in the type system.
  *
- * The type is a **discriminated union** on the `tag` property (`"some"` /
- * `"none"`), so `if (opt.tag === "some")` narrows, and the `match` module's
+ * The type is a **discriminated union** on the `__tag` property (`"some"` /
+ * `"none"`), so `if (opt.__tag === "some")` narrows, and the `match` module's
  * `Option.some` / `Option.none` patterns account for each variant in
  * exhaustiveness checking.
  *
@@ -549,7 +549,7 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
   /** @internal */ #inner: BaseOptionStrategy<T>;
 
   /** @internal */ constructor(
-    inner: BaseOptionStrategy<T> & { readonly tag: K },
+    inner: BaseOptionStrategy<T> & { readonly __tag: K },
   ) {
     this.#inner = inner;
   }
@@ -560,8 +560,8 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
    * variant.
    * @internal
    */
-  get tag(): K {
-    return this.#inner.tag as K;
+  get __tag(): K {
+    return this.#inner.__tag as K;
   }
 
   /**
@@ -875,8 +875,8 @@ export namespace Option {
    * the imperative counterpart of the {@link Option.some} match pattern.
    *
    * After `Option.isSome(value)`, `value` has type
-   * `Option<T> & { tag: "some" }` (and the false branch is narrowed to
-   * `{ tag: "none" }`).
+   * `Option<T> & { __tag: "some" }` (and the false branch is narrowed to
+   * `{ __tag: "none" }`).
    *
    * ```typescript
    * const describe = (opt: Option<number>): string => {
@@ -890,7 +890,7 @@ export namespace Option {
    */
   export const isSome = <T>(
     value: unknown,
-  ): value is Option<T> & { tag: "some" } =>
+  ): value is Option<T> & { __tag: "some" } =>
     OptionImpl.isOption(value) && value.isSome();
 
   /**
@@ -903,7 +903,7 @@ export namespace Option {
    */
   export const isNone = <T>(
     value: unknown,
-  ): value is Option<T> & { tag: "none" } =>
+  ): value is Option<T> & { __tag: "none" } =>
     OptionImpl.isOption(value) && value.isNone();
   /**
    * A pattern for `match()` that matches a `Some` and passes the **unwrapped
@@ -921,7 +921,7 @@ export namespace Option {
    *   .exhaustive();
    * ```
    */
-  export const some: ExtractPattern<"unwrap", { tag: "some" }> = {
+  export const some: ExtractPattern<"unwrap", { __tag: "some" }> = {
     [PATTERN]: "extract",
     extract: (value) => {
       if (OptionImpl.isOption(value) && value.isSome()) {
@@ -937,7 +937,7 @@ export namespace Option {
    * The handler receives the matched input value; there is no inner value to
    * unwrap, so it is typically ignored.
    */
-  export const none: AbsentPattern<{ tag: "none" }> = {
+  export const none: AbsentPattern<{ __tag: "none" }> = {
     [PATTERN]: "absent",
     test: (value) => OptionImpl.isOption(value) && value.isNone(),
   };

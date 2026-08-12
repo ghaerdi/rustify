@@ -2,10 +2,10 @@
 
 ## 2.2.0
 
-### Note
+### Breaking Changes
 
 - **`Option<T>` is now a discriminated union** — was a single interface, now
-  `OptionImpl<T, "some"> | OptionImpl<T, "none">` with a literal `tag`
+  `OptionImpl<T, "some"> | OptionImpl<T, "none">` with a literal `__tag`
   property. Values created with `Some()`/`None()` and every method work
   unchanged; only code that extended or implemented the old `Option<T>`
   interface (or referenced the internal strategy types) needs to adapt —
@@ -44,9 +44,9 @@
 
   - **`Option<T>` is now a discriminated union** —
     `OptionImpl<T, "some"> |
-    OptionImpl<T, "none">` (new `tag` property,
+    OptionImpl<T, "none">` (new `__tag` property,
     literal per variant). This is what powers per-variant exhaustiveness and
-    enables `if (opt.tag ===
+    enables `if (opt.__tag ===
     "some")` narrowing. The method surface is
     preserved via the internal `OptionMethods<T>` interface (used for
     `@inheritDoc` docs; not part of the public API); behavior is unchanged.
@@ -66,7 +66,7 @@
 
 - **Per-variant type guards for imperative narrowing** — `Option.isSome` /
   `Option.isNone` and `Result.isOk` / `Result.isErr` narrow to a single variant
-  (e.g. `value is Option<T> & { tag: "some" }`), so `if`/`else`, `Array.filter`,
+  (e.g. `value is Option<T> & { __tag: "some" }`), so `if`/`else`, `Array.filter`,
   and plain code get the same precision as the `match()` patterns. 7 new tests.
 
 - **JSR documentation coverage is now 100%** (was ~75%):

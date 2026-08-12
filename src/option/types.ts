@@ -7,7 +7,7 @@ export interface OptionMatcher<T, U, V> {
 /** @internal Shared interface for the internal strategy classes. */
 export interface BaseOptionStrategy<T> {
   /** The variant discriminant: `"some"` or `"none"`. */
-  readonly tag: "some" | "none";
+  readonly __tag: "some" | "none";
   isSome(): boolean;
   isSomeAnd(fn: (value: T) => boolean): boolean;
   isNone(): boolean;
