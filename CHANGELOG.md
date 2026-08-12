@@ -2,6 +2,14 @@
 
 ## 2.2.0
 
+### Breaking Changes
+
+- **`Option<T>` is now a discriminated union** — was a single interface, now
+  `OptionImpl<T, "some"> | OptionImpl<T, "none">` with a literal `tag`
+  property. Values created with `Some()`/`None()` work unchanged; only code
+  that extended or implemented the old `Option<T>` interface (or referenced
+  the internal strategy types) needs to adapt.
+
 ### New Features
 
 - **`match` module — type-safe pattern matching for any value** (inspired by
