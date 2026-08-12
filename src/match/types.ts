@@ -287,7 +287,8 @@ export type DescribeMissing<T> = T extends string
   : T extends null | undefined ? "null or undefined"
   : T extends { type: infer D extends PropertyKey } ? `{ type: ${D & string} }`
   : T extends { kind: infer D extends PropertyKey } ? `{ kind: ${D & string} }`
-  : T extends { __tag: infer D extends PropertyKey } ? `{ __tag: ${D & string} }`
+  : T extends { __tag: infer D extends PropertyKey }
+    ? `{ __tag: ${D & string} }`
   : T extends { isOk(): infer B extends boolean } ? `{ isOk: ${B} }`
   : T extends object ? "an object"
   : "a value";

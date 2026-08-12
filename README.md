@@ -195,9 +195,9 @@ which hand the unwrapped value or error to the handler).
 
 ### Option\<T\>
 
-`Option<T>` is a **discriminated union** — every value exposes a literal `__tag`:
-`"some"` or `"none"` — so you can narrow with `if (opt.__tag === "some")` (or
-`isSome()` / `isNone()`).
+`Option<T>` is a **discriminated union** — every value exposes a literal
+`__tag`: `"some"` or `"none"` — so you can narrow with
+`if (opt.__tag === "some")` (or `isSome()` / `isNone()`).
 
 - **Checking:**
   - `isSome()`: Returns `true` if `Some`.

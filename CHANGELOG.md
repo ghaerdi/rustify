@@ -8,8 +8,8 @@
   `OptionImpl<T, "some"> | OptionImpl<T, "none">` with a literal `__tag`
   property. Values created with `Some()`/`None()` and every method work
   unchanged; only code that extended or implemented the old `Option<T>`
-  interface (or referenced the internal strategy types) needs to adapt —
-  the method surface now lives on the internal `OptionMethods<T>` interface.
+  interface (or referenced the internal strategy types) needs to adapt — the
+  method surface now lives on the internal `OptionMethods<T>` interface.
 
 ### New Features
 
@@ -67,8 +67,9 @@
 
 - **Per-variant type guards for imperative narrowing** — `Option.isSome` /
   `Option.isNone` and `Result.isOk` / `Result.isErr` narrow to a single variant
-  (e.g. `value is Option<T> & { __tag: "some" }`), so `if`/`else`, `Array.filter`,
-  and plain code get the same precision as the `match()` patterns. 7 new tests.
+  (e.g. `value is Option<T> & { __tag: "some" }`), so `if`/`else`,
+  `Array.filter`, and plain code get the same precision as the `match()`
+  patterns. 7 new tests.
 
 - **JSR documentation coverage is now 100%** (was ~75%):
   - Documented the `Option` namespace declaration.
