@@ -61,6 +61,15 @@
   (e.g. `value is Option<T> & { tag: "some" }`), so `if`/`else`, `Array.filter`,
   and plain code get the same precision as the `match()` patterns. 7 new tests.
 
+- **JSR documentation coverage is now 100%** (was ~75%):
+  - Documented the `Option` namespace declaration.
+  - Documented the `Option._inner` property.
+  - Documented `OkImpl.[Symbol.iterator]` and `ErrImpl.[Symbol.iterator]`.
+  - Documented `utils.ts` `toString` and removed a stray `@inheritDoc` from
+    `defaultErrorTransform`.
+- Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs type
+  checking, tests, and a JSR publish dry-run on push/PR to `main`.
+
 ### Documentation
 
 - Documented the new `match` module in the README: a `match` entry in Core
@@ -89,16 +98,6 @@
 - Reformatted the codebase (README, CHANGELOG, package.json, and all source
   files) for consistent style.
 
-### Improvements
-
-- **JSR documentation coverage is now 100%** (was ~75%):
-  - Documented the `Option` namespace declaration.
-  - Documented the `Option._inner` property.
-  - Documented `OkImpl.[Symbol.iterator]` and `ErrImpl.[Symbol.iterator]`.
-  - Documented `utils.ts` `toString` and removed a stray `@inheritDoc` from
-    `defaultErrorTransform`.
-- Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs type
-  checking, tests, and a JSR publish dry-run on push/PR to `main`.
 
 ## 2.1.1
 
