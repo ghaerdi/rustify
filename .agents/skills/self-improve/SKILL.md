@@ -1,7 +1,7 @@
 ---
 name: "self-improve"
 description: "Keep this repo's documentation in sync with the code and capture reusable patterns from each working session. Trigger whenever the user asks to update documentation, improve docs, run self-improve, 'learn from this session', sync or create README.md / AGENTS.md, fix or add JSDoc, or save a working pattern as a skill. Also trigger proactively at the end of any session that produced meaningful changes (API additions, refactors, migrations, convention shifts, user corrections) and when existing docs or skills reference stale tooling (e.g. 'bun' or 'jsr.json' after the Deno migration). Do NOT wait for the user to spell out 'self-improve' — if docs are out of date with the code you just changed, this skill applies."
-version: 1
+version: 2
 created: "2026-08-12"
 updated: "2026-08-12"
 ---
@@ -105,10 +105,8 @@ The skill surface for this repo lives in `.agents/skills/`, versioned in git.
   Bun→Deno migration, `monad-module-conventions` still said `bun run check`,
   `require()` lazy imports, and `jsr.json` — all false. When you see a stale
   reference in any skill, fix it.
-- Also reconcile the Pi project-memory skills for this project
-  (`~/.pi/agent/projects-memory/rustify/skills/<name>/SKILL.md`) when you find
-  them stale — they are this project's skills too, just stored outside the
-  repo.
+- All project skills live in this directory — there is no second copy to
+  reconcile elsewhere (the Pi projects-memory copies were moved here).
 - Skill format — follow the existing frontmatter shape:
 
 ```markdown

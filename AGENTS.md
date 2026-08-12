@@ -37,7 +37,7 @@ test/
 
 - Monad module architecture: `types.ts` (internal interfaces) + one file per
   variant + public module file + `index.ts` re-exports. See
-  monad-module-conventions skill (projects-memory) for
+  `.agents/skills/monad-module-conventions` for
   the full layout.
 - JSDoc on public interfaces only; `@internal` on internals; `@inheritDoc` on
   implementations; `@example` on user-facing methods; `@module` on entrypoints.
@@ -51,8 +51,7 @@ test/
 ## Release
 
 Version bumps + CHANGELOG + git tag + draft GitHub release: follow the
-`release-workflow` skill (projects-memory). Release-note formatting: see the
-`release-notes` skill.
+`release-workflow` and `release-notes` skills (`.agents/skills/`).
 
 ## Docs
 
