@@ -1,3 +1,36 @@
+## 2.2.0
+
+### New Features
+
+- **`match` module — type-safe pattern matching for any value** (inspired by
+  [ts-pattern](https://github.com/gvergnaud/ts-pattern) and
+  [megamatch](https://github.com/Snowflyt/megamatch)):
+  - `match(value)` builds a chain of `.with(pattern, handler)` cases,
+    terminated by `.exhaustive()` (throws if nothing matched),
+    `.otherwise(handler)` (a default case), or `.run()` (returns `undefined`
+    if nothing matched).
+  - Patterns are plain values (literals, object shapes, arrays) or composable
+    guards from the `P` namespace: `P.any`, `P.string`, `P.number`,
+    `P.boolean`, `P.bigint`, `P.symbol`, `P.nullish`, `P.array`,
+    `P.instanceOf`, `P.union`, `P.when`, `P.not`, `P.optional`.
+  - `matches(pattern, value)` — standalone predicate form.
+  - **Compile-time exhaustiveness**: `.exhaustive()` is a *property* that
+    becomes a non-callable `NeverCase<...>` carrying a readable message
+    (`NeverCase<"NonExhaustive: unhandled case { type: rect }">`) when input
+    union members are unhandled — the error fires at the `.exhaustive()` call
+    site, whether or not the result is used. `.run()` is exhaustiveness-aware:
+    it excludes `undefined` from its return type when the input is fully
+    covered.
+  - Works directly with the library's `Option`/`Result` values via
+    `P.when` type guards (`Option.isOption`, `Result.isResult`).
+  - Public types: `Match`, `Pattern`, `Narrow`.
+
+### Tests
+
+- Added `test/match.test.ts` (263 tests): literals, shapes, guards, arrays,
+  `instanceOf`, combinators, terminals, exhaustiveness (positive and
+  negative), and Option/Result integration.
+
 # Changelog
 
 ## 2.1.2
