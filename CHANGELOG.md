@@ -10,6 +10,7 @@
   unchanged; only code that extended or implemented the old `Option<T>`
   interface (or referenced the internal strategy types) needs to adapt —
   the method surface now lives on the internal `OptionMethods<T>` interface.
+
 ### New Features
 
 - **`match` module — type-safe pattern matching for any value** (inspired by
@@ -105,7 +106,6 @@
   imports.
 - Reformatted the codebase (README, CHANGELOG, package.json, and all source
   files) for consistent style.
-
 
 ## 2.1.1
 
