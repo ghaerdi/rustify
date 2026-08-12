@@ -197,6 +197,32 @@ interface ResultTypeStatics {
   isResult<T, E>(value: unknown): value is Result<T, E>;
 
   /**
+   * Type guard that narrows a value to the `Ok` variant of `Result<T, E>` —
+   * the imperative counterpart of the {@link Result.ok} match pattern.
+   *
+   * After `Result.isOk(value)`, `value` has type `Ok<T, E>` (and the false
+   * branch is narrowed to `Err<T, E>`).
+   *
+   * ```typescript
+   * const message = (res: Result<number, string>): string => {
+   *   if (Result.isOk(res)) return `ok: ${res.unwrap()}`; // res: Ok
+   *   return `err: ${res.unwrapErr()}`; // res: Err
+   * };
+   * ```
+   */
+  isOk: <T, E>(value: unknown) => value is Ok<T, E>;
+
+  /**
+   * Type guard that narrows a value to the `Err` variant of `Result<T, E>` —
+   * the imperative counterpart of the {@link Result.err} match pattern.
+   *
+   * ```typescript
+   * const failed = (res: Result<number, string>): boolean => Result.isErr(res);
+   * ```
+   */
+  isErr: <T, E>(value: unknown) => value is Err<T, E>;
+
+  /**
    * A pattern for `match()` that matches `Ok` and passes the **unwrapped
    * value** to the handler (see {@link Result.ok} usage example).
    */
@@ -249,6 +275,14 @@ export const Result: ResultTypeStatics = {
   isResult<T, E>(value: unknown): value is Result<T, E> {
     return value instanceof OkImpl || value instanceof ErrImpl;
   },
+
+  /** @inheritDoc */
+  isOk: <T, E>(value: unknown): value is Ok<T, E> =>
+    Result.isResult(value) && value.isOk(),
+
+  /** @inheritDoc */
+  isErr: <T, E>(value: unknown): value is Err<T, E> =>
+    Result.isResult(value) && value.isErr(),
 
   ok: {
     [PATTERN]: "extract",

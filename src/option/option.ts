@@ -871,6 +871,37 @@ export namespace Option {
   export const isOption = OptionImpl.isOption;
 
   /**
+   * Type guard that narrows a value to the `Some` variant of `Option<T>` —
+   * the imperative counterpart of the {@link Option.some} match pattern.
+   *
+   * After `Option.isSome(value)`, `value` has type
+   * `Option<T> & { tag: "some" }` (and the false branch is narrowed to
+   * `{ tag: "none" }`).
+   *
+   * ```typescript
+   * const describe = (opt: Option<number>): string => {
+   *   if (Option.isSome(opt)) return `Some(${opt.unwrap()})`; // opt: Some
+   *   return "None"; // opt: None
+   * };
+   *
+   * const values: Option<number>[] = [Some(1), None()];
+   * values.filter(Option.isSome).map((s) => s.unwrap() + 1); // [2]
+   * ```
+   */
+  export const isSome = <T>(value: unknown): value is Option<T> & { tag: "some" } =>
+    OptionImpl.isOption(value) && value.isSome();
+
+  /**
+   * Type guard that narrows a value to the `None` variant of `Option<T>` —
+   * the imperative counterpart of the {@link Option.none} match pattern.
+   *
+   * ```typescript
+   * const isMissing = (opt: Option<number>): boolean => Option.isNone(opt);
+   * ```
+   */
+  export const isNone = <T>(value: unknown): value is Option<T> & { tag: "none" } =>
+    OptionImpl.isOption(value) && value.isNone();
+  /**
    * A pattern for `match()` that matches a `Some` and passes the **unwrapped
    * value** to the handler — no `P.when` annotation needed, the handler
    * parameter type is inferred from the matched input.

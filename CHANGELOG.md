@@ -60,6 +60,12 @@
   - All with JSDoc examples; 18 new tests (laziness + exact panic-message
     assertions per the Rust parity suite).
 
+- **Per-variant type guards for imperative narrowing** — `Option.isSome` /
+  `Option.isNone` and `Result.isOk` / `Result.isErr` narrow to a single
+  variant (e.g. `value is Option<T> & { tag: "some" }`), so `if`/`else`,
+  `Array.filter`, and plain code get the same precision as the `match()`
+  patterns. 7 new tests.
+
 ### Documentation
 
 - Documented the new `match` module in the README: a `match` entry in Core

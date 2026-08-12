@@ -856,3 +856,41 @@ describe("Rust std parity: insert/replace/isNoneOr/expectNone/count/copied/unzip
     expect(b.isNone()).toBe(true);
   });
 });
+
+describe("Option.isSome / Option.isNone type guards", () => {
+	test("narrows the Some branch and unwraps typed values", () => {
+		const describe = (opt: Option<number>): string => {
+			if (Option.isSome(opt)) {
+				// opt: Option<number> & { tag: "some" } — unwrap() is typed
+				return `some: ${opt.unwrap()}`;
+			}
+			// opt: narrowed to the None variant
+			return "none";
+		};
+		expect(describe(Some(5))).toBe("some: 5");
+		expect(describe(None())).toBe("none");
+	});
+
+	test("narrows the None branch", () => {
+		const isMissing = (opt: Option<number>): boolean => {
+			if (Option.isNone(opt)) return true;
+			return false;
+		};
+		expect(isMissing(None())).toBe(true);
+		expect(isMissing(Some(5))).toBe(false);
+	});
+
+	test("works with Array.filter for type-safe Some extraction", () => {
+		const values: Option<number>[] = [Some(1), None(), Some(3)];
+		const someValues = values.filter(Option.isSome);
+		// someValues: (Option<number> & { tag: "some" })[] — unwrap() typed
+		const doubled = someValues.map((s) => s.unwrap() * 2);
+		expect(doubled).toEqual([2, 6]);
+	});
+
+	test("rejects non-Option values", () => {
+		expect(Option.isSome(42)).toBe(false);
+		expect(Option.isNone("hello")).toBe(false);
+		expect(Option.isSome(null)).toBe(false);
+	});
+});
