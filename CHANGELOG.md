@@ -34,10 +34,6 @@
       .exhaustive();
     ```
 
-    (previously these required verbose `P.when` type-guard annotations).
-    Exhaustiveness is **per-variant**: `.with(Option.some, ...).exhaustive()`
-    alone fails to type-check (the `None` case is required), and the error names
-    the missing variant (`{ tag: none }`, `{ isOk: false }`).
   - **`Option<T>` is now a discriminated union** —
     `OptionImpl<T, "some"> |
     OptionImpl<T, "none">` (new `tag` property,
