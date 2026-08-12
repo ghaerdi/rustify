@@ -1,6 +1,8 @@
 import type { BaseOptionStrategy, OptionMatcher } from "./types.ts";
 import { SomeStrategy } from "./some.ts";
 import { NoneStrategy } from "./none.ts";
+import { PATTERN } from "../match/types.ts";
+import type { AbsentPattern, ExtractPattern } from "../match/types.ts";
 
 /** @internal */
 interface OptionInstance<T> extends BaseOptionStrategy<T> {
@@ -706,4 +708,41 @@ export namespace Option {
   export const fromNullable = OptionImpl.fromNullable;
   /** @inheritDoc */
   export const isOption = OptionImpl.isOption;
+
+  /**
+   * A pattern for `match()` that matches a `Some` and passes the **unwrapped
+   * value** to the handler — no `P.when` annotation needed, the handler
+   * parameter type is inferred from the matched input.
+   *
+   * ```typescript
+   * import { match } from "@ghaerdi/rustify/match";
+   * import { Option } from "@ghaerdi/rustify";
+   *
+   * const opt: Option<number> = Some(5);
+   * const label = match(opt)
+   *   .with(Option.some, (n) => `Some(${n.toFixed(2)})`) // n: number
+   *   .with(Option.none, () => "None")
+   *   .exhaustive();
+   * ```
+   */
+  export const some: ExtractPattern<"unwrap"> = {
+    [PATTERN]: "extract",
+    extract: (value) => {
+      if (OptionImpl.isOption(value) && value.isSome()) {
+        return { ok: true, value: value.unwrap() };
+      }
+      return { ok: false };
+    },
+  };
+
+  /**
+   * A pattern for `match()` that matches `None` (see {@link Option.some}).
+   *
+   * The handler receives the matched input value; there is no inner value to
+   * unwrap, so it is typically ignored.
+   */
+  export const none: AbsentPattern = {
+    [PATTERN]: "absent",
+    test: (value) => OptionImpl.isOption(value) && value.isNone(),
+  };
 }

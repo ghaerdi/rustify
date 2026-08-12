@@ -21,8 +21,17 @@
     site, whether or not the result is used. `.run()` is exhaustiveness-aware:
     it excludes `undefined` from its return type when the input is fully
     covered.
-  - Works directly with the library's `Option`/`Result` values via
-    `P.when` type guards (`Option.isOption`, `Result.isResult`).
+  - **First-class `Option`/`Result` patterns** — `Option.some` and
+    `Option.none` match the `Option` variants, `Result.ok` and `Result.err`
+    match the `Result` variants, and the handler receives the **unwrapped**
+    value (or error) directly:
+    ```typescript
+    match(opt)
+      .with(Option.some, (n) => n.toFixed(2)) // n: number
+      .with(Option.none, () => "none")
+      .exhaustive();
+    ```
+    (previously these required verbose `P.when` type-guard annotations).
   - Public types: `Match`, `Pattern`, `Narrow`.
 
 ### Documentation

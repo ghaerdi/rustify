@@ -49,7 +49,8 @@
 
 import { OkImpl } from "./ok.ts";
 import { ErrImpl } from "./err.ts";
-
+import { PATTERN } from "../match/types.ts";
+import type { ExtractPattern } from "../match/types.ts";
 /**
  * Represents the successful case (`Ok`) of a {@link Result}.
  * Contains the successful value of type `T`.
@@ -194,6 +195,18 @@ interface ResultTypeStatics {
    * ```
    */
   isResult<T, E>(value: unknown): value is Result<T, E>;
+
+  /**
+   * A pattern for `match()` that matches `Ok` and passes the **unwrapped
+   * value** to the handler (see {@link Result.ok} usage example).
+   */
+  ok: ExtractPattern<"unwrap">;
+
+  /**
+   * A pattern for `match()` that matches `Err` and passes the **unwrapped
+   * error** to the handler (see {@link Result.ok} usage example).
+   */
+  err: ExtractPattern<"unwrapErr">;
 }
 
 /**
@@ -235,5 +248,25 @@ export const Result: ResultTypeStatics = {
   /** @inheritDoc */
   isResult<T, E>(value: unknown): value is Result<T, E> {
     return value instanceof OkImpl || value instanceof ErrImpl;
+  },
+
+  ok: {
+    [PATTERN]: "extract",
+    extract: (value) => {
+      if (Result.isResult(value) && value.isOk()) {
+        return { ok: true, value: value.unwrap() };
+      }
+      return { ok: false };
+    },
+  },
+
+  err: {
+    [PATTERN]: "extract",
+    extract: (value) => {
+      if (Result.isResult(value) && value.isErr()) {
+        return { ok: true, value: value.unwrapErr() };
+      }
+      return { ok: false };
+    },
   },
 };

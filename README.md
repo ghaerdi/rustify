@@ -116,7 +116,8 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
   `.with()` / `.exhaustive()` API inspired by
   [ts-pattern](https://github.com/gvergnaud/ts-pattern). Matches literals,
   object shapes, arrays, class instances, and your own algebraic types
-  (including `Option` and `Result` via `P.when` guards), with compile-time
+  (including `Option` and `Result` via the dedicated `Option.some` /
+  `Option.none` / `Result.ok` / `Result.err` patterns), with compile-time
   exhaustiveness checking.
 
 ## API Overview
@@ -357,7 +358,7 @@ const element = Option.fromNullable(() => document.getElementById("app"));
 
 ```typescript
 import { match, P } from "@ghaerdi/rustify/match";
-import { Option, Result } from "@ghaerdi/rustify";
+import { Err, None, Ok, Option, Result, Some } from "@ghaerdi/rustify";
 
 type Shape =
   | { type: "circle"; radius: number }
@@ -387,18 +388,21 @@ const describe = (value: unknown): string =>
 console.log(describe("hi")); // "a string: hi"
 console.log(describe({ type: "rect", width: 3, height: 4 })); // "a 3-wide rect"
 
-// P.when integrates with the library's own types via type guards:
+// Option.some / Option.none / Result.ok / Result.err are ready-made
+// patterns for the library's own types: they match the variant AND hand the
+// unwrapped value (or error) straight to the handler.
 const label = (value: Result<number, string> | Option<number>): string =>
   match(value)
-    .with(
-      P.when((v): v is Result<number, string> => Result.isResult(v)),
-      (r) => r.map((n) => n.toString()).unwrapOr("err"),
-    )
-    .with(
-      P.when((v): v is Option<number> => Option.isOption(v)),
-      (o) => o.unwrap().toString(),
-    )
+    .with(Result.ok, (n) => `ok: ${n}`)
+    .with(Result.err, (e) => `err: ${e}`)
+    .with(Option.some, (n) => `some: ${n}`)
+    .with(Option.none, () => "none")
     .exhaustive();
+
+console.log(label(Ok(5))); // "ok: 5"
+console.log(label(Err("boom"))); // "err: boom"
+console.log(label(Some(5))); // "some: 5"
+console.log(label(None())); // "none"
 ```
 
 

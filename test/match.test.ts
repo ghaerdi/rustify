@@ -456,5 +456,56 @@ describe("match", () => {
 			expect(describe(Ok(42))).toBe("Ok(42)");
 			expect(describe(Err("boom"))).toBe("Err(boom)");
 		});
+
+		test("Option.some passes the unwrapped value to the handler", () => {
+			// The `n: number` annotations only compile because the handler
+			// parameter is inferred from `Option<number>["unwrap"]`.
+			const describe = (opt: Option<number>): string =>
+				match(opt)
+					.with(Option.some, (n: number) => `Some(${n.toFixed(2)})`)
+					.with(Option.none, () => "None")
+					.exhaustive();
+			expect(describe(Some(5))).toBe("Some(5.00)");
+			expect(describe(None())).toBe("None");
+		});
+
+		test("Option.none matches None; Option.some rejects non-Option values", () => {
+			expect(matches(Some(5), Option.some)).toBe(true);
+			expect(matches(None(), Option.some)).toBe(false);
+			expect(matches(42, Option.some)).toBe(false);
+			expect(matches(Some(5), Option.none)).toBe(false);
+			expect(matches(None(), Option.none)).toBe(true);
+		});
+
+		test("Result.ok and Result.err pass unwrapped value/error to handlers", () => {
+			const describe = (res: Result<number, string>): string =>
+				match(res)
+					.with(Result.ok, (v: number) => `Ok(${v.toFixed(2)})`)
+					.with(Result.err, (e: string) => `Err(${e.toUpperCase()})`)
+					.exhaustive();
+			expect(describe(Ok(42))).toBe("Ok(42.00)");
+			expect(describe(Err("boom"))).toBe("Err(BOOM)");
+		});
+
+		test("Option/Result patterns work on `unknown` input via P.any narrowing", () => {
+			// Matching an unknown value: the pattern type argument pins the
+			// handler parameter to the extracted type.
+			const classify = (v: unknown): string =>
+				match(v)
+					.with(P.when((x): x is Option<number> => Option.isOption(x) && x.isSome()), (s) =>
+						`Some(${s.unwrap()})`,
+					)
+					.with(P.when((x): x is Option<number> => Option.isOption(x) && x.isNone()), () => "None")
+					.with(P.when((x): x is Result<number, string> => Result.isResult(x)), (r) =>
+						r.isOk() ? `Ok(${r.unwrap()})` : `Err(${r.unwrapErr()})`,
+					)
+					.with(P.any, () => "other")
+					.exhaustive();
+			expect(classify(Some(5))).toBe("Some(5)");
+			expect(classify(None())).toBe("None");
+			expect(classify(Ok(7))).toBe("Ok(7)");
+			expect(classify(Err("x"))).toBe("Err(x)");
+			expect(classify("hi")).toBe("other");
+		});
 	});
 });

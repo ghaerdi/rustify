@@ -1,4 +1,4 @@
-import type { DescribeMissing, Narrow, NeverCase, Pattern, Remove } from "./types.ts";
+import type { DescribeMissing, MatchResult, Narrow, NeverCase, Pattern, Remove } from "./types.ts";
 import { matchesPattern } from "./patterns.ts";
 import { toString } from "../utils.ts";
 
@@ -189,10 +189,13 @@ export class MatchImpl<TInput, TOutput, TRemaining = TInput>
     return undefined as never;
   }
 
-  #find(): { ok: true; value: unknown } | { ok: false } {
+  #find(): MatchResult {
     for (const c of this.#cases) {
-      if (matchesPattern(c.pattern, this.#input)) {
-        return { ok: true, value: c.handler(this.#input) };
+      const result = matchesPattern(c.pattern, this.#input);
+      if (result.ok) {
+        // `result.value` is the input for ordinary patterns and the
+        // extracted (unwrapped) value for extract patterns.
+        return { ok: true, value: c.handler(result.value) };
       }
     }
     return { ok: false };

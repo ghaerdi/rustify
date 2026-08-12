@@ -64,6 +64,41 @@ export interface GuardPattern<T> {
 	readonly [PATTERN]: "guard";
 	readonly guard: (value: unknown) => value is T;
 }
+
+/**
+ * The result of testing a pattern against a value: either a match carrying
+ * the value that should be passed to the handler, or a miss.
+ *
+ * Most patterns pass the input value through unchanged; *extract* patterns
+ * (like {@link Option.some} and {@link Result.ok}) substitute the unwrapped
+ * value instead, so handlers never see the container.
+ *
+ * @internal
+ */
+export type MatchResult = { ok: true; value: unknown } | { ok: false };
+
+/**
+ * @internal Marker for a pattern that matches a value and passes an
+ * **extracted** value to the handler instead of the input itself.
+ *
+ * `K` is a phantom method key: at the type level, the handler parameter is the
+ * return type of `TInput[K]` (see {@link Narrow}), so the unwrapped value is
+ * fully inferred from the input type without any type arguments.
+ */
+export interface ExtractPattern<K extends PropertyKey = never> {
+	readonly [PATTERN]: "extract";
+	readonly extract: (value: unknown) => MatchResult;
+}
+
+/**
+ * @internal Marker for a pattern that matches when `test(value)` is true and
+ * passes the input value through to the handler (used for absent cases like
+ * `Option.none`, where there is nothing to unwrap).
+ */
+export interface AbsentPattern {
+	readonly [PATTERN]: "absent";
+	readonly test: (value: unknown) => boolean;
+}
 /** @internal Marker for the `P.array(pattern?)` pattern. */
 export interface ArrayMarker<T> {
 	readonly [PATTERN]: "array";
@@ -118,6 +153,8 @@ export type Pattern<TInput> =
 	| InstanceOfPattern<unknown>
 	| UnionPattern
 	| GuardPattern<unknown>
+	| ExtractPattern
+	| AbsentPattern
 	| ArrayMarker<unknown>
 	| NotPattern
 	| OptionalPattern<unknown>
@@ -162,23 +199,27 @@ export type PatternToValue<P> = P extends AnyPattern
 										: unknown
 									: P extends UnionPattern
 										? UnionToValue<P["patterns"]>
-										: P extends OptionalPattern<infer T>
-											? PatternToValue<T> | undefined
-											: P extends ArrayMarker<infer T>
-												? PatternToValue<T>[]
-												: P extends NotPattern
-													? unknown
-													: P extends Constructor<infer I>
-														? I
-														: P extends readonly unknown[]
-															? MapArray<P>
-															: P extends object
-																? {
-																		readonly [K in keyof P]: PatternToValue<
-																			P[K]
-																		>;
-																	}
-																: P;
+										: P extends ExtractPattern
+											? unknown
+											: P extends AbsentPattern
+												? unknown
+												: P extends OptionalPattern<infer T>
+													? PatternToValue<T> | undefined
+													: P extends ArrayMarker<infer T>
+														? PatternToValue<T>[]
+														: P extends NotPattern
+															? unknown
+															: P extends Constructor<infer I>
+																? I
+																: P extends readonly unknown[]
+																	? MapArray<P>
+																	: P extends object
+																		? {
+																				readonly [K in keyof P]: PatternToValue<
+																					P[K]
+																				>;
+																			}
+																		: P;
 
 /** Maps a union pattern's member patterns to the union of their value types. */
 type UnionToValue<Ps extends readonly unknown[]> = Ps extends readonly [
@@ -208,7 +249,18 @@ type MapArray<P extends readonly unknown[]> = P extends readonly [
  * @template TInput The input type of the matcher.
  * @template P The pattern type.
  */
-export type Narrow<TInput, P> = TInput & PatternToValue<P>;
+export type Narrow<TInput, P> = P extends ExtractPattern<infer K>
+	? ExtractMethod<TInput, K>
+	: P extends AbsentPattern
+		? TInput
+		: TInput & PatternToValue<P>;
+
+/** Return type of `TInput[K]` when it is a method — the extracted handler value. */
+type ExtractMethod<TInput, K extends PropertyKey> = K extends keyof TInput
+	? TInput[K] extends (...args: unknown[]) => infer R
+		? R
+		: never
+	: never;
 
 /**
  * Removes the members of the input type that `pattern` can match, leaving the

@@ -47,5 +47,5 @@ export function matches<TInput>(
   value: TInput,
   pattern: Pattern<TInput>,
 ): boolean {
-  return matchesPattern(pattern, value);
+  return matchesPattern(pattern, value).ok;
 }

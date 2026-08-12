@@ -16,6 +16,9 @@ import {
   type StringPattern,
   type SymbolPattern,
   type UnionPattern,
+  type AbsentPattern,
+  type ExtractPattern,
+  type MatchResult,
 } from "./types.ts";
 
 // ─── Pattern namespace ─────────────────────────────────────────────────────
@@ -134,79 +137,87 @@ function isMarker(pattern: unknown): pattern is Marker {
  * @returns Whether the value matches.
  * @internal
  */
-export function matchesPattern(pattern: unknown, value: unknown): boolean {
+export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
+  const hit = (ok: boolean): MatchResult => (ok ? { ok: true, value } : { ok: false });
+
   if (isMarker(pattern)) {
     switch (pattern[PATTERN]) {
       case "any":
-        return true;
+        return hit(true);
       case "string":
-        return typeof value === "string";
+        return hit(typeof value === "string");
       case "number":
-        return typeof value === "number";
+        return hit(typeof value === "number");
       case "boolean":
-        return typeof value === "boolean";
+        return hit(typeof value === "boolean");
       case "bigint":
-        return typeof value === "bigint";
+        return hit(typeof value === "bigint");
       case "symbol":
-        return typeof value === "symbol";
+        return hit(typeof value === "symbol");
       case "nullish":
-        return value === null || value === undefined;
+        return hit(value === null || value === undefined);
       case "instanceOf":
-        return value instanceof (pattern as InstanceOfPattern<unknown>).ctor;
+        return hit(value instanceof (pattern as InstanceOfPattern<unknown>).ctor);
       case "union":
-        return (pattern as UnionPattern).patterns.some((p) =>
-          matchesPattern(p, value),
+        return hit(
+          (pattern as UnionPattern).patterns.some((p) => matchesPattern(p, value).ok),
         );
       case "guard":
-        return (pattern as GuardPattern<unknown>).guard(value) === true;
+        return hit((pattern as GuardPattern<unknown>).guard(value) === true);
+      case "extract":
+        // The extract function decides both whether the value matches AND what
+        // the handler receives (e.g. the unwrapped Some/Ok value).
+        return (pattern as ExtractPattern).extract(value);
+      case "absent":
+        return hit((pattern as AbsentPattern).test(value) === true);
       case "array": {
-        if (!Array.isArray(value)) return false;
+        if (!Array.isArray(value)) return hit(false);
         const sub = (pattern as ArrayMarker<unknown>).pattern;
-        if (sub === undefined) return true;
-        return value.every((item) => matchesPattern(sub, item));
+        if (sub === undefined) return hit(true);
+        return hit(value.every((item) => matchesPattern(sub, item).ok));
       }
       case "not":
-        return !matchesPattern((pattern as NotPattern).pattern, value);
+        return hit(!matchesPattern((pattern as NotPattern).pattern, value).ok);
       case "optional":
-        return (
+        return hit(
           value === undefined ||
-          matchesPattern((pattern as OptionalPattern<unknown>).pattern, value)
+            matchesPattern((pattern as OptionalPattern<unknown>).pattern, value).ok,
         );
     }
   }
 
   // A class constructor used directly as a pattern: value instanceof pattern.
   if (typeof pattern === "function") {
-    return (
+    return hit(
       (pattern as { prototype?: unknown }).prototype !== undefined &&
-      value instanceof (pattern as Constructor)
+        value instanceof (pattern as Constructor),
     );
   }
 
   // An array pattern: same length, every element matches pairwise.
   if (Array.isArray(pattern)) {
-    return (
+    return hit(
       Array.isArray(value) &&
-      pattern.length === value.length &&
-      pattern.every((p, i) => matchesPattern(p, value[i]))
+        pattern.length === value.length &&
+        pattern.every((p, i) => matchesPattern(p, value[i]).ok),
     );
   }
 
   // A shape pattern: every own property of the pattern matches the value.
   if (typeof pattern === "object" && pattern !== null) {
-    return (
+    return hit(
       typeof value === "object" &&
-      value !== null &&
-      Object.keys(pattern).every((key) =>
-        matchesPattern(
-          (pattern as Record<string, unknown>)[key],
-          (value as Record<string, unknown>)[key],
+        value !== null &&
+        Object.keys(pattern).every((key) =>
+          matchesPattern(
+            (pattern as Record<string, unknown>)[key],
+            (value as Record<string, unknown>)[key],
+          ).ok,
         ),
-      )
     );
   }
 
   // Anything else is a literal, compared with Object.is (NaN matches NaN).
-  return Object.is(pattern, value);
+  return hit(Object.is(pattern, value));
 }
 
