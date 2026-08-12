@@ -1,4 +1,11 @@
-import type { DescribeMissing, MatchResult, Narrow, NeverCase, Pattern, Remove } from "./types.ts";
+import type {
+  DescribeMissing,
+  MatchResult,
+  Narrow,
+  NeverCase,
+  Pattern,
+  Remove,
+} from "./types.ts";
 import { matchesPattern } from "./patterns.ts";
 import { toString } from "../utils.ts";
 
@@ -89,8 +96,7 @@ export interface Match<TInput, TOutput = never, TRemaining = TInput> {
    *   .exhaustive();
    * ```
    */
-  exhaustive: [TRemaining] extends [never]
-    ? () => TOutput
+  exhaustive: [TRemaining] extends [never] ? () => TOutput
     : NeverCase<`NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`>;
 
   /**
@@ -158,29 +164,32 @@ export class MatchImpl<TInput, TOutput, TRemaining = TInput>
    * the match is complete, a non-callable error carrying the missing cases
    * otherwise.
    */
-  exhaustive: [TRemaining] extends [never]
-    ? () => TOutput
-    : NeverCase<`NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`> =
-      (() => {
-        const found = this.#find();
-        if (found.ok) {
-          return found.value as [TRemaining] extends [never]
-            ? TOutput
-            : NeverCase<`NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`>;
-        }
-        throw new Error(
-          `[rustify/match] No pattern matched the value ${toString(this.#input)}. ` +
-            "Add a catch-all case (P.any) or use .otherwise() instead of .exhaustive().",
-        );
-      }) as [TRemaining] extends [never]
-        ? () => TOutput
-        : NeverCase<`NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`>;
+  exhaustive: [TRemaining] extends [never] ? () => TOutput
+    : NeverCase<
+      `NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`
+    > = (() => {
+      const found = this.#find();
+      if (found.ok) {
+        return found.value as [TRemaining] extends [never] ? TOutput
+          : NeverCase<
+            `NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`
+          >;
+      }
+      throw new Error(
+        `[rustify/match] No pattern matched the value ${
+          toString(this.#input)
+        }. ` +
+          "Add a catch-all case (P.any) or use .otherwise() instead of .exhaustive().",
+      );
+    }) as [TRemaining] extends [never] ? () => TOutput
+      : NeverCase<
+        `NonExhaustive: unhandled case ${DescribeMissing<TRemaining>}`
+      >;
 
   run(): [TRemaining] extends [never] ? TOutput : TOutput | undefined {
     const found = this.#find();
     if (found.ok) {
-      return found.value as [TRemaining] extends [never]
-        ? TOutput
+      return found.value as [TRemaining] extends [never] ? TOutput
         : TOutput | undefined;
     }
     // `as never` is assignable to both branches of the deferred conditional;
@@ -201,4 +210,3 @@ export class MatchImpl<TInput, TOutput, TRemaining = TInput>
     return { ok: false };
   }
 }
-

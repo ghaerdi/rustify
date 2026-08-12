@@ -17,31 +17,31 @@ export const PATTERN = Symbol("rustify.match.pattern");
 
 /** @internal Marker for the `P.any` pattern. */
 export interface AnyPattern {
-	readonly [PATTERN]: "any";
+  readonly [PATTERN]: "any";
 }
 /** @internal Marker for the `P.string` pattern. */
 export interface StringPattern {
-	readonly [PATTERN]: "string";
+  readonly [PATTERN]: "string";
 }
 /** @internal Marker for the `P.number` pattern. */
 export interface NumberPattern {
-	readonly [PATTERN]: "number";
+  readonly [PATTERN]: "number";
 }
 /** @internal Marker for the `P.boolean` pattern. */
 export interface BooleanPattern {
-	readonly [PATTERN]: "boolean";
+  readonly [PATTERN]: "boolean";
 }
 /** @internal Marker for the `P.bigint` pattern. */
 export interface BigintPattern {
-	readonly [PATTERN]: "bigint";
+  readonly [PATTERN]: "bigint";
 }
 /** @internal Marker for the `P.symbol` pattern. */
 export interface SymbolPattern {
-	readonly [PATTERN]: "symbol";
+  readonly [PATTERN]: "symbol";
 }
 /** @internal Marker for the `P.nullish` pattern. */
 export interface NullishPattern {
-	readonly [PATTERN]: "nullish";
+  readonly [PATTERN]: "nullish";
 }
 /**
  * A class constructor, usable directly as a pattern or via `P.instanceOf`.
@@ -51,18 +51,18 @@ export type Constructor<T = unknown> = abstract new (...args: any[]) => T;
 
 /** @internal Marker for the `P.instanceOf(ctor)` pattern. */
 export interface InstanceOfPattern<I> {
-	readonly [PATTERN]: "instanceOf";
-	readonly ctor: Constructor<I>;
+  readonly [PATTERN]: "instanceOf";
+  readonly ctor: Constructor<I>;
 }
 /** @internal Marker for the `P.union(...)` pattern. */
 export interface UnionPattern {
-	readonly [PATTERN]: "union";
-	readonly patterns: readonly unknown[];
+  readonly [PATTERN]: "union";
+  readonly patterns: readonly unknown[];
 }
 /** @internal Marker for the `P.when(guard)` pattern. */
 export interface GuardPattern<T> {
-	readonly [PATTERN]: "guard";
-	readonly guard: (value: unknown) => value is T;
+  readonly [PATTERN]: "guard";
+  readonly guard: (value: unknown) => value is T;
 }
 
 /**
@@ -92,11 +92,11 @@ export type MatchResult = { ok: true; value: unknown } | { ok: false };
  * `unknown` — matching any input — for backward compatibility.
  */
 export interface ExtractPattern<
-	K extends PropertyKey = never,
-	M = unknown,
+  K extends PropertyKey = never,
+  M = unknown,
 > {
-	readonly [PATTERN]: "extract";
-	readonly extract: (value: unknown) => MatchResult;
+  readonly [PATTERN]: "extract";
+  readonly extract: (value: unknown) => MatchResult;
 }
 
 /**
@@ -107,23 +107,23 @@ export interface ExtractPattern<
  * `M` is the phantom "matched" type (see {@link ExtractPattern}).
  */
 export interface AbsentPattern<M = unknown> {
-	readonly [PATTERN]: "absent";
-	readonly test: (value: unknown) => boolean;
+  readonly [PATTERN]: "absent";
+  readonly test: (value: unknown) => boolean;
 }
 /** @internal Marker for the `P.array(pattern?)` pattern. */
 export interface ArrayMarker<T> {
-	readonly [PATTERN]: "array";
-	readonly pattern?: Pattern<T>;
+  readonly [PATTERN]: "array";
+  readonly pattern?: Pattern<T>;
 }
 /** @internal Marker for the `P.not(pattern)` pattern. */
 export interface NotPattern {
-	readonly [PATTERN]: "not";
-	readonly pattern: unknown;
+  readonly [PATTERN]: "not";
+  readonly pattern: unknown;
 }
 /** @internal Marker for the `P.optional(pattern)` pattern. */
 export interface OptionalPattern<T> {
-	readonly [PATTERN]: "optional";
-	readonly pattern: Pattern<T>;
+  readonly [PATTERN]: "optional";
+  readonly pattern: Pattern<T>;
 }
 
 /**
@@ -131,7 +131,7 @@ export interface OptionalPattern<T> {
  * @internal
  */
 export type Marker = {
-	readonly [PATTERN]: string;
+  readonly [PATTERN]: string;
 };
 
 /**
@@ -153,29 +153,28 @@ export type Marker = {
  * ```
  */
 export type Pattern<TInput> =
-	| TInput
-	| AnyPattern
-	| StringPattern
-	| NumberPattern
-	| BooleanPattern
-	| BigintPattern
-	| SymbolPattern
-	| NullishPattern
-	| InstanceOfPattern<unknown>
-	| UnionPattern
-	| GuardPattern<unknown>
-	| ExtractPattern
-	| AbsentPattern
-	| ArrayMarker<unknown>
-	| NotPattern
-	| OptionalPattern<unknown>
-	| Constructor
-	| (TInput extends readonly unknown[]
-			? readonly Pattern<TInput[number]>[]
-			: never)
-	| (TInput extends object
-			? { readonly [K in keyof TInput]?: Pattern<TInput[K]> }
-			: never);
+  | TInput
+  | AnyPattern
+  | StringPattern
+  | NumberPattern
+  | BooleanPattern
+  | BigintPattern
+  | SymbolPattern
+  | NullishPattern
+  | InstanceOfPattern<unknown>
+  | UnionPattern
+  | GuardPattern<unknown>
+  | ExtractPattern
+  | AbsentPattern
+  | ArrayMarker<unknown>
+  | NotPattern
+  | OptionalPattern<unknown>
+  | Constructor
+  | (TInput extends readonly unknown[] ? readonly Pattern<TInput[number]>[]
+    : never)
+  | (TInput extends object
+    ? { readonly [K in keyof TInput]?: Pattern<TInput[K]> }
+    : never);
 
 /**
  * The type of values that match a given `pattern`.
@@ -185,71 +184,50 @@ export type Pattern<TInput> =
  *
  * @template P The pattern type.
  */
-export type PatternToValue<P> = P extends AnyPattern
-	? unknown
-	: P extends StringPattern
-		? string
-		: P extends NumberPattern
-			? number
-			: P extends BooleanPattern
-				? boolean
-				: P extends BigintPattern
-					? bigint
-					: P extends SymbolPattern
-						? symbol
-						: P extends NullishPattern
-							? null | undefined
-							: P extends InstanceOfPattern<infer I>
-								? I
-								: P extends {
-											readonly [PATTERN]: "guard";
-											readonly guard: infer G;
-										}
-									? G extends (value: unknown) => value is infer T
-										? T
-										: unknown
-									: P extends UnionPattern
-										? UnionToValue<P["patterns"]>
-										: P extends ExtractPattern<infer _, infer M>
-											? M
-											: P extends AbsentPattern<infer M2>
-												? M2
-												: P extends OptionalPattern<infer T>
-													? PatternToValue<T> | undefined
-													: P extends ArrayMarker<infer T>
-														? PatternToValue<T>[]
-														: P extends NotPattern
-															? unknown
-															: P extends Constructor<infer I>
-																? I
-																: P extends readonly unknown[]
-																	? MapArray<P>
-																	: P extends object
-																		? {
-																				readonly [K in keyof P]: PatternToValue<
-																					P[K]
-																				>;
-																			}
-																		: P;
+export type PatternToValue<P> = P extends AnyPattern ? unknown
+  : P extends StringPattern ? string
+  : P extends NumberPattern ? number
+  : P extends BooleanPattern ? boolean
+  : P extends BigintPattern ? bigint
+  : P extends SymbolPattern ? symbol
+  : P extends NullishPattern ? null | undefined
+  : P extends InstanceOfPattern<infer I> ? I
+  : P extends {
+    readonly [PATTERN]: "guard";
+    readonly guard: infer G;
+  } ? G extends (value: unknown) => value is infer T ? T
+    : unknown
+  : P extends UnionPattern ? UnionToValue<P["patterns"]>
+  : P extends ExtractPattern<infer _, infer M> ? M
+  : P extends AbsentPattern<infer M2> ? M2
+  : P extends OptionalPattern<infer T> ? PatternToValue<T> | undefined
+  : P extends ArrayMarker<infer T> ? PatternToValue<T>[]
+  : P extends NotPattern ? unknown
+  : P extends Constructor<infer I> ? I
+  : P extends readonly unknown[] ? MapArray<P>
+  : P extends object ? {
+      readonly [K in keyof P]: PatternToValue<
+        P[K]
+      >;
+    }
+  : P;
 
 /** Maps a union pattern's member patterns to the union of their value types. */
 type UnionToValue<Ps extends readonly unknown[]> = Ps extends readonly [
-	infer H,
-	...infer T,
-]
-	? PatternToValue<H> | UnionToValue<T>
-	: never;
+  infer H,
+  ...infer T,
+] ? PatternToValue<H> | UnionToValue<T>
+  : never;
 
 /**
  * Maps an array pattern to a tuple (for tuple patterns) or an array type (for
  * plain array patterns).
  */
 type MapArray<P extends readonly unknown[]> = P extends readonly [
-	infer H,
-	...infer T,
-]
-	? [PatternToValue<H>, ...MapArray<T>]
-	: PatternToValue<P[number]>[];
+  infer H,
+  ...infer T,
+] ? [PatternToValue<H>, ...MapArray<T>]
+  : PatternToValue<P[number]>[];
 
 /**
  * The type of the value passed to a handler when `pattern` matches an input of
@@ -261,17 +239,15 @@ type MapArray<P extends readonly unknown[]> = P extends readonly [
  * @template P The pattern type.
  */
 export type Narrow<TInput, P> = P extends ExtractPattern<infer K>
-	? ExtractMethod<TInput, K>
-	: P extends AbsentPattern
-		? TInput
-		: TInput & PatternToValue<P>;
+  ? ExtractMethod<TInput, K>
+  : P extends AbsentPattern ? TInput
+  : TInput & PatternToValue<P>;
 
 /** Return type of `TInput[K]` when it is a method — the extracted handler value. */
 type ExtractMethod<TInput, K extends PropertyKey> = K extends keyof TInput
-	? TInput[K] extends (...args: unknown[]) => infer R
-		? R
-		: never
-	: never;
+  ? TInput[K] extends (...args: unknown[]) => infer R ? R
+  : never
+  : never;
 
 /**
  * Removes the members of the input type that `pattern` can match, leaving the
@@ -287,9 +263,8 @@ type ExtractMethod<TInput, K extends PropertyKey> = K extends keyof TInput
  * @internal
  */
 export type Remove<TInput, P> = TInput extends unknown
-  ? [TInput] extends [PatternToValue<P>]
-    ? never
-    : TInput
+  ? [TInput] extends [PatternToValue<P>] ? never
+  : TInput
   : never;
 
 /**
@@ -302,32 +277,20 @@ export type Remove<TInput, P> = TInput extends unknown
  * @internal
  */
 export type DescribeMissing<T> = T extends string
-  ? string extends T
-    ? "a string"
-    : `${T & string}`
-  : T extends number
-    ? number extends T
-      ? "a number"
-      : `${T & number}`
-    : T extends boolean
-      ? "a boolean"
-      : T extends bigint
-        ? "a bigint"
-        : T extends symbol
-          ? "a symbol"
-          : T extends null | undefined
-            ? "null or undefined"
-            : T extends { type: infer D extends PropertyKey }
-              ? `{ type: ${D & string} }`
-              : T extends { kind: infer D extends PropertyKey }
-                ? `{ kind: ${D & string} }`
-                : T extends { tag: infer D extends PropertyKey }
-                  ? `{ tag: ${D & string} }`
-                  : T extends { isOk(): infer B extends boolean }
-                    ? `{ isOk: ${B} }`
-                    : T extends object
-                      ? "an object"
-                      : "a value";
+  ? string extends T ? "a string"
+  : `${T & string}`
+  : T extends number ? number extends T ? "a number"
+    : `${T & number}`
+  : T extends boolean ? "a boolean"
+  : T extends bigint ? "a bigint"
+  : T extends symbol ? "a symbol"
+  : T extends null | undefined ? "null or undefined"
+  : T extends { type: infer D extends PropertyKey } ? `{ type: ${D & string} }`
+  : T extends { kind: infer D extends PropertyKey } ? `{ kind: ${D & string} }`
+  : T extends { tag: infer D extends PropertyKey } ? `{ tag: ${D & string} }`
+  : T extends { isOk(): infer B extends boolean } ? `{ isOk: ${B} }`
+  : T extends object ? "an object"
+  : "a value";
 
 /**
  * The type of the `exhaustive` property when some input members are still

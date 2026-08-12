@@ -5,26 +5,25 @@
 - **`match` module — type-safe pattern matching for any value** (inspired by
   [ts-pattern](https://github.com/gvergnaud/ts-pattern) and
   [megamatch](https://github.com/Snowflyt/megamatch)):
-  - `match(value)` builds a chain of `.with(pattern, handler)` cases,
-    terminated by `.exhaustive()` (throws if nothing matched),
-    `.otherwise(handler)` (a default case), or `.run()` (returns `undefined`
-    if nothing matched).
+  - `match(value)` builds a chain of `.with(pattern, handler)` cases, terminated
+    by `.exhaustive()` (throws if nothing matched), `.otherwise(handler)` (a
+    default case), or `.run()` (returns `undefined` if nothing matched).
   - Patterns are plain values (literals, object shapes, arrays) or composable
-    guards from the `P` namespace: `P.any`, `P.string`, `P.number`,
-    `P.boolean`, `P.bigint`, `P.symbol`, `P.nullish`, `P.array`,
-    `P.instanceOf`, `P.union`, `P.when`, `P.not`, `P.optional`.
+    guards from the `P` namespace: `P.any`, `P.string`, `P.number`, `P.boolean`,
+    `P.bigint`, `P.symbol`, `P.nullish`, `P.array`, `P.instanceOf`, `P.union`,
+    `P.when`, `P.not`, `P.optional`.
   - `matches(value, pattern)` — standalone predicate form.
-  - **Compile-time exhaustiveness**: `.exhaustive()` is a *property* that
+  - **Compile-time exhaustiveness**: `.exhaustive()` is a _property_ that
     becomes a non-callable `NeverCase<...>` carrying a readable message
     (`NeverCase<"NonExhaustive: unhandled case { type: rect }">`) when input
     union members are unhandled — the error fires at the `.exhaustive()` call
     site, whether or not the result is used. `.run()` is exhaustiveness-aware:
     it excludes `undefined` from its return type when the input is fully
     covered.
-  - **First-class `Option`/`Result` patterns** — `Option.some` and
-    `Option.none` match the `Option` variants, `Result.ok` and `Result.err`
-    match the `Result` variants, and the handler receives the **unwrapped**
-    value (or error) directly:
+  - **First-class `Option`/`Result` patterns** — `Option.some` and `Option.none`
+    match the `Option` variants, `Result.ok` and `Result.err` match the `Result`
+    variants, and the handler receives the **unwrapped** value (or error)
+    directly:
     ```typescript
     match(opt)
       .with(Option.some, (n) => n.toFixed(2)) // n: number
@@ -33,28 +32,30 @@
     ```
     (previously these required verbose `P.when` type-guard annotations).
     Exhaustiveness is **per-variant**: `.with(Option.some, ...).exhaustive()`
-    alone fails to type-check (the `None` case is required), and the error
-    names the missing variant (`{ tag: none }`, `{ isOk: false }`).
-  - **`Option<T>` is now a discriminated union** — `OptionImpl<T, "some"> |
-    OptionImpl<T, "none">` (new `tag` property, literal per variant). This is
-    what powers per-variant exhaustiveness and enables `if (opt.tag ===
-    "some")` narrowing. The method surface is preserved via the internal
-    `OptionMethods<T>` interface (used for `@inheritDoc` docs; not part of the
-    public API); behavior is unchanged.
+    alone fails to type-check (the `None` case is required), and the error names
+    the missing variant (`{ tag: none }`, `{ isOk: false }`).
+  - **`Option<T>` is now a discriminated union** —
+    `OptionImpl<T, "some"> |
+    OptionImpl<T, "none">` (new `tag` property,
+    literal per variant). This is what powers per-variant exhaustiveness and
+    enables `if (opt.tag ===
+    "some")` narrowing. The method surface is
+    preserved via the internal `OptionMethods<T>` interface (used for
+    `@inheritDoc` docs; not part of the public API); behavior is unchanged.
   - Public types: `Match`, `Pattern`, `Narrow`.
 
 ### Documentation
 
 - Documented the new `match` module in the README: a `match` entry in Core
-  Concepts, a full `### match` API section (terminals, `P` namespace,
-  public types), and a worked `### Pattern matching with match()` example
-  (exhaustive unions, guards, and `Option`/`Result` integration).
+  Concepts, a full `### match` API section (terminals, `P` namespace, public
+  types), and a worked `### Pattern matching with match()` example (exhaustive
+  unions, guards, and `Option`/`Result` integration).
 
 ### Tests
 
 - Added `test/match.test.ts` (263 tests): literals, shapes, guards, arrays,
-  `instanceOf`, combinators, terminals, exhaustiveness (positive and
-  negative), and Option/Result integration.
+  `instanceOf`, combinators, terminals, exhaustiveness (positive and negative),
+  and Option/Result integration.
 
 # Changelog
 
@@ -64,8 +65,8 @@
 
 - Split `result.ts` into a `src/result/` directory with dedicated files:
   `types.ts`, `ok.ts`, `err.ts`, `result.ts`, and `index.ts` — mirroring the
-  `option/` structure. All internal imports and entrypoint exports were
-  updated to the new paths.
+  `option/` structure. All internal imports and entrypoint exports were updated
+  to the new paths.
 - Replaced the lazy `require()` calls in `OkImpl.transpose` with clean static
   imports.
 - Reformatted the codebase (README, CHANGELOG, package.json, and all source
@@ -79,14 +80,14 @@
   - Documented `OkImpl.[Symbol.iterator]` and `ErrImpl.[Symbol.iterator]`.
   - Documented `utils.ts` `toString` and removed a stray `@inheritDoc` from
     `defaultErrorTransform`.
-- Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs
-  type checking, tests, and a JSR publish dry-run on push/PR to `main`.
+- Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs type
+  checking, tests, and a JSR publish dry-run on push/PR to `main`.
 
 ### Tests
 
 - Added 23 Rust standard library parity tests for `Option` and `Result`,
-  matching the documented doctests from Rust's std (lazy evaluation,
-  error message content, `sq_then_to_string` chaining, `or_else` chaining,
+  matching the documented doctests from Rust's std (lazy evaluation, error
+  message content, `sq_then_to_string` chaining, `or_else` chaining,
   one-level-at-a-time `flatten`, and more).
 
 ## 2.1.1

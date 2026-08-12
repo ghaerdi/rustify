@@ -1,24 +1,24 @@
 import {
-  PATTERN,
+  type AbsentPattern,
   type AnyPattern,
   type ArrayMarker,
   type BigintPattern,
   type BooleanPattern,
   type Constructor,
+  type ExtractPattern,
   type GuardPattern,
   type InstanceOfPattern,
   type Marker,
+  type MatchResult,
   type NotPattern,
   type NullishPattern,
   type NumberPattern,
   type OptionalPattern,
+  PATTERN,
   type Pattern,
   type StringPattern,
   type SymbolPattern,
   type UnionPattern,
-  type AbsentPattern,
-  type ExtractPattern,
-  type MatchResult,
 } from "./types.ts";
 
 // ─── Pattern namespace ─────────────────────────────────────────────────────
@@ -138,7 +138,9 @@ function isMarker(pattern: unknown): pattern is Marker {
  * @internal
  */
 export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
-  const hit = (ok: boolean): MatchResult => (ok ? { ok: true, value } : { ok: false });
+  const hit = (
+    ok: boolean,
+  ): MatchResult => (ok ? { ok: true, value } : { ok: false });
 
   if (isMarker(pattern)) {
     switch (pattern[PATTERN]) {
@@ -157,10 +159,14 @@ export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
       case "nullish":
         return hit(value === null || value === undefined);
       case "instanceOf":
-        return hit(value instanceof (pattern as InstanceOfPattern<unknown>).ctor);
+        return hit(
+          value instanceof (pattern as InstanceOfPattern<unknown>).ctor,
+        );
       case "union":
         return hit(
-          (pattern as UnionPattern).patterns.some((p) => matchesPattern(p, value).ok),
+          (pattern as UnionPattern).patterns.some((p) =>
+            matchesPattern(p, value).ok
+          ),
         );
       case "guard":
         return hit((pattern as GuardPattern<unknown>).guard(value) === true);
@@ -181,7 +187,8 @@ export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
       case "optional":
         return hit(
           value === undefined ||
-            matchesPattern((pattern as OptionalPattern<unknown>).pattern, value).ok,
+            matchesPattern((pattern as OptionalPattern<unknown>).pattern, value)
+              .ok,
         );
     }
   }
@@ -212,7 +219,7 @@ export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
           matchesPattern(
             (pattern as Record<string, unknown>)[key],
             (value as Record<string, unknown>)[key],
-          ).ok,
+          ).ok
         ),
     );
   }
@@ -220,4 +227,3 @@ export function matchesPattern(pattern: unknown, value: unknown): MatchResult {
   // Anything else is a literal, compared with Object.is (NaN matches NaN).
   return hit(Object.is(pattern, value));
 }
-

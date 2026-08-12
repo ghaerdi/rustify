@@ -810,8 +810,9 @@ describe("Result", () => {
 
     describe("flatten", () => {
       test("removes one level at a time", () => {
-        const x: Result<Result<Result<string, string>, string>, string> =
-          Ok(Ok(Ok("hello")));
+        const x: Result<Result<Result<string, string>, string>, string> = Ok(
+          Ok(Ok("hello")),
+        );
         expect(x.flatten().unwrap().unwrap()).toBe("hello");
         expect(x.flatten().flatten().unwrap()).toBe("hello");
       });

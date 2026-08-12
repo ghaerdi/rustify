@@ -4,7 +4,6 @@ import { NoneStrategy } from "./none.ts";
 import { PATTERN } from "../match/types.ts";
 import type { AbsentPattern, ExtractPattern } from "../match/types.ts";
 
-
 /**
  * The method surface shared by every {@link Option}: the operations available
  * on both the `Some` and `None` variants. This interface is implemented by the
@@ -551,7 +550,9 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
     return this.#wrap(this.#inner.flatten());
   }
   /** @inheritDoc */ filter(predicate: (value: T) => boolean): Option<T> {
-    if (this.#inner.isSome() && predicate(this.#inner.unwrap())) return this as Option<T>;
+    if (this.#inner.isSome() && predicate(this.#inner.unwrap())) {
+      return this as Option<T>;
+    }
     return new OptionImpl(new NoneStrategy<T>());
   }
   /** @inheritDoc */ okOr<E>(

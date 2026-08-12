@@ -125,8 +125,8 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
 ### Result\<T, E\>
 
 `Result<T, E>` is a **discriminated union** of `Ok<T>` and `Err<E>` — narrow
-with `isOk()` / `isErr()` (or the `match()` patterns `Result.ok` /
-`Result.err`, which hand the unwrapped value or error to the handler).
+with `isOk()` / `isErr()` (or the `match()` patterns `Result.ok` / `Result.err`,
+which hand the unwrapped value or error to the handler).
 
 - **Checking:**
   - `isOk()`: Returns `true` if `Ok`.
@@ -192,9 +192,9 @@ with `isOk()` / `isErr()` (or the `match()` patterns `Result.ok` /
 
 ### Option\<T\>
 
-`Option<T>` is a **discriminated union** — every value exposes a literal
-`tag`: `"some"` or `"none"` — so you can narrow with
-`if (opt.tag === "some")` (or `isSome()` / `isNone()`).
+`Option<T>` is a **discriminated union** — every value exposes a literal `tag`:
+`"some"` or `"none"` — so you can narrow with `if (opt.tag === "some")` (or
+`isSome()` / `isNone()`).
 
 - **Checking:**
   - `isSome()`: Returns `true` if `Some`.
@@ -273,25 +273,25 @@ with `isOk()` / `isErr()` (or the `match()` patterns `Result.ok` /
 Import `match` and `P` from `@ghaerdi/rustify/match`.
 
 - **Matching:**
-  - `match(value)`: Starts a match chain, returning a `Match` you extend
-    with `.with()` cases and terminate with `.exhaustive()`, `.otherwise()`
-    or `.run()`.
-  - `matches(value, pattern)`: Standalone predicate — returns `true` if
-    `value` matches `pattern`.
+  - `match(value)`: Starts a match chain, returning a `Match` you extend with
+    `.with()` cases and terminate with `.exhaustive()`, `.otherwise()` or
+    `.run()`.
+  - `matches(value, pattern)`: Standalone predicate — returns `true` if `value`
+    matches `pattern`.
 - **Terminals:**
   - `.with(pattern, handler)`: Adds a case. `handler` receives the value
     narrowed to what `pattern` matches. Returns the extended match.
   - `.exhaustive()`: Runs the match and **throws** if nothing matched. At
-    compile time, calling it on an incomplete match is a type error at the
-    call site that names the missing cases (e.g.
+    compile time, calling it on an incomplete match is a type error at the call
+    site that names the missing cases (e.g.
     `NeverCase<"NonExhaustive: unhandled case { type: rect }">`).
-  - `.otherwise(handler)`: Runs the match, calling `handler(value)` for
-    anything no case matched.
+  - `.otherwise(handler)`: Runs the match, calling `handler(value)` for anything
+    no case matched.
   - `.run()`: Runs the match, returning `undefined` if nothing matched —
     excluded from the return type when every case is covered.
-- **`Option`/`Result` patterns:** `Option.some`, `Option.none`, `Result.ok`
-  and `Result.err` match the respective variant and pass the **unwrapped**
-  value (or error) to the handler — `n` below is `number`, not `Option<number>`:
+- **`Option`/`Result` patterns:** `Option.some`, `Option.none`, `Result.ok` and
+  `Result.err` match the respective variant and pass the **unwrapped** value (or
+  error) to the handler — `n` below is `number`, not `Option<number>`:
   ```typescript
   match(opt)
     .with(Option.some, (n) => n.toFixed(2))
@@ -424,7 +424,6 @@ console.log(label(Err("boom"))); // "err: boom"
 console.log(label(Some(5))); // "some: 5"
 console.log(label(None())); // "none"
 ```
-
 
 ## Development
 
