@@ -13,7 +13,7 @@
     guards from the `P` namespace: `P.any`, `P.string`, `P.number`,
     `P.boolean`, `P.bigint`, `P.symbol`, `P.nullish`, `P.array`,
     `P.instanceOf`, `P.union`, `P.when`, `P.not`, `P.optional`.
-  - `matches(pattern, value)` — standalone predicate form.
+  - `matches(value, pattern)` — standalone predicate form.
   - **Compile-time exhaustiveness**: `.exhaustive()` is a *property* that
     becomes a non-callable `NeverCase<...>` carrying a readable message
     (`NeverCase<"NonExhaustive: unhandled case { type: rect }">`) when input
@@ -24,6 +24,13 @@
   - Works directly with the library's `Option`/`Result` values via
     `P.when` type guards (`Option.isOption`, `Result.isResult`).
   - Public types: `Match`, `Pattern`, `Narrow`.
+
+### Documentation
+
+- Documented the new `match` module in the README: a `match` entry in Core
+  Concepts, a full `### match` API section (terminals, `P` namespace,
+  public types), and a worked `### Pattern matching with match()` example
+  (exhaustive unions, guards, and `Option`/`Result` integration).
 
 ### Tests
 

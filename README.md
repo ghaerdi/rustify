@@ -112,6 +112,12 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
   - `Some<T>`: Contains a value. Becomes iterable if `T` is iterable.
   - `None()`: Represents the absence of a value. Call `None()` to create a None
     instance.
+- **`match`:** Type-safe pattern matching for **any** value — a chained
+  `.with()` / `.exhaustive()` API inspired by
+  [ts-pattern](https://github.com/gvergnaud/ts-pattern). Matches literals,
+  object shapes, arrays, class instances, and your own algebraic types
+  (including `Option` and `Result` via `P.when` guards), with compile-time
+  exhaustiveness checking.
 
 ## API Overview
 
@@ -253,6 +259,43 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
   - `Option.isOption(value)`: Type guard, returns `true` if `value` is `Some` or
     `None`.
 
+### match
+
+Import `match` and `P` from `@ghaerdi/rustify/match`.
+
+- **Matching:**
+  - `match(value)`: Starts a match chain, returning a `Match` you extend
+    with `.with()` cases and terminate with `.exhaustive()`, `.otherwise()`
+    or `.run()`.
+  - `matches(value, pattern)`: Standalone predicate — returns `true` if
+    `value` matches `pattern`.
+- **Terminals:**
+  - `.with(pattern, handler)`: Adds a case. `handler` receives the value
+    narrowed to what `pattern` matches. Returns the extended match.
+  - `.exhaustive()`: Runs the match and **throws** if nothing matched. At
+    compile time, calling it on an incomplete match is a type error at the
+    call site that names the missing cases (e.g.
+    `NeverCase<"NonExhaustive: unhandled case { type: rect }">`).
+  - `.otherwise(handler)`: Runs the match, calling `handler(value)` for
+    anything no case matched.
+  - `.run()`: Runs the match, returning `undefined` if nothing matched —
+    excluded from the return type when every case is covered.
+- **Patterns (the `P` namespace):**
+  - `P.any` / `P._`: Matches anything (catch-all).
+  - `P.string`, `P.number`, `P.boolean`, `P.bigint`, `P.symbol`: Matches
+    primitive types.
+  - `P.nullish`: Matches `null` or `undefined`.
+  - `P.array(pattern?)`: Matches arrays; optionally checks every element.
+  - `P.instanceOf(Ctor)`: Matches class instances.
+  - `P.union(...patterns)`: Matches any of the given patterns.
+  - `P.when(guard)`: Matches when the type guard returns `true`.
+  - `P.not(pattern)`: Matches everything except `pattern`.
+  - `P.optional(pattern)`: Matches `undefined` or `pattern`.
+- **Types:**
+  - `Match`: the chain type returned by `match()`.
+  - `Pattern<TInput>`: a valid pattern for `TInput`.
+  - `Narrow<TInput, P>`: the type of a value matched by pattern `P`.
+
 ## Examples
 
 ### Chaining with Result
@@ -309,6 +352,55 @@ const failed = Result.from(() => JSON.parse("invalid"));
 const element = Option.fromNullable(() => document.getElementById("app"));
 // element is Some(element) or None
 ```
+
+### Pattern matching with match()
+
+```typescript
+import { match, P } from "@ghaerdi/rustify/match";
+import { Option, Result } from "@ghaerdi/rustify";
+
+type Shape =
+  | { type: "circle"; radius: number }
+  | { type: "rect"; width: number; height: number };
+
+// exhaustive() is checked at compile time: every Shape case must be handled.
+const area = (shape: Shape): number =>
+  match(shape)
+    .with({ type: "circle" }, ({ radius }) => Math.PI * radius * radius)
+    .with({ type: "rect" }, ({ width, height }) => width * height)
+    .exhaustive();
+
+console.log(area({ type: "circle", radius: 2 })); // ~12.57
+console.log(area({ type: "rect", width: 3, height: 4 })); // 12
+
+// Patterns can also be guards, catch-alls, and combinators:
+const describe = (value: unknown): string =>
+  match(value)
+    .with(P.string, (s) => `a string: ${s}`)
+    .with(P.number, (n) => `a number: ${n}`)
+    .with(
+      { type: "rect", width: P.number, height: P.number },
+      ({ width }) => `a ${width}-wide rect`,
+    )
+    .otherwise(() => "something else");
+
+console.log(describe("hi")); // "a string: hi"
+console.log(describe({ type: "rect", width: 3, height: 4 })); // "a 3-wide rect"
+
+// P.when integrates with the library's own types via type guards:
+const label = (value: Result<number, string> | Option<number>): string =>
+  match(value)
+    .with(
+      P.when((v): v is Result<number, string> => Result.isResult(v)),
+      (r) => r.map((n) => n.toString()).unwrapOr("err"),
+    )
+    .with(
+      P.when((v): v is Option<number> => Option.isOption(v)),
+      (o) => o.unwrap().toString(),
+    )
+    .exhaustive();
+```
+
 
 ## Development
 
