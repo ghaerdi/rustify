@@ -60,6 +60,7 @@ Import `Ok`, `Err`, `Result`, `Some`, `None`, and `Option` from the library.
 
 ```typescript
 import { Err, None, Ok, Option, Result, Some } from "@ghaerdi/rustify";
+import { match } from "@ghaerdi/rustify/match";
 
 // --- Creating a function that returns a Result ---
 
@@ -77,11 +78,13 @@ function divide(
 
 const result = divide(10, 2);
 
-// Use 'match' to exhaustively handle both Ok and Err cases.
-const message = result.match({
-  Ok: (value) => `Result: ${value}`,
-  Err: (error) => `Error: ${error}`,
-});
+// Use match() to exhaustively handle both Ok and Err cases.
+// Result.ok / Result.err match the variant and hand the UNWRAPPED
+// value (or error) straight to the handler.
+const message = match(result)
+  .with(Result.ok, (value) => `Result: ${value}`)
+  .with(Result.err, (error) => `Error: ${error}`)
+  .exhaustive(); // compile-checked: every variant handled
 console.log(message); // "Result: 5"
 
 // Working with ok() and err() methods that return Option:
@@ -90,12 +93,12 @@ if (okValue.isSome()) {
   console.log(`Ok value: ${okValue.unwrap()}`);
 }
 
-// Example with Option
+// Example with Option — Option.some / Option.none match the variants:
 const name: Option<string> = Some("Alice");
-const greeting = name.match({
-  Some: (value) => `Hello, ${value}!`,
-  None: () => "Hello, stranger!",
-});
+const greeting = match(name)
+  .with(Option.some, (value) => `Hello, ${value}!`)
+  .with(Option.none, () => "Hello, stranger!")
+  .exhaustive();
 console.log(greeting); // "Hello, Alice!"
 
 // Wrapping unsafe operations
