@@ -29,3 +29,4 @@
  */
 export * from "./result/index.ts";
 export * from "./option/index.ts";
+export * from "./match/index.ts";
