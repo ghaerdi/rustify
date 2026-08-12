@@ -888,7 +888,9 @@ export namespace Option {
    * values.filter(Option.isSome).map((s) => s.unwrap() + 1); // [2]
    * ```
    */
-  export const isSome = <T>(value: unknown): value is Option<T> & { tag: "some" } =>
+  export const isSome = <T>(
+    value: unknown,
+  ): value is Option<T> & { tag: "some" } =>
     OptionImpl.isOption(value) && value.isSome();
 
   /**
@@ -899,7 +901,9 @@ export namespace Option {
    * const isMissing = (opt: Option<number>): boolean => Option.isNone(opt);
    * ```
    */
-  export const isNone = <T>(value: unknown): value is Option<T> & { tag: "none" } =>
+  export const isNone = <T>(
+    value: unknown,
+  ): value is Option<T> & { tag: "none" } =>
     OptionImpl.isOption(value) && value.isNone();
   /**
    * A pattern for `match()` that matches a `Some` and passes the **unwrapped

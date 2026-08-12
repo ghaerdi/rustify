@@ -863,31 +863,31 @@ describe("Rust std parity: unwrapErrOrElse / intoOk / intoErr", () => {
 });
 
 describe("Result.isOk / Result.isErr type guards", () => {
-	test("narrows the Ok branch and unwraps typed values", () => {
-		const message = (res: Result<number, string>): string => {
-			if (Result.isOk(res)) {
-				// res: Ok<number, string> — unwrap() typed
-				return `ok: ${res.unwrap()}`;
-			}
-			// res: Err<number, string> — unwrapErr() typed
-			return `err: ${res.unwrapErr()}`;
-		};
-		expect(message(Ok(5) as Result<number, string>)).toBe("ok: 5");
-		expect(message(Err("boom") as Result<number, string>)).toBe("err: boom");
-	});
+  test("narrows the Ok branch and unwraps typed values", () => {
+    const message = (res: Result<number, string>): string => {
+      if (Result.isOk(res)) {
+        // res: Ok<number, string> — unwrap() typed
+        return `ok: ${res.unwrap()}`;
+      }
+      // res: Err<number, string> — unwrapErr() typed
+      return `err: ${res.unwrapErr()}`;
+    };
+    expect(message(Ok(5) as Result<number, string>)).toBe("ok: 5");
+    expect(message(Err("boom") as Result<number, string>)).toBe("err: boom");
+  });
 
-	test("narrows the Err branch", () => {
-		const failed = (res: Result<number, string>): boolean => {
-			if (Result.isErr(res)) return true;
-			return false;
-		};
-		expect(failed(Err("x") as Result<number, string>)).toBe(true);
-		expect(failed(Ok(1) as Result<number, string>)).toBe(false);
-	});
+  test("narrows the Err branch", () => {
+    const failed = (res: Result<number, string>): boolean => {
+      if (Result.isErr(res)) return true;
+      return false;
+    };
+    expect(failed(Err("x") as Result<number, string>)).toBe(true);
+    expect(failed(Ok(1) as Result<number, string>)).toBe(false);
+  });
 
-	test("rejects non-Result values", () => {
-		expect(Result.isOk(42)).toBe(false);
-		expect(Result.isErr("hello")).toBe(false);
-		expect(Result.isOk(undefined)).toBe(false);
-	});
+  test("rejects non-Result values", () => {
+    expect(Result.isOk(42)).toBe(false);
+    expect(Result.isErr("hello")).toBe(false);
+    expect(Result.isOk(undefined)).toBe(false);
+  });
 });
