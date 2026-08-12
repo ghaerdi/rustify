@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.2.1
+
+### Fixes
+
+- **JSR documentation coverage is now 100%** (was 50%) — JSR's "Has docs for
+  most symbols" score criterion now passes. The `option`, `result`, and `match`
+  entrypoints used named re-exports (`export { X } from "..."`), which JSR's
+  docs pipeline emits as undocumented declarations; they now use `export *`
+  barrels, preserving each symbol's JSDoc.
+
+### Refactoring
+
+- Switched the `option/`, `result/`, and `match/` index files to `export *`
+  barrel exports, and marked the internal `match` symbols (`PATTERN`,
+  `PatternToValue`) with `@internal` JSDoc so they stay out of the public API.
+
+### Documentation
+
+- Added `AGENTS.md`, a `self-improve` skill, and updated module conventions;
+  moved the project's agent skills into the repository (`.agents/skills/`).
+
 ## 2.2.0
 
 ### Breaking Changes
