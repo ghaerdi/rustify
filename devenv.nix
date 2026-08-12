@@ -3,7 +3,6 @@
   config,
   ...
 }: {
-  # https://devenv.sh/languages/
   languages.deno.enable = true;
   languages.nix = {
     enable = true;
@@ -11,18 +10,12 @@
     lsp.package = pkgs.nil;
   };
 
-  # https://devenv.sh/packages/
-  packages = [pkgs.git];
-
-  # https://devenv.sh/scripts/
   scripts.check.exec = "deno task check";
 
-  # https://devenv.sh/basics/
   enterShell = ''
-    echo "Welcome to rustify!"
+    echo "Welcome to rustify!" | ${pkgs.lolcat}/bin/lolcat
   '';
 
-  # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
     deno task check
@@ -49,6 +42,4 @@
       excludes = [".agents"];
     };
   };
-
-  # See full reference at https://devenv.sh/reference/options/
 }
