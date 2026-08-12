@@ -4,11 +4,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      dry-run:
-        description: Validate without publishing to JSR
-        type: boolean
-        default: true
 
 jobs:
   publish:
@@ -26,13 +21,8 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Publish
-        # Skip pre-releases — only stable releases publish to JSR.
-        # Remove the guard to publish pre-release versions too.
+      - name: Publish (dry-run)
+        # TODO: flip `deno publish --dry-run` -> `deno publish` once validated.
+        # Real publish (from Actions, OIDC) is what generates the provenance statement.
         if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ inputs.dry-run }}" == "true" ]; then
-            deno publish --dry-run
-          else
-            deno publish
-          fi
+        run: deno publish --dry-run
