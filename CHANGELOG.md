@@ -26,12 +26,14 @@
     match the `Option` variants, `Result.ok` and `Result.err` match the `Result`
     variants, and the handler receives the **unwrapped** value (or error)
     directly:
+
     ```typescript
     match(opt)
       .with(Option.some, (n) => n.toFixed(2)) // n: number
       .with(Option.none, () => "none")
       .exhaustive();
     ```
+
     (previously these required verbose `P.when` type-guard annotations).
     Exhaustiveness is **per-variant**: `.with(Option.some, ...).exhaustive()`
     alone fails to type-check (the `None` case is required), and the error names
@@ -96,7 +98,6 @@
     `defaultErrorTransform`.
 - Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs type
   checking, tests, and a JSR publish dry-run on push/PR to `main`.
-
 
 ## 2.1.1
 
