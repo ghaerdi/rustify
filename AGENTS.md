@@ -37,16 +37,14 @@ test/
 
 - Monad module architecture: `types.ts` (internal interfaces) + one file per
   variant + public module file + `index.ts` re-exports. See
-  `.agents/skills/monad-module-conventions` for
-  the full layout.
+  `.agents/skills/monad-module-conventions` for the full layout.
 - JSDoc on public interfaces only; `@internal` on internals; `@inheritDoc` on
   implementations; `@example` on user-facing methods; `@module` on entrypoints.
 - No `as any` anywhere in `src/`.
 - All relative imports use explicit `.ts` extensions.
-- Tests: `describe`/`test` from `@std/testing/bdd`, `expect` from
-  `@std/expect`, `spy`/`assertSpyCalls`/`assertSpyCall` from
-  `@std/testing/mock`. Do NOT use `@std/expect` mock matchers — they are
-  incompatible with std spies.
+- Tests: `describe`/`test` from `@std/testing/bdd`, `expect` from `@std/expect`,
+  `spy`/`assertSpyCalls`/`assertSpyCall` from `@std/testing/mock`. Do NOT use
+  `@std/expect` mock matchers — they are incompatible with std spies.
 
 ## Release
 
@@ -55,6 +53,6 @@ Version bumps + CHANGELOG + git tag + draft GitHub release: follow the
 
 ## Docs
 
-Keep README.md, AGENTS.md, and JSDoc in sync with the code. After a session
-with meaningful changes, run the `self-improve` skill to reconcile docs and
-capture patterns.
+Keep README.md, AGENTS.md, and JSDoc in sync with the code. After a session with
+meaningful changes, run the `self-improve` skill to reconcile docs and capture
+patterns.
