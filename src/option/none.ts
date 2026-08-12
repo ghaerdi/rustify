@@ -2,6 +2,8 @@ import type { BaseOptionStrategy, OptionMatcher } from "./types.ts";
 
 /** @internal Strategy for the None variant. */
 export class NoneStrategy<T> implements BaseOptionStrategy<T> {
+  /** @internal Literal discriminant used for discriminated-union narrowing. */
+  readonly tag = "none" as const;
   isSome(): boolean {
     return false;
   }

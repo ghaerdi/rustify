@@ -3,6 +3,8 @@ import { NoneStrategy } from "./none.ts";
 
 /** @internal Strategy for the Some variant. */
 export class SomeStrategy<T> implements BaseOptionStrategy<T> {
+  /** @internal Literal discriminant used for discriminated-union narrowing. */
+  readonly tag = "some" as const;
   #value: T;
 
   constructor(value: T) {

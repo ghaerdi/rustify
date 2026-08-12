@@ -397,6 +397,60 @@ describe("match", () => {
 		});
 	});
 
+	describe("Per-variant exhaustiveness for Option/Result patterns", () => {
+		test("Option.some alone does not satisfy exhaustiveness", () => {
+			const opt: Option<number> = Some(5);
+			match(opt)
+				.with(Option.some, (n) => n.toFixed(2))
+				// @ts-expect-error — the None variant is unhandled
+				.exhaustive();
+		});
+
+		test("Option.none alone does not satisfy exhaustiveness", () => {
+			const opt: Option<number> = None<number>();
+			match(opt)
+				.with(Option.none, () => "none")
+				// @ts-expect-error — the Some variant is unhandled
+				.exhaustive();
+		});
+
+		test("Option.some + Option.none satisfies exhaustiveness", () => {
+			const opt: Option<number> = Some(5);
+			const label = match(opt)
+				.with(Option.some, (n) => `Some(${n})`)
+				.with(Option.none, () => "None")
+				.exhaustive();
+			expect(label).toBe("Some(5)");
+		});
+
+		test("Result.ok alone does not satisfy exhaustiveness", () => {
+			// `as` prevents const control-flow narrowing: Ok() returns the
+			// Ok member type, so without the cast the const narrows to it.
+			const res: Result<number, string> = Ok(5) as Result<number, string>;
+			match(res)
+				.with(Result.ok, (v) => v)
+				// @ts-expect-error — the Err variant is unhandled
+				.exhaustive();
+		});
+
+		test("Result.err alone does not satisfy exhaustiveness", () => {
+			const res: Result<number, string> = Err("boom") as Result<number, string>;
+			match(res)
+				.with(Result.err, (e) => e)
+				// @ts-expect-error — the Ok variant is unhandled
+				.exhaustive();
+		});
+
+		test("Result.ok + Result.err satisfies exhaustiveness", () => {
+			const res: Result<number, string> = Ok(5) as Result<number, string>;
+			const label = match(res)
+				.with(Result.ok, (v) => `Ok(${v})`)
+				.with(Result.err, (e) => `Err(${e})`)
+				.exhaustive();
+			expect(label).toBe("Ok(5)");
+		});
+	});
+
 	describe("matches() helper", () => {
 		test("returns whether a value matches a pattern", () => {
 			expect(matches({ type: "circle", radius: 5 }, { type: "circle" })).toBe(

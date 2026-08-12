@@ -200,13 +200,13 @@ interface ResultTypeStatics {
    * A pattern for `match()` that matches `Ok` and passes the **unwrapped
    * value** to the handler (see {@link Result.ok} usage example).
    */
-  ok: ExtractPattern<"unwrap">;
+  ok: ExtractPattern<"unwrap", { isOk(): true }>;
 
   /**
    * A pattern for `match()` that matches `Err` and passes the **unwrapped
    * error** to the handler (see {@link Result.ok} usage example).
    */
-  err: ExtractPattern<"unwrapErr">;
+  err: ExtractPattern<"unwrapErr", { isErr(): true }>;
 }
 
 /**

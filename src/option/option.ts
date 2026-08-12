@@ -4,67 +4,16 @@ import { NoneStrategy } from "./none.ts";
 import { PATTERN } from "../match/types.ts";
 import type { AbsentPattern, ExtractPattern } from "../match/types.ts";
 
-/** @internal */
-interface OptionInstance<T> extends BaseOptionStrategy<T> {
-  readonly _inner: BaseOptionStrategy<T>;
-  map<U>(fn: (value: T) => U): Option<U>;
-  inspect(fn: (value: T) => void): Option<T>;
-  and<U>(res: Option<U>): Option<U>;
-  andThen<U>(fn: (value: T) => Option<U>): Option<U>;
-  or(res: Option<T>): Option<T>;
-  orElse(fn: () => Option<T>): Option<T>;
-  xor(optb: Option<T>): Option<T>;
-  cloned(): Option<T>;
-  zip<U>(other: Option<U>): Option<[T, U]>;
-  zipWith<U, R>(other: Option<U>, fn: (s: T, o: U) => R): Option<R>;
-  flatten<U>(): Option<U>;
-  filter(predicate: (value: T) => boolean): Option<T>;
-  transpose<U, E>(): import("../result/index.ts").Result<Option<U>, E>;
-  take(): Option<T>;
-  takeIf(predicate: (value: T) => boolean): Option<T>;
-  [Symbol.iterator](): Iterator<any>;
-}
 
 /**
- * Represents an optional value: either `Some` (containing a value) or `None` (absent).
- *
- * `Option<T>` is the core type of this module. Every `Option` is either
- * `Some(value)` (containing a value of type `T`) or `None` (representing
- * the absence of a value). This eliminates the need for `null` and
- * `undefined` checks and makes missing values explicit in the type system.
+ * The method surface shared by every {@link Option}: the operations available
+ * on both the `Some` and `None` variants. This interface is implemented by the
+ * internal `OptionImpl` class and exists so the per-method documentation is
+ * part of the public API.
  *
  * @template T The type of the contained value.
- *
- * @example Creating options
- * ```typescript
- * import { Some, None, Option } from "@ghaerdi/rustify/option";
- *
- * const some: Option<number> = Some(5);
- * const none: Option<number> = None<number>();
- * const fromNull: Option<string> = Option.fromNullable(() => maybeGetValue());
- * ```
- *
- * @example Chaining operations
- * ```typescript
- * Some(5)
- *   .map(x => x * 2)           // Some(10)
- *   .filter(x => x > 8)        // Some(10)
- *   .andThen(x => Some(x + 1)) // Some(11)
- *   .unwrap();                  // 11
- * ```
- *
- * @example Pattern matching
- * ```typescript
- * const msg = some.match({
- *   Some: (value) => `Got: ${value}`,
- *   None: () => "Nothing",
- * });
- * ```
- *
- * @see {@link Some} to create a present value
- * @see {@link None} to represent an absent value
  */
-export interface Option<T> {
+export interface OptionMethods<T> {
   /**
    * @internal
    * The underlying strategy instance wrapped by this option.
@@ -451,13 +400,83 @@ export interface Option<T> {
   [Symbol.iterator](): Iterator<any>;
 }
 
+/**
+ * Represents an optional value: either `Some` (containing a value) or `None`
+ * (absent).
+ *
+ * `Option<T>` is the core type of this module. Every `Option` is either
+ * `Some(value)` (containing a value of type `T`) or `None` (representing the
+ * absence of a value). This eliminates the need for `null` and `undefined`
+ * checks and makes missing values explicit in the type system.
+ *
+ * The type is a **discriminated union** on the `tag` property (`"some"` /
+ * `"none"`), so `if (opt.tag === "some")` narrows, and the `match` module's
+ * `Option.some` / `Option.none` patterns account for each variant in
+ * exhaustiveness checking.
+ *
+ * @template T The type of the contained value.
+ *
+ * @example Creating options
+ * ```typescript
+ * import { Some, None, Option } from "@ghaerdi/rustify/option";
+ *
+ * const some: Option<number> = Some(5);
+ * const none: Option<number> = None<number>();
+ * const fromNull: Option<string> = Option.fromNullable(() => maybeGetValue());
+ * ```
+ *
+ * @example Chaining operations
+ * ```typescript
+ * Some(5)
+ *   .map(x => x * 2)           // Some(10)
+ *   .filter(x => x > 8)        // Some(10)
+ *   .andThen(x => Some(x + 1)) // Some(11)
+ *   .unwrap();                  // 11
+ * ```
+ *
+ * @example Pattern matching
+ * ```typescript
+ * const msg = some.match({
+ *   Some: (value) => `Got: ${value}`,
+ *   None: () => "Nothing",
+ * });
+ * ```
+ *
+ * @see {@link Some} to create a present value
+ * @see {@link None} to represent an absent value
+ */
+export type Option<T> = OptionImpl<T, "some"> | OptionImpl<T, "none">;
+
 // ─── Public OptionImpl ────────────────────────────────────────────────────
 
-class OptionImpl<T> implements OptionInstance<T> {
+class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
   /** @internal */ #inner: BaseOptionStrategy<T>;
 
-  /** @internal */ constructor(inner: BaseOptionStrategy<T>) {
+  /** @internal */ constructor(
+    inner: BaseOptionStrategy<T> & { readonly tag: K },
+  ) {
     this.#inner = inner;
+  }
+
+  /**
+   * The variant discriminant: `"some"` or `"none"`. Lets the `Option` type be
+   * a discriminated union, so type guards and pattern matching can narrow by
+   * variant.
+   * @internal
+   */
+  get tag(): K {
+    return this.#inner.tag as K;
+  }
+
+  /**
+   * Wraps a strategy produced by a strategy operation into a public `Option`,
+   * picking the concrete variant type from the strategy's discriminant.
+   * @internal
+   */
+  #wrap<U>(strategy: BaseOptionStrategy<U>): Option<U> {
+    return strategy.isSome()
+      ? new OptionImpl(strategy as SomeStrategy<U>)
+      : new OptionImpl(strategy as NoneStrategy<U>);
   }
 
   /** @internal */ get _inner(): BaseOptionStrategy<T> {
@@ -486,7 +505,7 @@ class OptionImpl<T> implements OptionInstance<T> {
     return this.#inner.unwrapOrElse(fn);
   }
   /** @inheritDoc */ map<U>(fn: (value: T) => U): Option<U> {
-    return new OptionImpl(this.#inner.map(fn));
+    return this.#wrap(this.#inner.map(fn));
   }
   /** @inheritDoc */ mapOr<U>(defaultValue: U, fn: (value: T) => U): U {
     return this.#inner.mapOr(defaultValue, fn);
@@ -496,43 +515,43 @@ class OptionImpl<T> implements OptionInstance<T> {
   }
   /** @inheritDoc */ inspect(fn: (value: T) => void): Option<T> {
     this.#inner.inspect(fn);
-    return this;
+    return this as Option<T>;
   }
   /** @inheritDoc */ and<U>(res: Option<U>): Option<U> {
-    return new OptionImpl(this.#inner.and(res._inner));
+    return this.#wrap(this.#inner.and(res._inner));
   }
   /** @inheritDoc */ andThen<U>(fn: (value: T) => Option<U>): Option<U> {
-    return new OptionImpl(this.#inner.andThen((v) => fn(v)._inner));
+    return this.#wrap(this.#inner.andThen((v) => fn(v)._inner));
   }
   /** @inheritDoc */ or(res: Option<T>): Option<T> {
-    return this.#inner.isSome() ? this : res;
+    return this.#inner.isSome() ? (this as Option<T>) : res;
   }
   /** @inheritDoc */ orElse(fn: () => Option<T>): Option<T> {
-    return this.#inner.isSome() ? this : fn();
+    return this.#inner.isSome() ? (this as Option<T>) : fn();
   }
   /** @inheritDoc */ xor(optb: Option<T>): Option<T> {
-    return new OptionImpl(this.#inner.xor(optb._inner));
+    return this.#wrap(this.#inner.xor(optb._inner));
   }
   /** @inheritDoc */ cloned(): Option<T> {
-    return new OptionImpl(this.#inner.cloned());
+    return this.#wrap(this.#inner.cloned());
   }
   /** @inheritDoc */ zip<U>(other: Option<U>): Option<[T, U]> {
-    return new OptionImpl(this.#inner.zip(other._inner));
+    return this.#wrap(this.#inner.zip(other._inner));
   }
   /** @inheritDoc */ zipWith<U, R>(
     other: Option<U>,
     fn: (s: T, o: U) => R,
   ): Option<R> {
-    return new OptionImpl(this.#inner.zipWith(other._inner, fn));
+    return this.#wrap(this.#inner.zipWith(other._inner, fn));
   }
   /** @inheritDoc */ match<U, V>(matcher: OptionMatcher<T, U, V>): U | V {
     return this.#inner.match(matcher);
   }
   /** @inheritDoc */ flatten<U>(): Option<U> {
-    return new OptionImpl(this.#inner.flatten());
+    return this.#wrap(this.#inner.flatten());
   }
   /** @inheritDoc */ filter(predicate: (value: T) => boolean): Option<T> {
-    if (this.#inner.isSome() && predicate(this.#inner.unwrap())) return this;
+    if (this.#inner.isSome() && predicate(this.#inner.unwrap())) return this as Option<T>;
     return new OptionImpl(new NoneStrategy<T>());
   }
   /** @inheritDoc */ okOr<E>(
@@ -556,7 +575,7 @@ class OptionImpl<T> implements OptionInstance<T> {
       >;
     if (result.isOk()) {
       const { Ok } = require("../result/index.ts");
-      return Ok(new OptionImpl(result.unwrap()));
+      return Ok(this.#wrap(result.unwrap() as BaseOptionStrategy<U>));
     } else {
       const { Err } = require("../result/index.ts");
       return Err(result.unwrapErr());
@@ -725,7 +744,7 @@ export namespace Option {
    *   .exhaustive();
    * ```
    */
-  export const some: ExtractPattern<"unwrap"> = {
+  export const some: ExtractPattern<"unwrap", { tag: "some" }> = {
     [PATTERN]: "extract",
     extract: (value) => {
       if (OptionImpl.isOption(value) && value.isSome()) {
@@ -741,7 +760,7 @@ export namespace Option {
    * The handler receives the matched input value; there is no inner value to
    * unwrap, so it is typically ignored.
    */
-  export const none: AbsentPattern = {
+  export const none: AbsentPattern<{ tag: "none" }> = {
     [PATTERN]: "absent",
     test: (value) => OptionImpl.isOption(value) && value.isNone(),
   };

@@ -84,8 +84,17 @@ export type MatchResult = { ok: true; value: unknown } | { ok: false };
  * `K` is a phantom method key: at the type level, the handler parameter is the
  * return type of `TInput[K]` (see {@link Narrow}), so the unwrapped value is
  * fully inferred from the input type without any type arguments.
+ *
+ * `M` is a phantom "matched" type: the values the pattern can match. It is
+ * used by `PatternToValue` so exhaustiveness accounting can remove exactly the
+ * covered union members (e.g. `Option.some` is `ExtractPattern<"unwrap",
+ * { tag: "some" }>` and only removes the `Some` member). It defaults to
+ * `unknown` — matching any input — for backward compatibility.
  */
-export interface ExtractPattern<K extends PropertyKey = never> {
+export interface ExtractPattern<
+	K extends PropertyKey = never,
+	M = unknown,
+> {
 	readonly [PATTERN]: "extract";
 	readonly extract: (value: unknown) => MatchResult;
 }
@@ -94,8 +103,10 @@ export interface ExtractPattern<K extends PropertyKey = never> {
  * @internal Marker for a pattern that matches when `test(value)` is true and
  * passes the input value through to the handler (used for absent cases like
  * `Option.none`, where there is nothing to unwrap).
+ *
+ * `M` is the phantom "matched" type (see {@link ExtractPattern}).
  */
-export interface AbsentPattern {
+export interface AbsentPattern<M = unknown> {
 	readonly [PATTERN]: "absent";
 	readonly test: (value: unknown) => boolean;
 }
@@ -199,10 +210,10 @@ export type PatternToValue<P> = P extends AnyPattern
 										: unknown
 									: P extends UnionPattern
 										? UnionToValue<P["patterns"]>
-										: P extends ExtractPattern
-											? unknown
-											: P extends AbsentPattern
-												? unknown
+										: P extends ExtractPattern<infer _, infer M>
+											? M
+											: P extends AbsentPattern<infer M2>
+												? M2
 												: P extends OptionalPattern<infer T>
 													? PatternToValue<T> | undefined
 													: P extends ArrayMarker<infer T>
@@ -312,9 +323,11 @@ export type DescribeMissing<T> = T extends string
                 ? `{ kind: ${D & string} }`
                 : T extends { tag: infer D extends PropertyKey }
                   ? `{ tag: ${D & string} }`
-                  : T extends object
-                    ? "an object"
-                    : "a value";
+                  : T extends { isOk(): infer B extends boolean }
+                    ? `{ isOk: ${B} }`
+                    : T extends object
+                      ? "an object"
+                      : "a value";
 
 /**
  * The type of the `exhaustive` property when some input members are still
