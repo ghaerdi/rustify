@@ -1,3 +1,5 @@
+# Changelog
+
 ## 2.2.0
 
 ### New Features
@@ -56,10 +58,10 @@
 - Added `test/match.test.ts` (263 tests): literals, shapes, guards, arrays,
   `instanceOf`, combinators, terminals, exhaustiveness (positive and negative),
   and Option/Result integration.
-
-# Changelog
-
-## 2.1.2
+- Added 23 Rust standard library parity tests for `Option` and `Result`,
+  matching the documented doctests from Rust's std (lazy evaluation, error
+  message content, `sq_then_to_string` chaining, `or_else` chaining,
+  one-level-at-a-time `flatten`, and more).
 
 ### Refactoring
 
@@ -83,12 +85,6 @@
 - Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs type
   checking, tests, and a JSR publish dry-run on push/PR to `main`.
 
-### Tests
-
-- Added 23 Rust standard library parity tests for `Option` and `Result`,
-  matching the documented doctests from Rust's std (lazy evaluation, error
-  message content, `sq_then_to_string` chaining, `or_else` chaining,
-  one-level-at-a-time `flatten`, and more).
 
 ## 2.1.1
 
