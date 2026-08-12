@@ -287,7 +287,6 @@ export interface BaseResult<T, E>
    */
   intoErr(): E;
 
-
   /**
    * Returns `res` if the result is Ok, otherwise returns the Err value of self.
    * This can be used for chaining operations where the intermediate Ok value is not needed.

@@ -228,7 +228,10 @@ describe("Result", () => {
       });
 
       test("should yield key-value pairs if Ok value is iterable (Map)", () => {
-        const mapData: [string, number][] = [["a", 1], ["b", 2]];
+        const mapData: [string, number][] = [
+          ["a", 1],
+          ["b", 2],
+        ];
         const result = Ok(new Map(mapData));
         const iterated = [...result];
         expect(iterated).toEqual(mapData);
@@ -824,7 +827,12 @@ describe("Rust std parity: unwrapErrOrElse / intoOk / intoErr", () => {
   test("unwrapErrOrElse returns the error for Err without calling the closure", () => {
     const calls: number[] = [];
     const r: Result<number, string> = Err("boom");
-    expect(r.unwrapErrOrElse((v) => { calls.push(v); return `had ${v}`; })).toBe("boom");
+    expect(
+      r.unwrapErrOrElse((v) => {
+        calls.push(v);
+        return `had ${v}`;
+      }),
+    ).toBe("boom");
     expect(calls).toEqual([]); // lazy — closure never called
   });
 

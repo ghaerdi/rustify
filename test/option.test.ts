@@ -661,7 +661,11 @@ describe("Option", () => {
 
     describe("map", () => {
       test("can change the contained type", () => {
-        expect(Some("foo").map((v) => v.length).unwrap()).toBe(3);
+        expect(
+          Some("foo")
+            .map((v) => v.length)
+            .unwrap(),
+        ).toBe(3);
       });
     });
 
@@ -806,7 +810,12 @@ describe("Rust std parity: insert/replace/isNoneOr/expectNone/count/copied/unzip
 
   test("isNoneOr returns true for None without calling the predicate", () => {
     const calls: number[] = [];
-    expect(None<number>().isNoneOr((v) => { calls.push(v); return true; })).toBe(true);
+    expect(
+      None<number>().isNoneOr((v) => {
+        calls.push(v);
+        return true;
+      }),
+    ).toBe(true);
     expect(calls).toEqual([]); // lazy — predicate never called
   });
 

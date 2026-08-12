@@ -51,12 +51,12 @@
 ### Improvements
 
 - **Rust std parity — 10 missing methods added:**
-  - `Option`: `insert`, `replace`, `isNoneOr`, `expectNone`, `count`,
-    `copied`, `unzip` (matches Rust std `Option` semantics; `copied` is an
-    identity since TS passes by value).
-  - `Result`: `unwrapErrOrElse`, `intoOk`, `intoErr` (matches Rust std
-    `Result`; `intoOk`/`intoErr` are aliases of `unwrap`/`unwrapErr` since
-    TS has no borrow semantics).
+  - `Option`: `insert`, `replace`, `isNoneOr`, `expectNone`, `count`, `copied`,
+    `unzip` (matches Rust std `Option` semantics; `copied` is an identity since
+    TS passes by value).
+  - `Result`: `unwrapErrOrElse`, `intoOk`, `intoErr` (matches Rust std `Result`;
+    `intoOk`/`intoErr` are aliases of `unwrap`/`unwrapErr` since TS has no
+    borrow semantics).
   - All with JSDoc examples; 18 new tests (laziness + exact panic-message
     assertions per the Rust parity suite).
 
