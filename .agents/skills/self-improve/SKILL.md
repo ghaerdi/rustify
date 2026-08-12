@@ -1,7 +1,7 @@
 ---
 name: "self-improve"
 description: "Keep this repo's documentation in sync with the code and capture reusable patterns from each working session. Trigger whenever the user asks to update documentation, improve docs, run self-improve, 'learn from this session', sync or create README.md / AGENTS.md, fix or add JSDoc, or save a working pattern as a skill. Also trigger proactively at the end of any session that produced meaningful changes (API additions, refactors, migrations, convention shifts, user corrections) and when existing docs or skills reference stale tooling (e.g. 'bun' or 'jsr.json' after the Deno migration). Do NOT wait for the user to spell out 'self-improve' — if docs are out of date with the code you just changed, this skill applies."
-version: 2
+version: 3
 created: "2026-08-12"
 updated: "2026-08-12"
 ---
@@ -141,7 +141,7 @@ When the session changed a pattern, update both. Current baseline:
 
 - Module layout `src/<mod>/`: `types.ts` (internal interfaces), one file per
   variant (`some.ts`/`none.ts`, `ok.ts`/`err.ts`), public module file,
-  `index.ts` (module doc + re-exports only).
+  `index.ts` (module doc + `export *` barrel re-exports only — named re-exports break JSR doc coverage, see monad-module-conventions).
 - Strategy pattern for mutating types (Option); plain immutable variants for
   Result. No impl wrapper without a mutating-methods reason.
 - Public interface + namespace-merged statics + factory functions + variant

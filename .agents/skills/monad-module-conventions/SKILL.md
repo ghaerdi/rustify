@@ -1,7 +1,7 @@
 ---
 name: "monad-module-conventions"
 description: "Follow this repo's monad module architecture conventions when adding a new monad type (e.g. Either/Future), splitting an existing module into the directory structure, or refactoring Option/Result internals. Covers the Strategy pattern, namespace-merge statics, JSDoc placement, the no-as-any rule, import/circular-dependency handling, and export updates. Use whenever touching src/option/, src/result/, or creating a new src/<mod>/ directory."
-version: 2
+version: 3
 created: "2026-08-10"
 updated: "2026-08-12"
 ---
@@ -10,7 +10,7 @@ updated: "2026-08-12"
 Trigger when adding a new monad type to this repo, restructuring src/ (e.g. splitting result.ts into src/result/), extending Option/Result with new methods that mirror Rust, or reviewing code in src/option/ or src/result/ for convention compliance (JSDoc placement, no as any, module layout).
 
 ## Procedure
-1. Directory layout per module: src/<mod>/types.ts (internal strategy/base interfaces, @internal), src/<mod>/<variant>.ts (one file per variant class, e.g. some.ts/none.ts, ok.ts/err.ts), src/<mod>/<mod>.ts (public interface + factories + statics + public type aliases), src/<mod>/index.ts (module doc + re-exports only).
+1. Directory layout per module: src/<mod>/types.ts (internal strategy/base interfaces, @internal), src/<mod>/<variant>.ts (one file per variant class, e.g. some.ts/none.ts, ok.ts/err.ts), src/<mod>/<mod>.ts (public interface + factories + statics + public type aliases), src/<mod>/index.ts (module doc + `export *` barrel re-exports only — never named re-exports, see the JSR doc-coverage pitfall).
 2. Variant classes implement an internal Base interface (e.g. BaseOptionStrategy<T>/BaseResult<T,E>) and are marked @internal with a note to use the factory functions instead.
 3. Strategy pattern for MUTATING methods only: if the type needs in-place mutation (getOrInsert, getOrInsertWith, take, takeIf), wrap the variants in an impl class (OptionImpl) that holds a private strategy field and swaps it (SomeStrategy <-> NoneStrategy). Non-mutating types (Result) keep plain variant classes.
 4. Public API shape: an interface for the monad (Option<T>) + namespace merge for static helpers (Option.fromNullable, Option.isOption), factory functions (Some/None, Ok/Err), and type aliases for the variants (Some<T> = Option<T> etc.). Implementers (OptionImpl) implement a widened internal interface (OptionInstance<T>) that overrides return types to the public Option<T>.
@@ -27,6 +27,7 @@ Trigger when adding a new monad type to this repo, restructuring src/ (e.g. spli
 - Circular imports between option/ and result/ are real (result uses Some/None, option uses Result types). Use `import type` for types; for values rely on static ESM imports + live bindings (the factories are only referenced inside method bodies, so the cycle resolves at call time). Never reintroduce `require()`.
 - When splitting/renaming a module, update ALL of: src/index.ts re-exports, deno.json exports, package.json exports, tests' import paths, and every internal import reference (grep for the old filename).
 - Module entrypoints (src/option/index.ts, src/result/index.ts) need a `@module` doc comment for the JSR 'Has module docs in all entrypoints' criterion.
+- Named re-exports in entrypoints break JSR doc coverage: `export { X } from "./x.ts"` is emitted by JSR's pinned deno_doc as an undocumented Reference declaration, so every re-exported symbol counts against the score (v2.2.1 fixed 50% → 100% by switching to `export *` barrels). `export *` hoists the source module's docs; mark any internal symbols that would leak via `export *` with `@internal` (e.g. PATTERN, PatternToValue in match).
 
 ## Verification
 1. deno task check passes with zero TypeScript errors (and `grep -rn 'as any' src/` returns nothing).

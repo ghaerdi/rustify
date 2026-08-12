@@ -16,6 +16,8 @@ dependencies. Dual-published to npm (`@ghaerdi/rustify`) and JSR
 - `deno fmt --check` / `deno fmt` — format check / format
 - `deno lint` — lint
 - `deno publish --dry-run` — verify publishability (JSR + npm via package.json)
+- `devenv test` — validate the dev environment (git-hooks + `deno task check`);
+  `devenv shell` enters it
 
 No install step needed — tests and checks run natively under Deno.
 
@@ -45,6 +47,9 @@ test/
 - Tests: `describe`/`test` from `@std/testing/bdd`, `expect` from `@std/expect`,
   `spy`/`assertSpyCalls`/`assertSpyCall` from `@std/testing/mock`. Do NOT use
   `@std/expect` mock matchers — they are incompatible with std spies.
+- Commits run devenv git-hooks (alejandra, deadnix, deno fmt/lint/check) — hooks
+  live in `devenv.nix`; the generated `.pre-commit-config.yaml` is not
+  hand-edited.
 
 ## Release
 

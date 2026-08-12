@@ -431,6 +431,10 @@ console.log(label(None())); // "none"
 This project uses Deno (>= 2.x). No install step is required — dependencies are
 resolved from JSR via the lockfile.
 
+- **Dev Environment (optional):** a `devenv` shell (`devenv.nix`) with git-hooks
+  is available — `devenv test` validates the environment (hooks + type check),
+  `devenv shell` enters it.
+
 - **Formatting:**
   ```bash
   deno fmt
