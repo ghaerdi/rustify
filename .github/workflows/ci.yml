@@ -22,19 +22,14 @@ jobs:
       - name: Format check
         run: deno fmt --check
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Lint
+        run: deno lint
 
       - name: Type check
-        run: bun run check
+        run: deno task check
 
       - name: Run tests
-        run: bun test
+        run: deno test
 
       - name: JSR publish dry-run
-        run: npx jsr publish --dry-run
+        run: deno publish --dry-run

@@ -1,6 +1,8 @@
-import { describe, expect, mock, test } from "bun:test";
-import { None, Option, Some } from "../src/option/index"; // Path to src/option.ts
-import { Err, Ok } from "../src/result"; // Path to src/result.ts
+import { describe, test } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { assertSpyCall, assertSpyCalls, spy } from "@std/testing/mock";
+import { None, Option, Some } from "../src/option/index.ts"; // Path to src/option.ts
+import { Err, Ok } from "../src/result/index.ts"; // Path to src/result.ts
 
 describe("Option", () => {
   describe("Creation & Basic Checks", () => {
@@ -140,9 +142,9 @@ describe("Option", () => {
       expect(Some(5).unwrapOrElse(defaultValueFn)).toBe(5);
     });
     test("None().unwrapOrElse(fn) should compute and return defaultValue", () => {
-      const mockFn = mock(() => 0);
+      const mockFn = spy(() => 0);
       expect(None<number>().unwrapOrElse(mockFn)).toBe(0);
-      expect(mockFn).toHaveBeenCalledTimes(1);
+      assertSpyCalls(mockFn, 1);
     });
   });
 
@@ -178,25 +180,25 @@ describe("Option", () => {
       expect(Some(5).mapOrElse(defaultFn, mapFn)).toBe("Some: 5");
     });
     test("None().mapOrElse(defaultFn, fn) should return defaultFn()", () => {
-      const mockDefaultFn = mock(defaultFn);
+      const mockDefaultFn = spy(defaultFn);
       expect(None<number>().mapOrElse(mockDefaultFn, mapFn)).toBe("None!");
-      expect(mockDefaultFn).toHaveBeenCalledTimes(1);
+      assertSpyCalls(mockDefaultFn, 1);
     });
   });
 
   describe("inspect", () => {
     test("Some(value).inspect(fn) should call fn(value) and return Some(value)", () => {
-      const mockFn = mock((_x: number) => {});
+      const mockFn = spy((_x: number) => {});
       const opt = Some(5);
       const result = opt.inspect(mockFn);
-      expect(mockFn).toHaveBeenCalledWith(5);
+      assertSpyCall(mockFn, 0, { args: [5] });
       expect(result).toBe(opt);
     });
     test("None().inspect(fn) should not call fn and return None singleton", () => {
-      const mockFn = mock((_x: any) => {});
+      const mockFn = spy((_x: any) => {});
       const opt = None();
       const result = opt.inspect(mockFn);
-      expect(mockFn).not.toHaveBeenCalled();
+      assertSpyCalls(mockFn, 0);
       expect(result.isNone()).toBe(true);
     });
   });
@@ -482,18 +484,18 @@ describe("Option", () => {
   describe("okOrElse", () => {
     test("Some(value).okOrElse(fn) should return Ok(value)", () => {
       const opt = Some(5);
-      const errorFn = mock(() => "error");
+      const errorFn = spy(() => "error");
       const result = opt.okOrElse(errorFn);
       expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(5);
-      expect(errorFn).not.toHaveBeenCalled();
+      assertSpyCalls(errorFn, 0);
     });
     test("None().okOrElse(fn) should return Err(fn())", () => {
-      const errorFn = mock(() => "computed error");
+      const errorFn = spy(() => "computed error");
       const result = None().okOrElse(errorFn);
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe("computed error");
-      expect(errorFn).toHaveBeenCalledTimes(1);
+      assertSpyCalls(errorFn, 1);
     });
   });
 

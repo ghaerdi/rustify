@@ -1,4 +1,5 @@
 import type { BaseOptionStrategy, OptionMatcher } from "./types.ts";
+import { Err, Ok } from "../result/index.ts";
 
 /** @internal Strategy for the None variant. */
 export class NoneStrategy<T> implements BaseOptionStrategy<T> {
@@ -74,18 +75,15 @@ export class NoneStrategy<T> implements BaseOptionStrategy<T> {
     return this;
   }
   okOr<E>(err: E): import("../result/index.ts").Result<T, E> {
-    const { Err } = require("../result/index.ts");
     return Err(err);
   }
   okOrElse<E>(fn: () => E): import("../result/index.ts").Result<T, E> {
-    const { Err } = require("../result/index.ts");
     return Err(fn());
   }
   transpose<U, E>(): import("../result/index.ts").Result<
     BaseOptionStrategy<U>,
     E
   > {
-    const { Ok } = require("../result/index.ts");
     return Ok(new NoneStrategy<U>());
   }
   unwrapOrDefault(): T {

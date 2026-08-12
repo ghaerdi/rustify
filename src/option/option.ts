@@ -4,6 +4,7 @@ import { NoneStrategy } from "./none.ts";
 import { PATTERN } from "../match/types.ts";
 import type { AbsentPattern, ExtractPattern } from "../match/types.ts";
 import { toString } from "../utils.ts";
+import { Err, Ok } from "../result/index.ts";
 
 /**
  * The method surface shared by every {@link Option}: the operations available
@@ -672,10 +673,8 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
         E
       >;
     if (result.isOk()) {
-      const { Ok } = require("../result/index.ts");
       return Ok(this.#wrap(result.unwrap() as BaseOptionStrategy<U>));
     } else {
-      const { Err } = require("../result/index.ts");
       return Err(result.unwrapErr());
     }
   }

@@ -1,6 +1,8 @@
 import { Err, Ok, Result } from "../src/result/index.ts";
-import { None, Option, Some } from "../src/option/index.ts";
-import { describe, expect, mock, test } from "bun:test";
+import { None, Some } from "../src/option/index.ts";
+import { describe, test } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { assertSpyCall, assertSpyCalls, spy } from "@std/testing/mock";
 
 describe("Result", () => {
   describe("Ok", () => {
@@ -8,22 +10,22 @@ describe("Result", () => {
     const okResult: Result<string, string> = Ok(value);
 
     test("isOk should return true", () => {
-      expect(okResult.isOk()).toBeTrue();
+      expect(okResult.isOk()).toBe(true);
     });
 
     test("isErr should return false", () => {
-      expect(okResult.isErr()).toBeFalse();
+      expect(okResult.isErr()).toBe(false);
     });
 
     test("ok should return Some with the value", () => {
       const okValue = okResult.ok();
-      expect(okValue.isSome()).toBeTrue();
+      expect(okValue.isSome()).toBe(true);
       expect(okValue.unwrap()).toBe(value);
     });
 
     test("err should return None", () => {
       const errValue = okResult.err();
-      expect(errValue.isNone()).toBeTrue();
+      expect(errValue.isNone()).toBe(true);
       expect(errValue.isNone()).toBe(true);
     });
 
@@ -41,72 +43,72 @@ describe("Result", () => {
 
     test("map should apply function and wrap result in Ok", () => {
       const mapped = okResult.map((val) => val.length);
-      expect(mapped.isOk()).toBeTrue();
+      expect(mapped.isOk()).toBe(true);
       expect(mapped.unwrap()).toBe(value.length);
     });
 
     test("mapErr should not apply function and return self", () => {
-      const mapErrFn = mock((_err: string) => `Error: ${_err}`);
+      const mapErrFn = spy((_err: string) => `Error: ${_err}`);
       const mappedErr = okResult.mapErr(mapErrFn);
-      expect(mappedErr.isOk()).toBeTrue();
+      expect(mappedErr.isOk()).toBe(true);
       expect(mappedErr.unwrap()).toBe(value);
-      expect(mapErrFn).not.toHaveBeenCalled();
+      assertSpyCalls(mapErrFn, 0);
     });
 
     test("andThen should apply function returning Result", () => {
-      const andThenFn = mock((val: string) => Ok(val.length));
+      const andThenFn = spy((val: string) => Ok(val.length));
       const andThenResult = okResult.andThen(andThenFn);
-      expect(andThenResult.isOk()).toBeTrue();
+      expect(andThenResult.isOk()).toBe(true);
       expect(andThenResult.unwrap()).toBe(value.length);
-      expect(andThenFn).toHaveBeenCalledWith(value);
+      assertSpyCall(andThenFn, 0, { args: [value] });
     });
 
     test("orElse should not apply function and return self", () => {
-      const orElseFn = mock((err: string) => Err(`Error: ${err}`));
+      const orElseFn = spy((err: string) => Err(`Error: ${err}`));
       const orElseResult = okResult.orElse(orElseFn);
-      expect(orElseResult.isOk()).toBeTrue();
+      expect(orElseResult.isOk()).toBe(true);
       expect(orElseResult.unwrap()).toBe(value);
-      expect(orElseFn).not.toHaveBeenCalled();
+      assertSpyCalls(orElseFn, 0);
     });
 
     test("isOkAnd should return true if predicate matches", () => {
-      expect(okResult.isOkAnd((v) => v === value)).toBeTrue();
+      expect(okResult.isOkAnd((v) => v === value)).toBe(true);
     });
 
     test("isOkAnd should return false if predicate does not match", () => {
-      expect(okResult.isOkAnd((v) => v === "different")).toBeFalse();
+      expect(okResult.isOkAnd((v) => v === "different")).toBe(false);
     });
 
     test("isErrAnd should return false", () => {
-      expect(okResult.isErrAnd((_) => true)).toBeFalse();
+      expect(okResult.isErrAnd((_) => true)).toBe(false);
     });
 
     test("mapOr should apply function and return the result", () => {
-      const mapOrFn = mock((val: string) => val.length);
+      const mapOrFn = spy((val: string) => val.length);
       expect(okResult.mapOr(0, mapOrFn)).toBe(value.length);
-      expect(mapOrFn).toHaveBeenCalledWith(value);
+      assertSpyCall(mapOrFn, 0, { args: [value] });
     });
 
     test("mapOrElse should apply ok function and return the result", () => {
-      const okFn = mock((val: string) => val.length);
-      const errFn = mock((_err: string) => 0);
+      const okFn = spy((val: string) => val.length);
+      const errFn = spy((_err: string) => 0);
       expect(okResult.mapOrElse(errFn, okFn)).toBe(value.length);
-      expect(okFn).toHaveBeenCalledWith(value);
-      expect(errFn).not.toHaveBeenCalled();
+      assertSpyCall(okFn, 0, { args: [value] });
+      assertSpyCalls(errFn, 0);
     });
 
     test("inspect should call function and return self", () => {
-      const inspectFn = mock((_v: string) => {});
+      const inspectFn = spy((_v: string) => {});
       const result = okResult.inspect(inspectFn);
       expect(result).toBe(okResult);
-      expect(inspectFn).toHaveBeenCalledWith(value);
+      assertSpyCall(inspectFn, 0, { args: [value] });
     });
 
     test("inspectErr should not call function and return self", () => {
-      const inspectErrFn = mock((_e: string) => {});
+      const inspectErrFn = spy((_e: string) => {});
       const result = okResult.inspectErr(inspectErrFn);
       expect(result).toBe(okResult);
-      expect(inspectErrFn).not.toHaveBeenCalled();
+      assertSpyCalls(inspectErrFn, 0);
     });
 
     test("expect should return the value", () => {
@@ -119,9 +121,9 @@ describe("Result", () => {
     });
 
     test("unwrapOrElse should return the value", () => {
-      const elseFn = mock((_err: string) => "default");
+      const elseFn = spy((_err: string) => "default");
       expect(okResult.unwrapOrElse(elseFn)).toBe(value);
-      expect(elseFn).not.toHaveBeenCalled();
+      assertSpyCalls(elseFn, 0);
     });
 
     test("and should return the other result if Ok", () => {
@@ -142,7 +144,7 @@ describe("Result", () => {
       const obj = { a: 1, b: { c: 2 } };
       const okObj = Ok(obj);
       const cloned = okObj.cloned();
-      expect(cloned.isOk()).toBeTrue();
+      expect(cloned.isOk()).toBe(true);
       const unwrapped = cloned.unwrap();
       expect(unwrapped).toEqual(obj);
       expect(unwrapped).not.toBe(obj);
@@ -152,7 +154,7 @@ describe("Result", () => {
     test("cloned should return a new Ok with the same value (primitive)", () => {
       const okPrimitive = Ok(123);
       const cloned = okPrimitive.cloned();
-      expect(cloned.isOk()).toBeTrue();
+      expect(cloned.isOk()).toBe(true);
       expect(cloned.unwrap()).toBe(123);
     });
 
@@ -173,8 +175,8 @@ describe("Result", () => {
       const okResultInstance: Result<number, string> = Ok(okValue);
 
       test("should execute the Ok handler", () => {
-        const okHandler = mock((v: number) => `Ok value: ${v}`);
-        const errHandler = mock((e: string) => `Err value: ${e}`);
+        const okHandler = spy((v: number) => `Ok value: ${v}`);
+        const errHandler = spy((e: string) => `Err value: ${e}`);
 
         const matchResult = okResultInstance.match({
           Ok: okHandler,
@@ -182,9 +184,9 @@ describe("Result", () => {
         });
 
         expect(matchResult).toBe(`Ok value: ${okValue}`);
-        expect(okHandler).toHaveBeenCalledTimes(1);
-        expect(okHandler).toHaveBeenCalledWith(okValue);
-        expect(errHandler).not.toHaveBeenCalled();
+        assertSpyCalls(okHandler, 1);
+        assertSpyCall(okHandler, 0, { args: [okValue] });
+        assertSpyCalls(errHandler, 0);
       });
 
       test("should return the correct type from the Ok handler", () => {
@@ -263,22 +265,22 @@ describe("Result", () => {
     const errResult: Result<string, string> = Err(error);
 
     test("isOk should return false", () => {
-      expect(errResult.isOk()).toBeFalse();
+      expect(errResult.isOk()).toBe(false);
     });
 
     test("isErr should return true", () => {
-      expect(errResult.isErr()).toBeTrue();
+      expect(errResult.isErr()).toBe(true);
     });
 
     test("ok should return None", () => {
       const okValue = errResult.ok();
-      expect(okValue.isNone()).toBeTrue();
+      expect(okValue.isNone()).toBe(true);
       expect(okValue.isNone()).toBe(true);
     });
 
     test("err should return Some with the error", () => {
       const errValue = errResult.err();
-      expect(errValue.isSome()).toBeTrue();
+      expect(errValue.isSome()).toBe(true);
       expect(errValue.unwrap()).toBe(error);
     });
 
@@ -295,79 +297,79 @@ describe("Result", () => {
     });
 
     test("map should not apply function and return self", () => {
-      const mapFn = mock((val: string) => val.length);
+      const mapFn = spy((val: string) => val.length);
       const mapped = errResult.map(mapFn);
-      expect(mapped.isErr()).toBeTrue();
+      expect(mapped.isErr()).toBe(true);
       expect(mapped.err().unwrap()).toBe(error);
-      expect(mapFn).not.toHaveBeenCalled();
+      assertSpyCalls(mapFn, 0);
     });
 
     test("mapErr should apply function and wrap result in Err", () => {
-      const mapErrFn = mock((err: string) => `Error: ${err}`);
+      const mapErrFn = spy((err: string) => `Error: ${err}`);
       const mappedErr = errResult.mapErr(mapErrFn);
-      expect(mappedErr.isErr()).toBeTrue();
+      expect(mappedErr.isErr()).toBe(true);
       const expectedError = `Error: ${error}`;
       expect(mappedErr.unwrapErr()).toBe(expectedError);
-      expect(mapErrFn).toHaveBeenCalledWith(error);
+      assertSpyCall(mapErrFn, 0, { args: [error] });
     });
 
     test("andThen should not apply function and return self", () => {
-      const andThenFn = mock((val: string) => Ok(val.length));
+      const andThenFn = spy((val: string) => Ok(val.length));
       const andThenResult = errResult.andThen(andThenFn);
-      expect(andThenResult.isErr()).toBeTrue();
+      expect(andThenResult.isErr()).toBe(true);
       expect(andThenResult.err().unwrap()).toBe(error);
-      expect(andThenFn).not.toHaveBeenCalled();
+      assertSpyCalls(andThenFn, 0);
     });
 
     test("orElse should apply function returning Result", () => {
-      const orElseFn = mock((err: string) => Ok(`Recovered from ${err}`));
+      const orElseFn = spy((err: string) => Ok(`Recovered from ${err}`));
       const orElseResult = errResult.orElse(orElseFn);
       const expectedValue = `Recovered from ${error}`;
-      expect(orElseResult.isOk()).toBeTrue();
+      expect(orElseResult.isOk()).toBe(true);
       expect(orElseResult.unwrap()).toBe(expectedValue);
-      expect(orElseFn).toHaveBeenCalledWith(error);
+      assertSpyCall(orElseFn, 0, { args: [error] });
     });
 
     test("isOkAnd should return false", () => {
-      expect(errResult.isOkAnd((_) => true)).toBeFalse();
+      expect(errResult.isOkAnd((_) => true)).toBe(false);
     });
 
     test("isErrAnd should return true if predicate matches", () => {
-      expect(errResult.isErrAnd((e) => e === error)).toBeTrue();
+      expect(errResult.isErrAnd((e) => e === error)).toBe(true);
     });
 
     test("isErrAnd should return false if predicate does not match", () => {
-      expect(errResult.isErrAnd((e) => e === "different")).toBeFalse();
+      expect(errResult.isErrAnd((e) => e === "different")).toBe(false);
     });
 
     test("mapOr should return the default value", () => {
-      const mapFn = mock((val: string) => val.length);
+      const mapFn = spy((val: string) => val.length);
       const defaultValue = 99;
       expect(errResult.mapOr(defaultValue, mapFn)).toBe(defaultValue);
-      expect(mapFn).not.toHaveBeenCalled();
+      assertSpyCalls(mapFn, 0);
     });
 
     test("mapOrElse should apply error function and return the result", () => {
-      const okFn = mock((val: string) => `Success length: ${val.length}`);
-      const errFn = mock((err: string) => `Error was: ${err}`);
+      const okFn = spy((val: string) => `Success length: ${val.length}`);
+      const errFn = spy((err: string) => `Error was: ${err}`);
       const expected = `Error was: ${error}`;
       expect(errResult.mapOrElse(errFn, okFn)).toBe(expected);
-      expect(errFn).toHaveBeenCalledWith(error);
-      expect(okFn).not.toHaveBeenCalled();
+      assertSpyCall(errFn, 0, { args: [error] });
+      assertSpyCalls(okFn, 0);
     });
 
     test("inspect should not call function and return self", () => {
-      const inspectFn = mock((_v: string) => {});
+      const inspectFn = spy((_v: string) => {});
       const result = errResult.inspect(inspectFn);
       expect(result).toBe(errResult);
-      expect(inspectFn).not.toHaveBeenCalled();
+      assertSpyCalls(inspectFn, 0);
     });
 
     test("inspectErr should call function and return self", () => {
-      const inspectErrFn = mock((_e: string) => {});
+      const inspectErrFn = spy((_e: string) => {});
       const result = errResult.inspectErr(inspectErrFn);
       expect(result).toBe(errResult);
-      expect(inspectErrFn).toHaveBeenCalledWith(error);
+      assertSpyCall(inspectErrFn, 0, { args: [error] });
     });
 
     test("expect should throw with message", () => {
@@ -382,10 +384,10 @@ describe("Result", () => {
     });
 
     test("unwrapOrElse should call function and return its result", () => {
-      const elseFn = mock((err: string) => `Computed default: ${err.length}`);
+      const elseFn = spy((err: string) => `Computed default: ${err.length}`);
       const expected = `Computed default: ${error.length}`;
       expect(errResult.unwrapOrElse(elseFn)).toBe(expected);
-      expect(elseFn).toHaveBeenCalledWith(error);
+      assertSpyCall(elseFn, 0, { args: [error] });
     });
 
     test("and should return self if Err", () => {
@@ -403,7 +405,7 @@ describe("Result", () => {
     test("cloned should return self (Err is not cloned)", () => {
       const errObj = Err({ code: 500, msg: "server error" });
       const cloned = errObj.cloned();
-      expect(cloned.isErr()).toBeTrue();
+      expect(cloned.isErr()).toBe(true);
       expect(cloned.err().unwrap()).toBe(errObj.err().unwrap());
       expect(cloned).toBe(errObj);
     });
@@ -425,8 +427,8 @@ describe("Result", () => {
       const errResultInstance: Result<number, string> = Err(errValue);
 
       test("should execute the Err handler", () => {
-        const okHandler = mock((v: number) => `Ok value: ${v}`);
-        const errHandler = mock((e: string) => `Err value: ${e}`);
+        const okHandler = spy((v: number) => `Ok value: ${v}`);
+        const errHandler = spy((e: string) => `Err value: ${e}`);
 
         const matchResult = errResultInstance.match({
           Ok: okHandler,
@@ -434,9 +436,9 @@ describe("Result", () => {
         });
 
         expect(matchResult).toBe(`Err value: ${errValue}`);
-        expect(errHandler).toHaveBeenCalledTimes(1);
-        expect(errHandler).toHaveBeenCalledWith(errValue);
-        expect(okHandler).not.toHaveBeenCalled();
+        assertSpyCalls(errHandler, 1);
+        assertSpyCall(errHandler, 0, { args: [errValue] });
+        assertSpyCalls(okHandler, 0);
       });
 
       test("should return the correct type from the Err handler", () => {
@@ -468,38 +470,38 @@ describe("Result", () => {
 
   describe("Result.isResult", () => {
     test("should return true for Ok", () => {
-      expect(Result.isResult(Ok(1))).toBeTrue();
+      expect(Result.isResult(Ok(1))).toBe(true);
     });
 
     test("should return true for Err", () => {
-      expect(Result.isResult(Err("error"))).toBeTrue();
+      expect(Result.isResult(Err("error"))).toBe(true);
     });
 
     test("should return false for plain object", () => {
-      expect(Result.isResult({ isOk: true })).toBeFalse();
+      expect(Result.isResult({ isOk: true })).toBe(false);
     });
 
     test("should return false for null", () => {
-      expect(Result.isResult(null)).toBeFalse();
+      expect(Result.isResult(null)).toBe(false);
     });
 
     test("should return false for undefined", () => {
-      expect(Result.isResult(undefined)).toBeFalse();
+      expect(Result.isResult(undefined)).toBe(false);
     });
 
     test("should return false for primitive number", () => {
-      expect(Result.isResult(123)).toBeFalse();
+      expect(Result.isResult(123)).toBe(false);
     });
 
     test("should return false for primitive string", () => {
-      expect(Result.isResult("hello")).toBeFalse();
+      expect(Result.isResult("hello")).toBe(false);
     });
   });
 
   describe("Result.from", () => {
     test("should return Ok with the result for a function that returns a value", () => {
       const result = Result.from(() => 5);
-      expect(result.isOk()).toBeTrue();
+      expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
 
@@ -508,7 +510,7 @@ describe("Result", () => {
       const result = Result.from(() => {
         throw new Error(errMsg);
       });
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(errMsg);
     });
 
@@ -517,12 +519,12 @@ describe("Result", () => {
       const result = Result.from(() => {
         throw errValue;
       });
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(errValue);
     });
 
     test("should use errorTransform function if provided", () => {
-      const transform = mock((err: unknown) => ({
+      const transform = spy((err: unknown) => ({
         message: `Transformed: ${
           err instanceof Error ? err.message : String(err)
         }`,
@@ -531,18 +533,18 @@ describe("Result", () => {
       const result = Result.from(() => {
         throw new Error("Original error");
       }, transform);
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toEqual({
         message: "Transformed: Original error",
         code: 500,
       });
-      expect(transform).toHaveBeenCalledTimes(1);
+      assertSpyCalls(transform, 1);
     });
 
     test("should return existing Ok if function returns Ok", () => {
       const innerOk = Ok(10);
       const result = Result.from(() => innerOk);
-      expect(result.isOk()).toBeTrue();
+      expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(10);
       expect(result).toBe(innerOk);
     });
@@ -550,7 +552,7 @@ describe("Result", () => {
     test("should return existing Err if function returns Err", () => {
       const innerErr = Err("Inner error");
       const result = Result.from(() => innerErr);
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe("Inner error");
       expect(result).toBe(innerErr);
     });
@@ -559,7 +561,7 @@ describe("Result", () => {
   describe("Result.fromAsync", () => {
     test("should return Ok with the resolved value for a promise that resolves", async () => {
       const result = await Result.fromAsync(async () => 5);
-      expect(result.isOk()).toBeTrue();
+      expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(5);
     });
 
@@ -568,7 +570,7 @@ describe("Result", () => {
       const result = await Result.fromAsync(async () => {
         throw new Error(errMsg);
       });
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(errMsg);
     });
 
@@ -577,12 +579,12 @@ describe("Result", () => {
       const result = await Result.fromAsync(async () => {
         throw errValue;
       });
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(errValue);
     });
 
     test("should use errorTransform function if provided for rejection", async () => {
-      const transform = mock((err: unknown) => ({
+      const transform = spy((err: unknown) => ({
         message: `Async Transformed: ${
           err instanceof Error ? err.message : String(err)
         }`,
@@ -591,18 +593,18 @@ describe("Result", () => {
       const result = await Result.fromAsync(async () => {
         throw new Error("Async Original error");
       }, transform);
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toEqual({
         message: "Async Transformed: Async Original error",
         code: 503,
       });
-      expect(transform).toHaveBeenCalledTimes(1);
+      assertSpyCalls(transform, 1);
     });
 
     test("should return existing Ok if promise resolves with Ok", async () => {
       const innerOk = Ok(20);
       const result = await Result.fromAsync(async () => innerOk);
-      expect(result.isOk()).toBeTrue();
+      expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toBe(20);
       expect(result).toBe(innerOk);
     });
@@ -610,7 +612,7 @@ describe("Result", () => {
     test("should return existing Err if promise resolves with Err", async () => {
       const innerErr = Err("Async Inner error");
       const result = await Result.fromAsync(async () => innerErr);
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe("Async Inner error");
       expect(result).toBe(innerErr);
     });
@@ -620,7 +622,7 @@ describe("Result", () => {
       const result = await Result.fromAsync(() => {
         throw new Error(errMsg);
       });
-      expect(result.isErr()).toBeTrue();
+      expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(errMsg);
     });
   });

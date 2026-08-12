@@ -1,0 +1,33 @@
+{
+  "name": "@ghaerdi/rustify",
+  "version": "2.2.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./option": "./src/option/index.ts",
+    "./result": "./src/result/index.ts",
+    "./match": "./src/match/index.ts"
+  },
+  "imports": {
+    "@std/expect": "jsr:@std/expect@^1",
+    "@std/testing": "jsr:@std/testing@^1"
+  },
+  "tasks": {
+    "check": "deno check src/ test/",
+    "test": "deno test"
+  },
+  "fmt": {
+    "include": ["src/", "test/"]
+  },
+  "lint": {
+    "include": ["src/", "test/"],
+    "rules": {
+      "exclude": [
+        "no-explicit-any",
+        "no-namespace",
+        "require-await"
+      ]
+    }
+  },
+  "exclude": ["node_modules/"]
+}

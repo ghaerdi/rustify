@@ -40,15 +40,12 @@
   ],
   "author": "ghaerdi",
   "license": "MIT",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.0.0"
-  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "check": "tsc --noEmit",
-    "prepublishOnly": "bun run check && bun test"
+    "check": "deno task check",
+    "test": "deno test",
+    "prepublishOnly": "deno task check && deno test"
   }
 }

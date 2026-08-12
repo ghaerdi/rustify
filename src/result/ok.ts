@@ -1,7 +1,7 @@
 import type { BaseResult, ResultMatcher } from "./types.ts";
 import type { Option } from "../option/index.ts";
 import { None, Some } from "../option/index.ts";
-import { Err, Ok } from "./result.ts";
+import { Ok } from "./result.ts";
 import type { Result } from "./result.ts";
 import { toString } from "../utils.ts";
 

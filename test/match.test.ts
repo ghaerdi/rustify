@@ -1,7 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { match, matches, P } from "../src/match/index";
-import { None, Option, Some } from "../src/option";
-import { Err, Ok, Result } from "../src/result";
+import { describe, test } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { match, matches, P } from "../src/match/index.ts";
+import { None, Option, Some } from "../src/option/index.ts";
+import { Err, Ok, Result } from "../src/result/index.ts";
 
 describe("match", () => {
   describe("Literal patterns", () => {
@@ -179,7 +180,7 @@ describe("match", () => {
           .with(P.instanceOf(Error), (e) => `error:${e.message}`)
           .otherwise(() => "other");
 
-      expect(f(new Date("2024-01-01"))).toBe("date:2024");
+      expect(f(new Date(2024, 0, 1))).toBe("date:2024");
       expect(f(new Error("boom"))).toBe("error:boom");
     });
 

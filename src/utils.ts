@@ -11,6 +11,7 @@ export function toString(val: unknown): string {
     try {
       value = JSON.stringify(val);
     } catch {
+      // Circular references or non-serializable values: fall back to String(val).
     }
   }
   return value;

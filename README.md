@@ -49,8 +49,6 @@ pnpm add @ghaerdi/rustify
 ```bash
 npx jsr add @ghaerdi/rustify
 # or
-bunx jsr add @ghaerdi/rustify
-# or
 deno add @ghaerdi/rustify
 ```
 
@@ -430,19 +428,24 @@ console.log(label(None())); // "none"
 
 ## Development
 
-This project uses Bun.
+This project uses Deno (>= 2.x). No install step is required — dependencies are
+resolved from JSR via the lockfile.
 
-- **Install Dependencies:**
+- **Formatting:**
   ```bash
-  bun install
+  deno fmt
+  ```
+- **Linting:**
+  ```bash
+  deno lint
   ```
 - **Type Checking:**
   ```bash
-  bun run check --watch
+  deno task check
   ```
 - **Run Tests:**
   ```bash
-  bun test --watch
+  deno test
   ```
 
 ## Contributing
