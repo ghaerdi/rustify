@@ -33,7 +33,7 @@
  * ```
  */
 
-export { match, matches } from "./match.ts";
-export { P } from "./patterns.ts";
-export type { Match } from "./matcher.ts";
-export type { Narrow, Pattern } from "./types.ts";
+export * from "./match.ts";
+export * from "./patterns.ts";
+export * from "./matcher.ts";
+export * from "./types.ts";

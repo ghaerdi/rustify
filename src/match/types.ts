@@ -8,8 +8,8 @@
  */
 
 /**
- * Unique symbol used to tag patterns created by the {@link P} namespace so the
- * runtime can distinguish "guards" from plain shape patterns.
+ * @internal Unique symbol used to tag patterns created by the {@link P}
+ * namespace so the runtime can distinguish "guards" from plain shape patterns.
  */
 export const PATTERN = Symbol("rustify.match.pattern");
 
@@ -177,7 +177,7 @@ export type Pattern<TInput> =
     : never);
 
 /**
- * The type of values that match a given `pattern`.
+ * @internal The type of values that match a given `pattern`.
  *
  * Used internally to narrow the handler parameter of `.with()`; exported so
  * advanced users can reason about what a pattern accepts.
