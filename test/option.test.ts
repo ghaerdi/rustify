@@ -777,3 +777,73 @@ describe("Option", () => {
     });
   });
 });
+
+describe("Rust std parity: insert/replace/isNoneOr/expectNone/count/copied/unzip", () => {
+  test("insert stores the value and returns it", () => {
+    const x = None<number>();
+    expect(x.insert(5)).toBe(5);
+    expect(x.isSome()).toBe(true);
+    expect(x.unwrap()).toBe(5);
+  });
+
+  test("insert overwrites an existing value", () => {
+    const x = Some(1);
+    expect(x.insert(2)).toBe(2);
+    expect(x.unwrap()).toBe(2);
+  });
+
+  test("replace returns the previous contents", () => {
+    const x = Some(5);
+    expect(x.replace(10).unwrap()).toBe(5);
+    expect(x.unwrap()).toBe(10);
+  });
+
+  test("replace on None returns None and stores the value", () => {
+    const x = None<number>();
+    expect(x.replace(10).isNone()).toBe(true);
+    expect(x.unwrap()).toBe(10);
+  });
+
+  test("isNoneOr returns true for None without calling the predicate", () => {
+    const calls: number[] = [];
+    expect(None<number>().isNoneOr((v) => { calls.push(v); return true; })).toBe(true);
+    expect(calls).toEqual([]); // lazy — predicate never called
+  });
+
+  test("isNoneOr matches the predicate for Some", () => {
+    expect(Some(5).isNoneOr((v) => v > 3)).toBe(true);
+    expect(Some(2).isNoneOr((v) => v > 3)).toBe(false);
+  });
+
+  test("expectNone returns undefined for None", () => {
+    expect(None().expectNone()).toBeUndefined();
+  });
+
+  test("expectNone throws with message and value for Some", () => {
+    expect(() => Some(5).expectNone()).toThrow("Tried to expect None: 5");
+    expect(() => Some("x").expectNone("custom")).toThrow("custom: x");
+  });
+
+  test("count returns 1 for Some and 0 for None", () => {
+    expect(Some(5).count()).toBe(1);
+    expect(None().count()).toBe(0);
+  });
+
+  test("copied returns the same option", () => {
+    const x = Some(5);
+    expect(x.copied()).toBe(x);
+    expect(None().copied().isNone()).toBe(true);
+  });
+
+  test("unzip splits Some([a, b]) into [Some(a), Some(b)]", () => {
+    const [a, b] = Some([1, "one"] as [number, string]).unzip();
+    expect(a.unwrap()).toBe(1);
+    expect(b.unwrap()).toBe("one");
+  });
+
+  test("unzip on None returns [None, None]", () => {
+    const [a, b] = None<[number, string]>().unzip();
+    expect(a.isNone()).toBe(true);
+    expect(b.isNone()).toBe(true);
+  });
+});

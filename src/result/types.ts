@@ -241,6 +241,54 @@ export interface BaseResult<T, E>
   unwrapOrElse(fn: (value: E) => T): T;
 
   /**
+   * Returns the contained `Err` value, or computes one from the `Ok` value.
+   * Mirrors Rust's `Result::unwrap_err_or_else`.
+   *
+   * @param fn The function computing an error from the `Ok` value.
+   * @returns The `Err` value, or `fn(value)` if the result is `Ok`.
+   *
+   * @example
+   * ```typescript
+   * Err("error").unwrapErrOrElse((v) => `had ${v}`); // "error"
+   * Ok(5).unwrapErrOrElse((v) => `had ${v}`); // "had 5"
+   * ```
+   */
+  unwrapErrOrElse(fn: (value: T) => E): E;
+
+  /**
+   * Returns the contained `Ok` value, consuming the result. Panics if the
+   * result is `Err`. TypeScript has no borrow distinction, so this is an
+   * alias of {@link BaseResult.unwrap}. Mirrors Rust's `Result::into_ok`.
+   *
+   * @returns The contained `Ok` value.
+   * @throws {Error} If the result is `Err`.
+   *
+   * @example
+   * ```typescript
+   * Ok(5).intoOk(); // 5
+   * Err("error").intoOk(); // throws
+   * ```
+   */
+  intoOk(): T;
+
+  /**
+   * Returns the contained `Err` value, consuming the result. Panics if the
+   * result is `Ok`. TypeScript has no borrow distinction, so this is an
+   * alias of {@link BaseResult.unwrapErr}. Mirrors Rust's `Result::into_err`.
+   *
+   * @returns The contained `Err` value.
+   * @throws {Error} If the result is `Ok`.
+   *
+   * @example
+   * ```typescript
+   * Err("error").intoErr(); // "error"
+   * Ok(5).intoErr(); // throws
+   * ```
+   */
+  intoErr(): E;
+
+
+  /**
    * Returns `res` if the result is Ok, otherwise returns the Err value of self.
    * This can be used for chaining operations where the intermediate Ok value is not needed.
    * @template U The type of the Ok value of the `res` Result.

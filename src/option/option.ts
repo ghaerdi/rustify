@@ -3,6 +3,7 @@ import { SomeStrategy } from "./some.ts";
 import { NoneStrategy } from "./none.ts";
 import { PATTERN } from "../match/types.ts";
 import type { AbsentPattern, ExtractPattern } from "../match/types.ts";
+import { toString } from "../utils.ts";
 
 /**
  * The method surface shared by every {@link Option}: the operations available
@@ -397,6 +398,102 @@ export interface OptionMethods<T> {
    * ```
    */
   [Symbol.iterator](): Iterator<any>;
+
+  /**
+   * Inserts `value` into the option, replacing the current contents, and
+   * returns the inserted value. Mirrors Rust's `Option::insert`.
+   *
+   * @param value The value to insert.
+   * @returns The inserted value.
+   *
+   * @example
+   * ```typescript
+   * const x = None<number>();
+   * x.insert(5); // 5 — x is now Some(5)
+   * ```
+   */
+  insert(value: T): T;
+
+  /**
+   * Replaces the current contents with `value`, returning the previous
+   * contents as an `Option`. Mirrors Rust's `Option::replace`.
+   *
+   * @param value The replacement value.
+   * @returns The previous option (`Some` with the old value, or `None`).
+   *
+   * @example
+   * ```typescript
+   * Some(5).replace(10).unwrap(); // 5
+   * None<number>().replace(10); // None — now Some(10)
+   * ```
+   */
+  replace(value: T): Option<T>;
+
+  /**
+   * Returns `true` if the option is `None`, or if it contains a value that
+   * satisfies the predicate. Mirrors Rust's `Option::is_none_or`.
+   *
+   * @param fn The predicate applied to the contained value.
+   * @returns `true` if `None` or the predicate matches.
+   *
+   * @example
+   * ```typescript
+   * None<number>().isNoneOr((x) => x > 3); // true
+   * Some(5).isNoneOr((x) => x > 3); // true
+   * Some(2).isNoneOr((x) => x > 3); // false
+   * ```
+   */
+  isNoneOr(fn: (value: T) => boolean): boolean;
+
+  /**
+   * Returns `undefined` if the option is `None`, otherwise throws with
+   * `message` (followed by the contained value). Mirrors Rust's
+   * `Option::expect_none`.
+   *
+   * @param message The panic message (defaults to `"Tried to expect None"`).
+   * @throws {Error} If the option is `Some`.
+   *
+   * @example
+   * ```typescript
+   * None().expectNone(); // undefined
+   * Some(5).expectNone(); // throws "Tried to expect None: 5"
+   * ```
+   */
+  expectNone(message?: string): void;
+
+  /**
+   * Returns the number of elements in the option: `1` for `Some`, `0` for
+   * `None`. Mirrors Rust's `Option::count`.
+   *
+   * @returns `1` if `Some`, `0` if `None`.
+   */
+  count(): number;
+
+  /**
+   * Returns the option unchanged. TypeScript passes values by value, so
+   * `Option<T>` is already a copy for primitives and a reference for objects
+   * — unlike Rust, no explicit `Copy` step is needed. Mirrors Rust's
+   * `Option::copied` for `Copy` types.
+   *
+   * @returns The same option.
+   */
+  copied(): Option<T>;
+
+  /**
+   * Converts `Option<[A, B]>` into a tuple of two options. Mirrors Rust's
+   * `Option::unzip`.
+   *
+   * @template A The first element type of the pair.
+   * @template B The second element type of the pair.
+   * @returns `[Some(a), Some(b)]` for `Some([a, b])`, `[None, None]` for `None`.
+   *
+   * @example
+   * ```typescript
+   * Some([1, "a"] as [number, string]).unzip(); // [Some(1), Some("a")]
+   * None<[number, string]>().unzip(); // [None(), None()]
+   * ```
+   */
+  unzip<A, B>(this: Option<[A, B]>): [Option<A>, Option<B>];
 }
 
 /**
@@ -639,6 +736,50 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
         return { done: true, value: undefined! };
       },
     } as Iterator<T extends Iterable<infer U> ? U : never>;
+  }
+
+  /** @inheritDoc */
+  insert(value: T): T {
+    this.#inner = new SomeStrategy(value);
+    return value;
+  }
+
+  /** @inheritDoc */
+  replace(value: T): Option<T> {
+    const previous = this.#wrap(this.#inner);
+    this.#inner = new SomeStrategy(value);
+    return previous;
+  }
+
+  /** @inheritDoc */
+  isNoneOr(fn: (value: T) => boolean): boolean {
+    return this.#inner.isNone() || this.#inner.isSomeAnd(fn);
+  }
+
+  /** @inheritDoc */
+  expectNone(message = "Tried to expect None"): void {
+    if (this.#inner.isSome()) {
+      throw new Error(`${message}: ${toString(this.#inner.unwrap())}`);
+    }
+  }
+
+  /** @inheritDoc */
+  count(): number {
+    return this.#inner.isSome() ? 1 : 0;
+  }
+
+  /** @inheritDoc */
+  copied(): Option<T> {
+    return this as Option<T>;
+  }
+
+  /** @inheritDoc */
+  unzip<A, B>(this: Option<[A, B]>): [Option<A>, Option<B>] {
+    if (this.#inner.isSome()) {
+      const [a, b] = this.#inner.unwrap() as [A, B];
+      return [Some(a), Some(b)];
+    }
+    return [None<A>(), None<B>()];
   }
 
   /**

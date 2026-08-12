@@ -819,3 +819,37 @@ describe("Result", () => {
     });
   });
 });
+
+describe("Rust std parity: unwrapErrOrElse / intoOk / intoErr", () => {
+  test("unwrapErrOrElse returns the error for Err without calling the closure", () => {
+    const calls: number[] = [];
+    const r: Result<number, string> = Err("boom");
+    expect(r.unwrapErrOrElse((v) => { calls.push(v); return `had ${v}`; })).toBe("boom");
+    expect(calls).toEqual([]); // lazy — closure never called
+  });
+
+  test("unwrapErrOrElse computes an error from the value for Ok", () => {
+    const r: Result<number, string> = Ok(5);
+    expect(r.unwrapErrOrElse((v) => `had ${v}`)).toBe("had 5");
+  });
+
+  test("intoOk returns the value for Ok", () => {
+    const r: Result<number, string> = Ok(5);
+    expect(r.intoOk()).toBe(5);
+  });
+
+  test("intoOk throws for Err", () => {
+    const r: Result<number, string> = Err("boom");
+    expect(() => r.intoOk()).toThrow("Tried to unwrap Error: boom");
+  });
+
+  test("intoErr returns the error for Err", () => {
+    const r: Result<number, string> = Err("boom");
+    expect(r.intoErr()).toBe("boom");
+  });
+
+  test("intoErr throws for Ok", () => {
+    const r: Result<number, string> = Ok(5);
+    expect(() => r.intoErr()).toThrow("Tried to unwrap Ok value: 5");
+  });
+});

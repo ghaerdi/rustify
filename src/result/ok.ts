@@ -106,6 +106,21 @@ export class OkImpl<T, E = never> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
+  unwrapErrOrElse(fn: (value: T) => E): E {
+    return fn(this.#value);
+  }
+
+  /** @inheritDoc */
+  intoOk(): T {
+    return this.unwrap();
+  }
+
+  /** @inheritDoc */
+  intoErr(): E {
+    return this.unwrapErr();
+  }
+
+  /** @inheritDoc */
   and<U>(res: Result<U, E>): Result<U, E> {
     return res;
   }

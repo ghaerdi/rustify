@@ -111,6 +111,21 @@ export class ErrImpl<T = never, E = unknown> implements BaseResult<T, E> {
   }
 
   /** @inheritDoc */
+  unwrapErrOrElse(_fn: (value: T) => E): E {
+    return this.unwrapErr();
+  }
+
+  /** @inheritDoc */
+  intoOk(): T {
+    return this.unwrap();
+  }
+
+  /** @inheritDoc */
+  intoErr(): E {
+    return this.unwrapErr();
+  }
+
+  /** @inheritDoc */
   and<U>(_res: Result<U, E>): Result<U, E> {
     return this as unknown as Result<U, E>;
   }
