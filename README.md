@@ -124,6 +124,10 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
 
 ### Result\<T, E\>
 
+`Result<T, E>` is a **discriminated union** of `Ok<T>` and `Err<E>` — narrow
+with `isOk()` / `isErr()` (or the `match()` patterns `Result.ok` /
+`Result.err`, which hand the unwrapped value or error to the handler).
+
 - **Checking:**
   - `isOk()`: Returns `true` if `Ok`.
   - `isErr()`: Returns `true` if `Err`.
@@ -187,6 +191,10 @@ const nullable = Option.fromNullable(() => document.getElementById("app")); // S
     `Err`.
 
 ### Option\<T\>
+
+`Option<T>` is a **discriminated union** — every value exposes a literal
+`tag`: `"some"` or `"none"` — so you can narrow with
+`if (opt.tag === "some")` (or `isSome()` / `isNone()`).
 
 - **Checking:**
   - `isSome()`: Returns `true` if `Some`.
@@ -281,6 +289,18 @@ Import `match` and `P` from `@ghaerdi/rustify/match`.
     anything no case matched.
   - `.run()`: Runs the match, returning `undefined` if nothing matched —
     excluded from the return type when every case is covered.
+- **`Option`/`Result` patterns:** `Option.some`, `Option.none`, `Result.ok`
+  and `Result.err` match the respective variant and pass the **unwrapped**
+  value (or error) to the handler — `n` below is `number`, not `Option<number>`:
+  ```typescript
+  match(opt)
+    .with(Option.some, (n) => n.toFixed(2))
+    .with(Option.none, () => "none")
+    .exhaustive();
+  ```
+  These patterns are **per-variant**: `.with(Option.some, ...).exhaustive()`
+  alone is a compile error naming the missing variant
+  (`NeverCase<"NonExhaustive: unhandled case { tag: none }">`).
 - **Patterns (the `P` namespace):**
   - `P.any` / `P._`: Matches anything (catch-all).
   - `P.string`, `P.number`, `P.boolean`, `P.bigint`, `P.symbol`: Matches

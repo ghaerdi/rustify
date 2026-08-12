@@ -38,8 +38,9 @@
   - **`Option<T>` is now a discriminated union** — `OptionImpl<T, "some"> |
     OptionImpl<T, "none">` (new `tag` property, literal per variant). This is
     what powers per-variant exhaustiveness and enables `if (opt.tag ===
-    "some")` narrowing. The method surface is preserved via the new exported
-    `OptionMethods<T>` interface; behavior is unchanged.
+    "some")` narrowing. The method surface is preserved via the internal
+    `OptionMethods<T>` interface (used for `@inheritDoc` docs; not part of the
+    public API); behavior is unchanged.
   - Public types: `Match`, `Pattern`, `Narrow`.
 
 ### Documentation
