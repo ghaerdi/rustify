@@ -34,32 +34,16 @@ functional programming patterns for safer code. This allows you to:
 You can install `rustify` using your favorite package manager or directly from
 jsr.
 
-**Deno:**
-
-```bash
-deno add @ghaerdi/rustify
-```
-
 **npm:**
 
 ```bash
 npm install @ghaerdi/rustify
-# or
-yarn add @ghaerdi/rustify
-# or
-pnpm add @ghaerdi/rustify
-# or
-bun add @ghaerdi/rustify
 ```
 
 **jsr:**
 
 ```bash
 npx jsr add @ghaerdi/rustify
-# or
-deno add @ghaerdi/rustify
-# or
-bunx jsr add @ghaerdi/rustify
 ```
 
 ## Basic Usage
