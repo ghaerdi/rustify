@@ -187,3 +187,6 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
+# dnt npm build output
+npm/

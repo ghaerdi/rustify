@@ -2,20 +2,8 @@
   "name": "@ghaerdi/rustify",
   "version": "2.2.1",
   "description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
-  "module": "src/index.ts",
   "type": "module",
-  "main": "src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./option": "./src/option/index.ts",
-    "./result": "./src/result/index.ts",
-    "./match": "./src/match/index.ts"
-  },
-  "files": [
-    "src",
-    "README.md",
-    "LICENSE"
-  ],
+  "private": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ghaerdi/rustify.git"
@@ -40,12 +28,10 @@
   ],
   "author": "ghaerdi",
   "license": "MIT",
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
   "scripts": {
     "check": "deno task check",
     "test": "deno test",
-    "prepublishOnly": "deno task check && deno test"
+    "build": "deno task build:npm",
+    "prepublishOnly": "deno task check && deno test && deno task build:npm"
   }
 }
