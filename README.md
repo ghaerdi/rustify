@@ -50,6 +50,7 @@ npx jsr add @ghaerdi/rustify
 
 ```typescript
 import { Err, Ok, Result } from "@ghaerdi/rustify";
+import { match } from "@ghaerdi/rustify/match";
 
 function divide(
   numerator: number,
@@ -59,11 +60,14 @@ function divide(
   return Ok(numerator / denominator);
 }
 
-const result = divide(10, 2)
-  .map((value) => value + 1) // Ok(6)
-  .unwrapOr(0);
+// match() handles both variants exhaustively — the Ok value and the error are
+// narrowed to their types, so (v) is number and (e) is string.
+const message = match(divide(10, 2))
+  .with(Result.ok, (v) => `Result: ${v}`)
+  .with(Result.err, (e) => `Error: ${e}`)
+  .exhaustive();
 
-console.log(result); // 6
+console.log(message); // "Result: 5"
 ```
 
 ## Documentation
