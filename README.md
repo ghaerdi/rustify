@@ -70,6 +70,31 @@ const message = match(divide(10, 2))
 console.log(message); // "Result: 5"
 ```
 
+## Wrapping untrusted functions
+
+Wrap throwing/rejecting code (like `JSON.parse` or an HTTP call) in
+`Result.from` / `Result.fromAsync` to turn exceptions into `Err` values:
+
+```typescript
+import { match } from "@ghaerdi/rustify/match";
+import { Result } from "@ghaerdi/rustify";
+
+// sync — catches any thrown error into Err
+const parsed = Result.from(() => JSON.parse('{"x": 1}'));
+console.log(
+  match(parsed)
+    .with(Result.ok, (v) => `parsed: ${JSON.stringify(v)}`) // "parsed: {"x":1}"
+    .with(Result.err, (e) => `error: ${e}`)
+    .exhaustive(),
+);
+
+// async — awaits and catches both sync throws and rejected promises
+const body = await Result.fromAsync(async () =>
+  (await fetch("/api/user")).json()
+);
+if (body.isOk()) console.log(body.unwrap());
+```
+
 ## Documentation
 
 Full API reference, `match()` guide, and worked examples live in the
