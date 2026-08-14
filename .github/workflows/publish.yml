@@ -5,25 +5,70 @@ on:
     types: [published]
   workflow_dispatch:
 
+env:
+  GH_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+  # npm dist-tag derived from the release tag's semver pre-release label:
+  #   v2.2.1       -> (empty) -> npm publish     -> becomes latest
+  #   v2.2.1-beta.1 -> beta    -> npm publish --tag=beta
+  #   v2.2.1-rc.2   -> rc      -> npm publish --tag=rc
+  # Computed inside the npm job (bash) so stable tags publish as latest.
 jobs:
-  publish:
+  # JSR is pure TypeScript source. `deno publish` from Actions (OIDC) is what
+  # generates the SLSA provenance statement on jsr.io.
+  jsr:
     name: Publish to JSR
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write # OIDC — required for provenance
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v1
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
         with:
           deno-version: v2.x
-
       - name: Publish to JSR
-        # Real publish (from Actions, OIDC) is what generates the provenance
-        # statement. Runs for both stable and prerelease GitHub releases — the
-        # version is read from deno.json, so a prerelease tag publishes a
-        # prerelease version that does not become the JSR "latest".
         run: deno publish
+
+  # npm publishes the COMPILED artifact built by deno dnt. Uses trusted
+  # publishing (OIDC) — no NPM_TOKEN secret needed. Configure the trusted
+  # publisher on npmjs.com (package Settings → Trusted publishing) with:
+  #   user: ghaerdi, repo: rustify, workflow: publish.yml, action: npm publish
+  # Requires npm CLI 11.5.1+ / Node 22.14+ (setup-node '22' or newer).
+  npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC — required for trusted publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Verify version matches git tag
+        if: github.event_name == 'release'
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GH_TAG#v}"  # strip leading 'v' from v1.2.3-beta.1
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "error: package.json version ($PKG_VERSION) != git tag ($TAG_VERSION)" >&2
+            exit 1
+          fi
+      - name: Build npm package (deno dnt)
+        run: deno task build:npm
+      - name: Publish to npm
+        run: |
+          cd npm
+          # semver pre-release label, e.g. v2.2.1-beta.1 -> "beta"
+          PRERELEASE=$(printf '%s' "$GH_TAG" | sed -n 's/^v[0-9]*\.[0-9]*\.[0-9]*-\([^0-9][^.]*\).*/\1/p')
+          if [ -n "$PRERELEASE" ]; then
+            echo "publishing as npm tag: $PRERELEASE"
+            npm publish --tag="$PRERELEASE"
+          else
+            echo "publishing as latest"
+            npm publish
+          fi
