@@ -15,7 +15,10 @@ dependencies. Dual-published to npm (`@ghaerdi/rustify`) and JSR
 - `deno test` — run the full test suite
 - `deno fmt --check` / `deno fmt` — format check / format
 - `deno lint` — lint
-- `deno publish --dry-run` — verify publishability (JSR + npm via package.json)
+- `deno publish --dry-run` — verify JSR publishability
+- `deno task build:npm` — compile the npm artifact (`npm/`, deno dnt) from
+  `src/`; reads the version from package.json. This is what CI runs before
+  publishing to npm (see Release).
 - `devenv test` — validate the dev environment (git-hooks + `deno task check`);
   `devenv shell` enters it
 
@@ -56,6 +59,16 @@ test/
 Version bumps + CHANGELOG + git tag + draft GitHub release: follow the
 `release-workflow` and `release-notes` skills (`.agents/skills/`).
 
+Publishing is automated — `.github/workflows/publish.yml` runs on the GitHub
+`release: published` event and publishes **both** registries from CI, no tokens
+(OIDC):
+- **JSR**: `deno publish` (TypeScript source, SLSA provenance).
+- **npm**: `deno task build:npm` (compiled `npm/` via dnt) then `npm publish`
+  via trusted publishing; the npm dist-tag derives from the tag's pre-release
+  label (`-beta.N` → `beta`, stable → `latest`).
+
+Bump the version in BOTH `package.json` and `deno.json` to the exact release
+version before tagging — the workflow's version guard fails on a mismatch.
 ## Docs
 
 Keep README.md, AGENTS.md, and JSDoc in sync with the code. After a session with
