@@ -21,8 +21,9 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Publish (dry-run)
-        # TODO: flip `deno publish --dry-run` -> `deno publish` once validated.
-        # Real publish (from Actions, OIDC) is what generates the provenance statement.
-        if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
-        run: deno publish --dry-run
+      - name: Publish to JSR
+        # Real publish (from Actions, OIDC) is what generates the provenance
+        # statement. Runs for both stable and prerelease GitHub releases — the
+        # version is read from deno.json, so a prerelease tag publishes a
+        # prerelease version that does not become the JSR "latest".
+        run: deno publish
