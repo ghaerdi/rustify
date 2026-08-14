@@ -21,6 +21,23 @@
 - Added `AGENTS.md`, a `self-improve` skill, and updated module conventions;
   moved the project's agent skills into the repository (`.agents/skills/`).
 
+### Refactoring
+
+- **npm package now ships compiled output via `deno dnt`** — the npm artifact
+  (`npm/`) is built from `src/` with a `build:npm` task, emitting ESM + CommonJS
+  - `.d.ts` with import specifiers rewritten from `.ts` to `.js`. JSR keeps
+    publishing TypeScript source unchanged (`deno publish`). Consumers bundling
+    rustify (webpack, Next, Vite, etc.) no longer need to transpile the package
+    themselves — previously npm shipped raw `.ts` source, which non-Deno
+    bundlers could not parse.
+
+### Infrastructure
+
+- Added `scripts/build_npm.ts` (`@deno/dnt`), a `deno task build:npm`, and
+  `deno.json` `publish.exclude` entries keeping `npm/`, `scripts/`, and `test/`
+  out of the JSR package. Versions are read from `package.json` as the single
+  source of truth.
+
 ## 2.2.0
 
 ### Breaking Changes
