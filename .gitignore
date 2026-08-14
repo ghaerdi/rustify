@@ -190,3 +190,6 @@ devenv.local.yaml
 
 # dnt npm build output
 npm/
+
+# wiki
+wiki
