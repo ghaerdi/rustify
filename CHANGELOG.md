@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.3.0-beta.2
+
+### Improvements
+
+- **npm package metadata now comes from `package.json` as the single source of
+  truth.** `scripts/build_npm.ts` previously hardcoded the description,
+  keywords, author, repository, bugs, and license; it now reads them straight
+  from the repo `package.json` so the published `npm/package.json` can't drift
+  from what `deno publish` sees. Only dnt-specific outputs (`files`, `engines`)
+  stay defined in the script.
+- **Trimmed and focused the npm keywords.** Added `match` and
+  `pattern
+  matching`; removed the redundant `optional`, `null safety`, and
+  `maybe` tags. The description was rewritten to match the current
+  `src/index.ts` API ("Rust-style algebraic types..."). No runtime or type-level
+  changes.
+
+### Documentation
+
+- Reconcile `AGENTS.md`, `README.md`, and the `npm-esm-bundling` /
+  `release-workflow` skills with the esbuild-bundled npm build (single ESM
+  entries, dead-file pruning, `files` allowlist).
+
 ## 2.3.0-beta.1
 
 ### Improvements
