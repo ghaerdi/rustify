@@ -23,6 +23,14 @@
   mirroring Rust's `Option::as_slice` (stabilized in Rust 1.75). Treats an
   `Option` as a zero-or-one-element collection, e.g. in `flatMap` over arrays of
   options.
+- **`Result.all` / `Option.all`** — combine an array or tuple of
+  `Result`/`Option` values into a single one, short-circuiting on the first
+  `Err`/`None`. Literal arrays keep their tuple type (`Promise.all`-style);
+  `Result` error types unify into a union. Rust's iterator `.collect()`
+  semantics.
+- **`Result.traverse` / `Option.traverse`** — map each element through a
+  function returning a `Result`/`Option`, then combine (map + `all`); `fn` stops
+  being called at the first failure.
 
 ### Documentation
 
