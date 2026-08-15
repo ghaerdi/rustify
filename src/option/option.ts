@@ -874,6 +874,11 @@ export const Some = <T>(value: T): Option<T> =>
  */
 export const None = <T>(): Option<T> => new OptionImpl(new NoneStrategy<T>());
 
+/** @internal Success value types of a tuple of Options, preserving tuple shape. */
+type OptionAllValues<T extends readonly Option<unknown>[]> = {
+  -readonly [K in keyof T]: T[K] extends Option<infer V> ? V : never;
+};
+
 // ─── Static methods (namespace merge with Option interface) ────────────────
 
 /**
@@ -924,6 +929,71 @@ export namespace Option {
     value: unknown,
   ): value is Option<T> & { __tag: "none" } =>
     OptionImpl.isOption(value) && value.isNone();
+
+  /**
+   * Combines an array (or tuple) of Options into a single Option, returning `None`
+   * if any element is `None`.
+   *
+   * - If every element is `Some`, returns `Some` containing the unwrapped values.
+   * - If any element is `None`, returns `None` — later elements are not evaluated.
+   *
+   * For literal arrays the tuple type is preserved.
+   *
+   * @template T The tuple/array of Options to combine.
+   * @param results The Options to combine.
+   * @returns An `Option` containing all unwrapped values, or `None`.
+   * @note Not a standard Rust Option method. Rust achieves this via iterator `.collect()`.
+   * @example
+   * ```typescript
+   * Option.all([Some(1), Some(2)]).unwrap(); // [1, 2]
+   * Option.all([Some(1), None<number>()]).isNone(); // true
+   * ```
+   */
+  export const all = <const T extends readonly Option<unknown>[]>(
+    results: T,
+  ): Option<OptionAllValues<T>> => {
+    const values: unknown[] = [];
+    for (const opt of results) {
+      if (opt.isNone()) {
+        return None() as unknown as Option<OptionAllValues<T>>;
+      }
+      values.push(opt.unwrap());
+    }
+    return Some(values as OptionAllValues<T>);
+  };
+
+  /**
+   * Maps each element of an array through a function returning an `Option`, then
+   * combines the results into a single `Option` (map + `all`).
+   *
+   * Short-circuits: `fn` stops being called as soon as one element yields `None`.
+   *
+   * @template T The element type of the input array.
+   * @template U The value type produced by `fn`.
+   * @param items The array of values to map.
+   * @param fn The function mapping each value to an `Option`.
+   * @returns An `Option` containing all mapped values, or `None`.
+   * @note Not a standard Rust Option method. Equivalent to `iter().map(fn).collect()` in Rust.
+   * @example
+   * ```typescript
+   * Option.traverse([1, 2, 3], (n) => (n > 0 ? Some(n * 2) : None())).unwrap();
+   * // [2, 4, 6]
+   * ```
+   */
+  export const traverse = <T, U>(
+    items: readonly T[],
+    fn: (item: T) => Option<U>,
+  ): Option<U[]> => {
+    const values: U[] = [];
+    for (const item of items) {
+      const opt = fn(item);
+      if (opt.isNone()) {
+        return None() as unknown as Option<U[]>;
+      }
+      values.push(opt.unwrap());
+    }
+    return Some(values);
+  };
   /**
    * A pattern for `match()` that matches a `Some` and passes the **unwrapped
    * value** to the handler — no `P.when` annotation needed, the handler

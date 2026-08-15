@@ -909,4 +909,40 @@ describe("Option.isSome / Option.isNone type guards", () => {
     expect(Option.isNone("hello")).toBe(false);
     expect(Option.isSome(null)).toBe(false);
   });
+  describe("all", () => {
+    test("all Some values should return Some of all values", () => {
+      const result = Option.all([Some(1), Some(2), Some(3)]);
+      expect(result.isSome()).toBe(true);
+      expect(result.unwrap()).toEqual([1, 2, 3]);
+    });
+    test("should return None if any element is None", () => {
+      const result = Option.all([Some(1), None<number>(), Some(3)]);
+      expect(result.isNone()).toBe(true);
+    });
+    test("should preserve tuple types for literals", () => {
+      const result = Option.all([Some(1), Some("a")]);
+      const values: [number, string] = result.unwrap();
+      expect(values).toEqual([1, "a"]);
+    });
+    test("empty array should return Some([])", () => {
+      const result = Option.all([]);
+      expect(result.isSome()).toBe(true);
+      expect(result.unwrap()).toEqual([]);
+    });
+  });
+
+  describe("traverse", () => {
+    test("should map all values when every result is Some", () => {
+      const result = Option.traverse([1, 2, 3], (n) => Some(n * 2));
+      expect(result.unwrap()).toEqual([2, 4, 6]);
+    });
+    test("should short-circuit and stop calling fn after first None", () => {
+      const calls = spy((n: number): Option<number> =>
+        n === 2 ? None() : Some(n)
+      );
+      const result = Option.traverse([1, 2, 3, 4], calls);
+      expect(result.isNone()).toBe(true);
+      assertSpyCalls(calls, 2);
+    });
+  });
 });

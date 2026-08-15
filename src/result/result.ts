@@ -107,6 +107,15 @@ export const Err = <E>(value: E): Err<never, E> => new ErrImpl(value);
  */
 export type Result<T, E> = Ok<T, E> | Err<T, E>;
 
+/** @internal Success value types of a tuple of Results, preserving tuple shape. */
+type ResultAllValues<T extends readonly Result<unknown, unknown>[]> = {
+  -readonly [K in keyof T]: T[K] extends Result<infer V, unknown> ? V : never;
+};
+
+/** @internal Union of the error types of a tuple of Results. */
+type ResultAllError<T extends readonly Result<unknown, unknown>[]> =
+  T[number] extends Result<unknown, infer E> ? E : never;
+
 /**
  * Default error transformation function used by `Result.from` and `Result.fromAsync`.
  * Extracts the `message` property if the error is an `Error` instance, otherwise returns the error as is.
@@ -179,6 +188,56 @@ interface ResultTypeStatics {
     fn: () => Promise<T | Result<T, any>>,
     errorTransform?: (error: unknown) => E,
   ): Promise<Result<T, E>>;
+
+  /**
+   * Combines an array (or tuple) of Results into a single Result, short-circuiting
+   * on the first `Err`.
+   *
+   * - If every element is `Ok`, returns `Ok` containing the unwrapped values.
+   * - If any element is `Err`, returns that `Err` immediately — later elements
+   *   are not evaluated.
+   *
+   * For literal arrays the tuple type is preserved (`Promise.all`-style), and the
+   * error types across elements are unified into a union.
+   *
+   * @template T The tuple/array of Results to combine.
+   * @param results The Results to combine.
+   * @returns A `Result` containing all unwrapped values, or the first error.
+   * @note Not a standard Rust Result method. Rust achieves this via iterator `.collect()`.
+   * @example
+   * ```typescript
+   * Result.all([Ok(1), Ok("a")]).unwrap(); // [1, "a"] — typed [number, string]
+   * Result.all([Ok(1), Err("boom")]).unwrapErr(); // "boom"
+   * Result.all([]).unwrap(); // []
+   * ```
+   */
+  all<const T extends readonly Result<unknown, unknown>[]>(
+    results: T,
+  ): Result<ResultAllValues<T>, ResultAllError<T>>;
+
+  /**
+   * Maps each element of an array through a function returning a `Result`, then
+   * combines the results into a single `Result` (map + `all`).
+   *
+   * Short-circuits: `fn` stops being called as soon as one element yields `Err`.
+   *
+   * @template T The element type of the input array.
+   * @template U The value type produced by `fn`.
+   * @template E The error type produced by `fn`.
+   * @param items The array of values to map.
+   * @param fn The function mapping each value to a `Result`.
+   * @returns A `Result` containing all mapped values, or the first error.
+   * @note Not a standard Rust Result method. Equivalent to `iter().map(fn).collect()` in Rust.
+   * @example
+   * ```typescript
+   * Result.traverse(["1", "2"], (s) => Result.from(() => JSON.parse(s))).unwrap();
+   * // [1, 2]
+   * ```
+   */
+  traverse<T, U, E>(
+    items: readonly T[],
+    fn: (item: T) => Result<U, E>,
+  ): Result<U[], E>;
 
   /**
    * Checks if a value is a Result (either Ok or Err) created by this library.
@@ -269,6 +328,39 @@ export const Result: ResultTypeStatics = {
     } catch (error) {
       return Err(errorTransform(error));
     }
+  },
+
+  /** @inheritDoc */
+  all<const T extends readonly Result<unknown, unknown>[]>(
+    results: T,
+  ): Result<ResultAllValues<T>, ResultAllError<T>> {
+    for (const result of results) {
+      if (result.isErr()) {
+        return result as unknown as Result<
+          ResultAllValues<T>,
+          ResultAllError<T>
+        >;
+      }
+    }
+    return Ok(
+      results.map((result) => result.unwrap()) as ResultAllValues<T>,
+    );
+  },
+
+  /** @inheritDoc */
+  traverse<T, U, E>(
+    items: readonly T[],
+    fn: (item: T) => Result<U, E>,
+  ): Result<U[], E> {
+    const values: U[] = [];
+    for (const item of items) {
+      const result = fn(item);
+      if (result.isErr()) {
+        return result as unknown as Result<U[], E>;
+      }
+      values.push(result.unwrap());
+    }
+    return Ok(values);
   },
 
   /** @inheritDoc */

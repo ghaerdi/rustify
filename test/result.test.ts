@@ -892,4 +892,45 @@ describe("Result.isOk / Result.isErr type guards", () => {
     expect(Result.isErr("hello")).toBe(false);
     expect(Result.isOk(undefined)).toBe(false);
   });
+  describe("all", () => {
+    test("all Ok values should return Ok of all values", () => {
+      const result = Result.all([Ok(1), Ok(2), Ok(3)]);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toEqual([1, 2, 3]);
+    });
+    test("should short-circuit and return the first Err", () => {
+      const result = Result.all([Ok(1), Err("first"), Err("second")]);
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe("first");
+    });
+    test("should preserve tuple types for literals", () => {
+      const result = Result.all([Ok(1), Ok("a")]);
+      const values: [number, string] = result.unwrap();
+      expect(values).toEqual([1, "a"]);
+    });
+    test("should unify error types into a union", () => {
+      const result = Result.all([Ok(1), Err("a" as const), Err(2 as const)]);
+      const err: "a" | 2 = result.unwrapErr();
+      expect(["a", 2]).toContain(err);
+    });
+    test("empty array should return Ok([])", () => {
+      const result = Result.all([]);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toEqual([]);
+    });
+  });
+
+  describe("traverse", () => {
+    test("should map all values when every result is Ok", () => {
+      const result = Result.traverse([1, 2, 3], (n) => Ok(n * 2));
+      expect(result.unwrap()).toEqual([2, 4, 6]);
+    });
+    test("should short-circuit and stop calling fn after first Err", () => {
+      const calls = spy((n: number) => (n === 2 ? Err("boom") : Ok(n)));
+      const result = Result.traverse([1, 2, 3, 4], calls);
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe("boom");
+      assertSpyCalls(calls, 2);
+    });
+  });
 });
