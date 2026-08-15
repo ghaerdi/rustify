@@ -1,9 +1,9 @@
 ---
 name: "monad-module-conventions"
 description: "Follow this repo's monad module architecture conventions when adding a new monad type (e.g. Either/Future), splitting an existing module into the directory structure, or refactoring Option/Result internals. Covers the Strategy pattern, namespace-merge statics, JSDoc placement, the no-as-any rule, import/circular-dependency handling, and export updates. Use whenever touching src/option/, src/result/, or creating a new src/<mod>/ directory."
-version: 3
+version: 4
 created: "2026-08-10"
-updated: "2026-08-12"
+updated: "2026-08-15"
 ---
 
 ## When to Use
@@ -24,6 +24,7 @@ Trigger when adding a new monad type to this repo, restructuring src/ (e.g. spli
 - Result does NOT need a ResultImpl-style wrapper: its OkImpl/ErrImpl are immutable (readonly #value, no mutating methods). Only Option needed the Strategy+wrapper pattern because getOrInsert/take/takeIf mutate in place. Do not add wrappers without a mutating-methods reason.
 - JSDoc belongs on the PUBLIC interface (Option<T>/Result<T>), with @param/@returns/@throws/@example. Impl methods use `/** @inheritDoc */` — do not duplicate full docs on implementations.
 - Namespace-merged statics: `export namespace Option { export const fromNullable = OptionImpl.fromNullable; }` — the namespace declaration itself needs its own doc comment or JSR doc coverage drops (see jsr-doc-coverage skill).
+- Tuple-preserving static combinators (`Result.all`, `Option.all`, ...) require a `const` type parameter — `all<const T extends readonly Result<unknown, unknown>[]>(results: T)` — plus `-readonly` mapped types on the output. A plain `T extends readonly X[]` param infers an ARRAY (union element type), not a tuple: `all([Ok(1), Ok("a")])` degrades to `(number | string)[]`. Add `{ -readonly [K in keyof T]: ... }` to strip the `readonly` that `const` infers, so callers get mutable tuples. Validated with a scratch `deno check` file before implementing.
 - Circular imports between option/ and result/ are real (result uses Some/None, option uses Result types). Use `import type` for types; for values rely on static ESM imports + live bindings (the factories are only referenced inside method bodies, so the cycle resolves at call time). Never reintroduce `require()`.
 - When splitting/renaming a module, update ALL of: src/index.ts re-exports, deno.json exports, package.json exports, tests' import paths, and every internal import reference (grep for the old filename).
 - Module entrypoints (src/option/index.ts, src/result/index.ts) need a `@module` doc comment for the JSR 'Has module docs in all entrypoints' criterion.

@@ -1,9 +1,9 @@
 ---
 name: "release-notes"
 description: "Write and maintain GitHub release notes for this repo (rustify) with a consistent, hand-written format: `# Release Notes - vX.Y.Z` header, emoji ## section headers in a fixed order, and a narrative tone that is NOT a raw CHANGELOG mirror. Use whenever the user asks to write, rewrite, edit, reorder, or audit release notes, add/remove sections (breaking changes, upgrade guide, code examples), or fix release-note wording/consistency. Also trigger when editing an existing draft release body via gh release edit."
-version: 1
+version: 2
 created: "2026-08-12"
-updated: "2026-08-12"
+updated: "2026-08-15"
 ---
 ## When to Use
 The user asks to write the release notes for a new version, rewrite/edit the notes of an existing draft release, add a section (e.g. ⚠️ Breaking Changes, 🔄 Upgrade Guide, a code example), reorder sections, trim wording (e.g. removing 'previously' references), or audit release notes for consistency across versions. Also whenever editing a draft body through gh release edit rather than regenerating from the CHANGELOG.
@@ -21,6 +21,7 @@ The user asks to write the release notes for a new version, rewrite/edit the not
 ## Pitfalls
 - Section reordering with python regex fails on emoji-encoded text — use sed/awk line-range extraction instead (fetch body, cut each section's line range, reassemble in the target order).
 - gh api PATCH moves the REMOTE tag only — the local tag ref goes stale; sync with `git tag -f` after every tag move.
+- `gh api -X PATCH repos/ghaerdi/rustify/git/refs/tags/<ver>` fails 422 "Object does not exist" when the target SHA is local-only (unpushed commits) — push main first, then PATCH, then `git tag -f` locally.
 - Backticks inside sed replacement strings break bash — for template-literal renames use a python heredoc.
 - Do not backport older release styles (v1.x `### ✨` + `*` bullets, v2.0.0 `## 🎉` headers) — historical releases stay as-is.
 - Never mark the release as latest or publish unless explicitly asked — drafts stay drafts.
