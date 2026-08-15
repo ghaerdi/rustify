@@ -17,6 +17,13 @@
   `src/index.ts` API ("Rust-style algebraic types..."). No runtime or type-level
   changes.
 
+### New Features
+
+- **`Option.asSlice()`** — returns `[value]` for `Some` and `[]` for `None`,
+  mirroring Rust's `Option::as_slice` (stabilized in Rust 1.75). Treats an
+  `Option` as a zero-or-one-element collection, e.g. in `flatMap` over arrays of
+  options.
+
 ### Documentation
 
 - Reconcile `AGENTS.md`, `README.md`, and the `npm-esm-bundling` /
