@@ -17,12 +17,17 @@ dependencies. Dual-published to npm (`@ghaerdi/rustify`) and JSR
 - `deno lint` — lint
 - `deno publish --dry-run` — verify JSR publishability
 - `deno task build:npm` — compile the npm artifact (`npm/`, deno dnt) from
-  `src/`; reads the version from package.json. This is what CI runs before
-  publishing to npm (see Release).
+  `src/`, then bundle each ESM entry with esbuild into a self-contained file
+  (webpack/Next.js SSR compat), prune the now-dead per-file ESM `.js`, and emit
+  a `files` allowlist in the published `package.json`; reads the version from
+  package.json. This is what CI runs before publishing to npm (see Release).
+  Requires `esbuild`, auto-installed via `"nodeModulesDir": "auto"`.
 - `devenv test` — validate the dev environment (git-hooks + `deno task check`);
   `devenv shell` enters it
 
-No install step needed — tests and checks run natively under Deno.
+Tests and checks run natively under Deno (no install step). The npm build
+(`deno task build:npm`) additionally uses `esbuild` from npm, auto-installed
+into a gitignored `node_modules/` via `deno.json` `"nodeModulesDir": "auto"`.
 
 ## Layout
 
@@ -62,13 +67,16 @@ Version bumps + CHANGELOG + git tag + draft GitHub release: follow the
 Publishing is automated — `.github/workflows/publish.yml` runs on the GitHub
 `release: published` event and publishes **both** registries from CI, no tokens
 (OIDC):
+
 - **JSR**: `deno publish` (TypeScript source, SLSA provenance).
-- **npm**: `deno task build:npm` (compiled `npm/` via dnt) then `npm publish`
-  via trusted publishing; the npm dist-tag derives from the tag's pre-release
-  label (`-beta.N` → `beta`, stable → `latest`).
+- **npm**: `deno task build:npm` (compiled `npm/` via dnt, ESM entries bundled
+  with esbuild for webpack/Next.js SSR compat) then `npm publish` via trusted
+  publishing; the npm dist-tag derives from the tag's pre-release label
+  (`-beta.N` → `beta`, stable → `latest`).
 
 Bump the version in BOTH `package.json` and `deno.json` to the exact release
 version before tagging — the workflow's version guard fails on a mismatch.
+
 ## Docs
 
 Keep README.md, AGENTS.md, and JSDoc in sync with the code. After a session with

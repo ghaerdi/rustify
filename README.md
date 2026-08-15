@@ -111,8 +111,10 @@ Full API reference, `match()` guide, and worked examples live in the
 
 ## Development
 
-This project uses Deno (>= 2.x). No install step is required — dependencies are
-resolved from JSR via the lockfile.
+This project uses Deno (>= 2.x). No install step is required for tests or checks
+— dependencies are resolved from JSR via the lockfile. The npm build
+(`deno task build:npm`) pulls `esbuild` from npm, auto-installed via
+`"nodeModulesDir": "auto"` in `deno.json`.
 
 - **Dev Environment (optional):** a `devenv` shell (`devenv.nix`) with git-hooks
   is available — `devenv test` validates the environment (hooks + type check),
