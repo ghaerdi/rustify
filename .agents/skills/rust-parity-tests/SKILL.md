@@ -18,7 +18,7 @@ Trigger when working on test/option.test.ts or test/result.test.ts and the goal 
 6. Run deno task check and deno test; verify all tests pass and the count increased.
 
 ## Pitfalls
-- Some Rust Option methods don't exist in this library (insert, replace, get_or_insert_default, is_none_or) — ask the user whether to implement the method or skip the tests before adding parity cases.
+- Some Rust Option methods don't exist in this library — get_or_insert_default is the remaining gap (TS has no Default trait; unwrapOrDefault throws for None). insert/replace/is_none_or were added in 2.2.0, as_slice in 2.3.0 — don't skip their parity tests.
 - Rust's take_if takes the predicate a MUTABLE reference and allows mutating the value inside it; this repo's takeIf passes the value by value, so mutation-in-predicate cases cannot be replicated.
 - never-type issues: Ok(2) has type Ok<number, never>; when the closure needs a concrete error type, annotate explicitly, e.g. `const x: Result<number, string> = Ok(2);`. Same for Some()/None() with empty generics.
 - Rust's iter() returns Option<&T> (Some(&4) or None); this repo uses [Symbol.iterator] yielding the raw value (or nothing). Assert accordingly ([...Some(4)] === [4], not Some(4)).

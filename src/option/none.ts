@@ -91,6 +91,9 @@ export class NoneStrategy<T> implements BaseOptionStrategy<T> {
       "Cannot unwrap None to default value. TypeScript doesn't have a Default trait. Use unwrapOr(defaultValue) instead.",
     );
   }
+  asSlice(): T[] {
+    return [];
+  }
   getOrInsert(_value: T): T {
     throw new Error(
       "Cannot call getOrInsert on NoneStrategy — use OptionImpl.getOrInsert instead.",

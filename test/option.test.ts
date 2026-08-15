@@ -521,6 +521,20 @@ describe("Option", () => {
     });
   });
 
+  describe("asSlice", () => {
+    test("Some(value).asSlice() should return [value]", () => {
+      expect(Some(5).asSlice()).toEqual([5]);
+    });
+    test("None().asSlice() should return []", () => {
+      expect(None<number>().asSlice()).toEqual([]);
+    });
+    test("flatMap over options should collect values", () => {
+      const items = [Some(1), None<number>(), Some(3)]
+        .flatMap((o) => o.asSlice());
+      expect(items).toEqual([1, 3]);
+    });
+  });
+
   describe("unwrapOrDefault", () => {
     test("Some(value).unwrapOrDefault() should return value", () => {
       const opt = Some(5);

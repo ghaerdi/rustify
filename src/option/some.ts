@@ -110,6 +110,9 @@ export class SomeStrategy<T> implements BaseOptionStrategy<T> {
   unwrapOrDefault(): T {
     return this.#value;
   }
+  asSlice(): T[] {
+    return [this.#value];
+  }
   getOrInsert(_value: T): T {
     return this.#value;
   }

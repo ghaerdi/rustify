@@ -40,6 +40,7 @@ export interface BaseOptionStrategy<T> {
     E
   >;
   unwrapOrDefault(): T;
+  asSlice(): T[];
   getOrInsert(value: T): T;
   getOrInsertWith(f: () => T): T;
   take(): BaseOptionStrategy<T>;

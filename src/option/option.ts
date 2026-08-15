@@ -328,6 +328,22 @@ export interface OptionMethods<T> {
   unwrapOrDefault(): T;
 
   /**
+   * Returns a slice containing the value if `Some`, or an empty array if `None`.
+   *
+   * Mirrors Rust's `Option::as_slice` — treats an `Option` as a zero-or-one
+   * element collection, e.g. for `flatMap` over arrays of options.
+   *
+   * @returns `[value]` for `Some`, `[]` for `None`.
+   * @example
+   * ```typescript
+   * Some(5).asSlice(); // [5]
+   * None().asSlice(); // []
+   * [Some(1), None(), Some(3)].flatMap((o) => o.asSlice()); // [1, 3]
+   * ```
+   */
+  asSlice(): T[];
+
+  /**
    * Inserts `value` into the option if it is `None`, then returns the contained value.
    * Mutates the option in place.
    * @param value The value to insert if None.
@@ -680,6 +696,10 @@ class OptionImpl<T, K extends "some" | "none"> implements OptionMethods<T> {
   }
   /** @inheritDoc */ unwrapOrDefault(): T {
     return this.#inner.unwrapOrDefault();
+  }
+
+  /** @inheritDoc */ asSlice(): T[] {
+    return this.#inner.asSlice();
   }
 
   /** @inheritDoc */ getOrInsert(value: T): T {
