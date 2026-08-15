@@ -1,7 +1,7 @@
 {
   "name": "@ghaerdi/rustify",
   "version": "2.3.0-beta.1",
-  "description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
+  "description": "Rust-style algebraic types for TypeScript: Option (Some/None) and Result (Ok/Err) with functional combinators and pattern matching for safe error handling and null management.",
   "type": "module",
   "private": false,
   "repository": {
@@ -20,11 +20,11 @@
     "monad",
     "option",
     "result",
+    "match",
+    "pattern matching",
     "error handling",
     "functional programming",
-    "type-safe",
-    "null safety",
-    "maybe"
+    "type-safe"
   ],
   "author": "ghaerdi",
   "license": "MIT",
