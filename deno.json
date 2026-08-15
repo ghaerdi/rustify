@@ -2,6 +2,7 @@
   "name": "@ghaerdi/rustify",
   "version": "2.2.1",
   "license": "MIT",
+  "nodeModulesDir": "auto",
   "exports": {
     ".": "./src/index.ts",
     "./option": "./src/option/index.ts",
@@ -11,7 +12,8 @@
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.43.2",
     "@std/expect": "jsr:@std/expect@^1",
-    "@std/testing": "jsr:@std/testing@^1"
+    "@std/testing": "jsr:@std/testing@^1",
+    "esbuild": "npm:esbuild@^0.28.2"
   },
   "tasks": {
     "check": "deno check src/ test/",

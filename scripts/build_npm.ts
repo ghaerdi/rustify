@@ -1,4 +1,5 @@
 import { build, emptyDir } from "@deno/dnt";
+import * as esbuild from "esbuild";
 
 // Single source of truth for the version is package.json.
 async function loadVersion(): Promise<string> {
@@ -70,3 +71,33 @@ await build({
     Deno.copyFileSync("README.md", "npm/README.md");
   },
 });
+
+// ─── Bundle ESM entries (webpack/Next.js SSR compat) ────────────────────────
+//
+// dnt emits each ESM entry as an `export * from "./x.js"` re-export shim. That
+// star-re-export chain of namespace-merge objects (e.g. `Option`, `Result`)
+// trips up webpack's SSR/RSC ESM interop — it produces a non-callable module
+// (`__webpack_modules__[moduleId] is not a function`), forcing Next.js
+// consumers to add `transpilePackages`. Bundling each entry down to a single
+// self-contained file with one explicit `export { ... }` removes the chain and
+// the workaround. CJS is left as dnt emitted it — `__createBinding` re-exports
+// are webpack-safe.
+const esmBundles = [
+  "npm/esm/index.js",
+  "npm/esm/option/index.js",
+  "npm/esm/result/index.js",
+  "npm/esm/match/index.js",
+];
+for (const entry of esmBundles) {
+  const tmp = `${entry}.bundled.js`;
+  await esbuild.build({
+    entryPoints: [entry],
+    outfile: tmp,
+    bundle: true,
+    format: "esm",
+    platform: "neutral",
+    logLevel: "warning",
+  });
+  await Deno.rename(tmp, entry);
+}
+await esbuild.stop();
