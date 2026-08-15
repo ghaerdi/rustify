@@ -101,3 +101,29 @@ for (const entry of esmBundles) {
   await Deno.rename(tmp, entry);
 }
 await esbuild.stop();
+
+// ─── Drop dead ESM per-file modules ─────────────────────────────────────────
+//
+// The bundled ESM entries (`esm/{index,option,result,match}/index.js`) are
+// self-contained — they inline every module, so the per-file `.js` modules
+// dnt also emitted (`esm/option/option.js`, `esm/match/match.js`, etc.) are
+// unreferenced. Removing them shrinks the npm tarball. Their `.d.ts` siblings
+// stay: the entry `.d.ts` files re-export from them for types. `esm/utils.js`
+// is imported by the bundled code, so it's kept.
+const liveEsmJs = new Set([
+  "npm/esm/index.js",
+  "npm/esm/utils.js",
+  "npm/esm/option/index.js",
+  "npm/esm/result/index.js",
+  "npm/esm/match/index.js",
+]);
+for await (const dirEntry of Deno.readDir("npm/esm")) {
+  if (!dirEntry.isDirectory) continue;
+  for await (const file of Deno.readDir(`npm/esm/${dirEntry.name}`)) {
+    if (!file.isFile || !file.name.endsWith(".js")) continue;
+    const p = `npm/esm/${dirEntry.name}/${file.name}`;
+    if (file.name !== "index.js" && !liveEsmJs.has(p)) {
+      await Deno.remove(p);
+    }
+  }
+}
