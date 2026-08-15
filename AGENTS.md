@@ -19,9 +19,11 @@ dependencies. Dual-published to npm (`@ghaerdi/rustify`) and JSR
 - `deno task build:npm` — compile the npm artifact (`npm/`, deno dnt) from
   `src/`, then bundle each ESM entry with esbuild into a self-contained file
   (webpack/Next.js SSR compat), prune the now-dead per-file ESM `.js`, and emit
-  a `files` allowlist in the published `package.json`; reads the version from
-  package.json. This is what CI runs before publishing to npm (see Release).
-  Requires `esbuild`, auto-installed via `"nodeModulesDir": "auto"`.
+  a `files` allowlist in the published `package.json`. Reads the version AND the
+  publish metadata (description, keywords, author, repository, bugs, license)
+  from package.json as the single source of truth — see `scripts/build_npm.ts`.
+  This is what CI runs before publishing to npm (see Release). Requires
+  `esbuild`, auto-installed via `"nodeModulesDir": "auto"`.
 - `devenv test` — validate the dev environment (git-hooks + `deno task check`);
   `devenv shell` enters it
 
@@ -58,6 +60,10 @@ test/
 - Commits run devenv git-hooks (alejandra, deadnix, deno fmt/lint/check) — hooks
   live in `devenv.nix`; the generated `.pre-commit-config.yaml` is not
   hand-edited.
+- `package.json` keywords mirror the GitHub repo topics 1:1 (same token set; GH
+  topics are kebab-case). `scripts/build_npm.ts` ships them verbatim to the npm
+  `keywords` field, so edit package.json, then `gh api .../topics` to keep
+  GitHub in sync.
 
 ## Release
 

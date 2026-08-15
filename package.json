@@ -16,15 +16,15 @@
   },
   "keywords": [
     "typescript",
-    "rust",
+    "rust-lang",
     "monad",
-    "option",
-    "result",
+    "options",
+    "results",
     "match",
-    "pattern matching",
-    "error handling",
-    "functional programming",
-    "type-safe"
+    "pattern-matching",
+    "error-handler",
+    "functional-programming",
+    "type-safety"
   ],
   "author": "ghaerdi",
   "license": "MIT",

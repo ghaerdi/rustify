@@ -1,7 +1,7 @@
 ---
 name: "npm-esm-bundling"
 description: "This repo's npm package ships webpack/Next.js-SSR-safe ESM. Trigger when working on scripts/build_npm.ts, when a Next.js/webpack consumer reports `__webpack_modules__[moduleId] is not a function` against @ghaerdi/rustify, or when revisiting how the npm artifact is produced. Covers why dnt's ESM `export *` re-export chain breaks webpack SSR, the esbuild bundling + dead-file pruning + `files` allowlist added to build:npm, and how to verify the tarball."
-version: 1
+version: 2
 created: "2026-08-15"
 updated: "2026-08-15"
 ---
@@ -19,7 +19,7 @@ updated: "2026-08-15"
 3. After dnt, esbuild-bundle each ESM entry into ONE self-contained file: `esbuild.build({ entryPoints:[entry], bundle:true, format:"esm", platform:"neutral" })`, write to a temp path, then `Deno.rename` over the entry (esbuild refuses to overwrite the input file → must use a temp output + rename). Each bundled entry has zero imports and one explicit `export { ... }` — webpack-safe, and consumers drop `transpilePackages`.
 4. Bundling orphans the per-file ESM `.js` modules dnt emitted (nothing imports them anymore). Prune them: iterate `npm/esm/<mod>/`, remove any `.js` that is not `index.js`; keep `esm/utils.js` (imported by bundled code) and all `.d.ts` (the entry `.d.ts` still `export * from "./xxx.js"` for types — keep those per-file `.d.ts`).
 5. Do NOT bundle the CJS (`script/`) side — dnt's `__createBinding`/`__exportStar` CJS re-exports are already webpack-safe (verified), and `script/index.js` requires its per-file modules, so they are live, not dead.
-6. Set an explicit `files` allowlist in the dnt `package` config: `files: ["esm/", "script/", "LICENSE", "README.md"]`. It becomes a denylist-free guarantee that stray source/artifacts never ship (npm auto-includes package.json).
+6. Set an explicit `files` allowlist in the dnt `package` config: `files: ["esm/", "script/", "LICENSE", "README.md"]`. It becomes a denylist-free guarantee that stray source/artifacts never ship (npm auto-includes package.json). The rest of the `package` block — `description`, `keywords`, `author`, `repository`, `bugs`, `license` — is read straight from the repo `package.json` (single source of truth), so edit package.json to change npm metadata, NOT the hardcoded script (build_npm.ts copies those fields from `pkg.*`; only dnt-specific outputs `files`/`engines` are defined in the script).
 7. `esbuild` is a dev dependency: `deno.json` adds `"esbuild": "npm:esbuild@^0.28.2"` under `imports` and `"nodeModulesDir": "auto"` (top level). `deno.lock` pins it. `node_modules/` is gitignored.
 8. Verify: `deno task build:npm`, then `cd npm && npm pack --dry-run` — confirm dead ESM `.js` are gone, tarball is ~61 files, and no `src/`/lockfiles slip in. Confirm ESM + CJS + types all work (`import('./npm/esm/index.js')`, `require('./script/index.js')`, and a tsc consumer that type-narrows via `.d.ts`).
 
