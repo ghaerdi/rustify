@@ -1,5 +1,37 @@
 # Changelog
 
+## 2.3.0-beta.1
+
+### Improvements
+
+- **npm ESM build is now bundled for webpack/Next.js SSR compatibility.** The
+  published ESM entries (`index`, `option`, `result`, `match`) previously were
+  `export * from` re-export shims over namespace-merge objects (`Option`,
+  `Result`); webpack's SSR/RSC interop could produce a non-callable module
+  (`__webpack_modules__[moduleId] is not a function`), forcing consumers to add
+  `transpilePackages`. The `build:npm` task now bundles each ESM entry with
+  esbuild into a single self-contained file (`export { ... }`, no
+  star-re-exports). The CJS (`script/`) output is unchanged and was already
+  webpack-safe. `deno.json` picks up `esbuild` as a dev dependency
+  (`nodeModulesDir: "auto"`); `deno.lock` pins `esbuild@0.28.2`. The published
+  API is identical.
+
+### Documentation
+
+- Moved the full API reference out of the `README` into a **library wiki**
+  (`github.com/ghaerdi/rustify/wiki`): per-type pages for `Option`, `Result`,
+  and `match`, plus `Installation` and `Examples`. The `README` now keeps a
+  condensed overview (intro, install, a `match()`-based basic usage example, a
+  `Result.from`/`Result.fromAsync` wrapping example) with links to the wiki.
+  Wiki internal links navigate to pages instead of raw `.md` files.
+- Added `match()` to the README basic usage example; added a `Result.from` /
+  `Result.fromAsync` example for wrapping throwing functions.
+
+### Infrastructure
+
+- Bumped `ci.yml` and `publish.yml` GitHub Actions versions.
+- Git-ignore the local `wiki/` checkout.
+
 ## 2.2.1
 
 ### Fixes

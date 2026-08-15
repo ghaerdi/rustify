@@ -1,6 +1,6 @@
 {
   "name": "@ghaerdi/rustify",
-  "version": "2.2.1",
+  "version": "2.3.0-beta.1",
   "license": "MIT",
   "nodeModulesDir": "auto",
   "exports": {
@@ -28,10 +28,16 @@
     ]
   },
   "fmt": {
-    "include": ["src/", "test/"]
+    "include": [
+      "src/",
+      "test/"
+    ]
   },
   "lint": {
-    "include": ["src/", "test/"],
+    "include": [
+      "src/",
+      "test/"
+    ],
     "rules": {
       "exclude": [
         "no-explicit-any",
@@ -40,5 +46,7 @@
       ]
     }
   },
-  "exclude": ["node_modules/"]
+  "exclude": [
+    "node_modules/"
+  ]
 }
