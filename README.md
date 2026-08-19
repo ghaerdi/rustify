@@ -23,6 +23,10 @@ functional programming patterns for safer code. This allows you to:
 - **Chain operations safely:** Monadic methods like `andThen`, `map`, and
   `orElse` allow elegant functional composition.
 - **Perform exhaustive checks:** The `match` method ensures you handle all cases
+- **Enforce deep immutability:** Use `Immutable<T>` to recursively make all
+  properties `readonly` and convert mutable collections (`Array`, `Map`, `Set`)
+  to their readonly counterparts.
+
   explicitly.
 - **Easily wrap unsafe functions:** `Result.from` and `Option.fromNullable`
   provide simple ways to convert potentially unsafe operations.
@@ -94,6 +98,42 @@ const body = await Result.fromAsync(async () =>
 );
 if (body.isOk()) console.log(body.unwrap());
 ```
+
+## Deep immutability
+
+Use `Immutable<T>` to recursively make all properties `readonly` and convert
+mutable collections to their readonly counterparts:
+
+```typescript
+import type { Immutable } from "@ghaerdi/rustify";
+
+type User = {
+  name: string;
+  tags: string[];
+  metadata: { role: string };
+};
+
+type FrozenUser = Immutable<User>;
+// {
+//   readonly name: string;
+//   readonly tags: readonly string[];
+//   readonly metadata: { readonly role: string };
+// }
+
+const user: Immutable<User> = {
+  name: "Alice",
+  tags: ["admin"],
+  metadata: { role: "admin" },
+};
+
+// user.name = "Bob";           // ❌ Error: readonly property
+// user.tags.push("mod");       // ❌ Error: readonly array
+// user.metadata.role = "user"; // ❌ Error: nested readonly property
+```
+
+Built-in types like `Date`, `RegExp`, `Promise`, `WeakMap`, and `WeakSet` pass
+through unchanged since `readonly` properties cannot prevent method-based
+mutation.
 
 ## Documentation
 

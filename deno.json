@@ -1,13 +1,15 @@
 {
   "name": "@ghaerdi/rustify",
   "version": "2.3.0-beta.2",
+
   "license": "MIT",
   "nodeModulesDir": "auto",
   "exports": {
     ".": "./src/index.ts",
     "./option": "./src/option/index.ts",
     "./result": "./src/result/index.ts",
-    "./match": "./src/match/index.ts"
+    "./match": "./src/match/index.ts",
+    "./immutable": "./src/immutable/index.ts"
   },
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.43.2",

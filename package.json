@@ -1,6 +1,7 @@
 {
   "name": "@ghaerdi/rustify",
   "version": "2.3.0-beta.2",
+
   "description": "Rust-style algebraic types for TypeScript: Option (Some/None) and Result (Ok/Err) with functional combinators and pattern matching for safe error handling and null management.",
   "type": "module",
   "private": false,

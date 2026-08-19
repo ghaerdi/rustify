@@ -19,6 +19,13 @@
 
 ### New Features
 
+- **`Immutable<T>`** — deeply immutable version of a type. Recursively makes all
+  properties `readonly` and converts mutable collections to their readonly
+  counterparts: `Array` → `ReadonlyArray`, `Map` → `ReadonlyMap`, `Set` →
+  `ReadonlySet`. Built-in types where `readonly` properties cannot prevent
+  mutation (`Date`, `RegExp`, `Promise`, `WeakMap`, `WeakSet`) and
+  already-readonly collections pass through unchanged. Functions also pass
+  through unchanged.
 - **`Option.asSlice()`** — returns `[value]` for `Some` and `[]` for `None`,
   mirroring Rust's `Option::as_slice` (stabilized in Rust 1.75). Treats an
   `Option` as a zero-or-one-element collection, e.g. in `flatMap` over arrays of

@@ -39,9 +39,11 @@ src/
   option/           — Option monad (Some/None; strategy impl for mutating methods)
   result/           — Result monad (Ok/Err; immutable variants)
   match/            — match() pattern matching
+  immutable/        — Immutable<T> deep readonly utility type
   utils.ts          — shared helpers
 test/
-  option.test.ts, result.test.ts, match.test.ts
+  option.test.ts, result.test.ts, match.test.ts, immutable.test.ts
+
 .agents/skills/     — project skills, versioned in git (see self-improve skill)
 ```
 
