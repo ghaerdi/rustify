@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.3.0-beta.3
+
+### Bug Fixes
+
+- **Cross-bundle `PATTERN` symbol mismatch.** `Symbol("rustify.match.pattern")`
+  created a unique symbol per bundle, so mixing imports from `@ghaerdi/rustify`
+  and `@ghaerdi/rustify/match` (or `./option`, `./result`) caused the matcher to
+  fail with `No pattern matched the value {}`. Switched to `Symbol.for()` so all
+  ESM bundles share the same global symbol.
+
 ## 2.3.0-beta.2
 
 ### Improvements
