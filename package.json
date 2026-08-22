@@ -1,6 +1,6 @@
 {
   "name": "@ghaerdi/rustify",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "A TypeScript monad library inspired by Rust, providing Result and Option types for safe error handling and null management.",
   "type": "module",
   "private": false,
