@@ -11,7 +11,7 @@
  * @internal Unique symbol used to tag patterns created by the {@link P}
  * namespace so the runtime can distinguish "guards" from plain shape patterns.
  */
-export const PATTERN = Symbol("rustify.match.pattern");
+export const PATTERN = Symbol.for("rustify.match.pattern");
 
 // ─── Internal pattern marker types ─────────────────────────────────────────
 
