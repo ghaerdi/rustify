@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.3.0-beta.4
+
+### New Features
+
+- **`Mutable<T>` type.** Deep inverse of `Immutable<T>`, recursively removes
+  `readonly` modifiers and converts `ReadonlyArray`/`ReadonlyMap`/`ReadonlySet`
+  back to their mutable counterparts. Useful as an escape hatch when mutation is
+  intentional — pair with an `InPlace` suffix naming convention.
+
 ## 2.3.0-beta.3
 
 ### Bug Fixes
