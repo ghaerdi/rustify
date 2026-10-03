@@ -1,40 +1,8 @@
 # Changelog
 
-## 2.3.0-beta.4
+## 2.3.0
 
-### New Features
-
-- **`Mutable<T>` type.** Deep inverse of `Immutable<T>`, recursively removes
-  `readonly` modifiers and converts `ReadonlyArray`/`ReadonlyMap`/`ReadonlySet`
-  back to their mutable counterparts. Useful as an escape hatch when mutation is
-  intentional — pair with an `InPlace` suffix naming convention.
-
-## 2.3.0-beta.3
-
-### Bug Fixes
-
-- **Cross-bundle `PATTERN` symbol mismatch.** `Symbol("rustify.match.pattern")`
-  created a unique symbol per bundle, so mixing imports from `@ghaerdi/rustify`
-  and `@ghaerdi/rustify/match` (or `./option`, `./result`) caused the matcher to
-  fail with `No pattern matched the value {}`. Switched to `Symbol.for()` so all
-  ESM bundles share the same global symbol.
-
-## 2.3.0-beta.2
-
-### Improvements
-
-- **npm package metadata now comes from `package.json` as the single source of
-  truth.** `scripts/build_npm.ts` previously hardcoded the description,
-  keywords, author, repository, bugs, and license; it now reads them straight
-  from the repo `package.json` so the published `npm/package.json` can't drift
-  from what `deno publish` sees. Only dnt-specific outputs (`files`, `engines`)
-  stay defined in the script.
-- **Trimmed and focused the npm keywords.** Added `match` and
-  `pattern
-  matching`; removed the redundant `optional`, `null safety`, and
-  `maybe` tags. The description was rewritten to match the current
-  `src/index.ts` API ("Rust-style algebraic types..."). No runtime or type-level
-  changes.
+_(Folds the four pre-release entries `2.3.0-beta.1` … `2.3.0-beta.4`.)_
 
 ### New Features
 
@@ -44,7 +12,12 @@
   `ReadonlySet`. Built-in types where `readonly` properties cannot prevent
   mutation (`Date`, `RegExp`, `Promise`, `WeakMap`, `WeakSet`) and
   already-readonly collections pass through unchanged. Functions also pass
-  through unchanged.
+  through unchanged. Exported from the package root and as the `./immutable`
+  subpath.
+- **`Mutable<T>`** — deep inverse of `Immutable<T>`, recursively removes
+  `readonly` modifiers and converts `ReadonlyArray`/`ReadonlyMap`/`ReadonlySet`
+  back to their mutable counterparts. Useful as an escape hatch when mutation is
+  intentional — pair with an `InPlace` suffix naming convention.
 - **`Option.asSlice()`** — returns `[value]` for `Some` and `[]` for `None`,
   mirroring Rust's `Option::as_slice` (stabilized in Rust 1.75). Treats an
   `Option` as a zero-or-one-element collection, e.g. in `flatMap` over arrays of
@@ -58,16 +31,27 @@
   function returning a `Result`/`Option`, then combine (map + `all`); `fn` stops
   being called at the first failure.
 
-### Documentation
+### Bug Fixes
 
-- Reconcile `AGENTS.md`, `README.md`, and the `npm-esm-bundling` /
-  `release-workflow` skills with the esbuild-bundled npm build (single ESM
-  entries, dead-file pruning, `files` allowlist).
-
-## 2.3.0-beta.1
+- **Cross-bundle `PATTERN` symbol mismatch.** `Symbol("rustify.match.pattern")`
+  created a unique symbol per bundle, so mixing imports from `@ghaerdi/rustify`
+  and `@ghaerdi/rustify/match` (or `./option`, `./result`) caused the matcher to
+  fail with `No pattern matched the value {}`. Switched to `Symbol.for()` so all
+  ESM bundles share the same global symbol. Backported to `2.2.2`.
 
 ### Improvements
 
+- **npm package metadata now comes from `package.json` as the single source of
+  truth.** `scripts/build_npm.ts` previously hardcoded the description,
+  keywords, author, repository, bugs, and license; it now reads them straight
+  from the repo `package.json` so the published `npm/package.json` can't drift
+  from what `deno publish` sees. Only dnt-specific outputs (`files`, `engines`)
+  stay defined in the script.
+- **Trimmed and focused the npm keywords.** Added `match` and
+  `pattern matching`; removed the redundant `optional`, `null safety`, and
+  `maybe` tags. The description was rewritten to match the current
+  `src/index.ts` API ("Rust-style algebraic types..."). No runtime or type-level
+  changes.
 - **npm ESM build is now bundled for webpack/Next.js SSR compatibility.** The
   published ESM entries (`index`, `option`, `result`, `match`) previously were
   `export * from` re-export shims over namespace-merge objects (`Option`,
@@ -79,6 +63,14 @@
   webpack-safe. `deno.json` picks up `esbuild` as a dev dependency
   (`nodeModulesDir: "auto"`); `deno.lock` pins `esbuild@0.28.2`. The published
   API is identical.
+- **Dead per-file ESM modules dropped from the npm tarball.** Once each ESM
+  entry is bundled, the per-file `.js` modules dnt also emitted
+  (`esm/option/option.js`, `esm/match/match.js`, …) are unreferenced, so
+  `build:npm` removes them after bundling. Their `.d.ts` siblings stay: the
+  entry `.d.ts` files re-export from them for types.
+- **Explicit `files` allowlist in the published npm package.** The generated
+  manifest now ships exactly `esm/`, `script/`, `LICENSE` and `README.md`,
+  keeping stray source and build artifacts out of the tarball.
 
 ### Documentation
 
@@ -88,12 +80,36 @@
   condensed overview (intro, install, a `match()`-based basic usage example, a
   `Result.from`/`Result.fromAsync` wrapping example) with links to the wiki.
   Wiki internal links navigate to pages instead of raw `.md` files.
-- Added `match()` to the README basic usage example; added a `Result.from` /
+- Added a dedicated Deno install section, `bun` / `bunx jsr` install
+  instructions, and simplified npm/jsr registry examples in the `README`.
+- Added `match()` to the `README` basic usage example, and a `Result.from` /
   `Result.fromAsync` example for wrapping throwing functions.
+- Documented `Immutable<T>` in the `README` (feature list plus a "Deep
+  immutability" section) and in `AGENTS.md`'s layout.
+- Reconciled `AGENTS.md`, `README.md` and the `npm-esm-bundling` /
+  `release-workflow` skills with the esbuild-bundled npm build (single ESM
+  entries, dead-file pruning, `files` allowlist); fixed a stale `build:npm`
+  metadata description, and aligned `package.json` keywords with the GitHub repo
+  topics.
+- Captured the tuple-preservation and tag-move pitfalls in the
+  `monad-module-conventions` / `release-notes` skills, and the OIDC npm
+  publishing requirements (trusted publishing, npm CLI ≥ 11.5.1) in
+  `release-workflow` and `AGENTS.md`.
+
+### Tests
+
+- 56 new tests: 40 type-level tests for `Immutable<T>` (primitives, functions,
+  collections, nested structures, built-ins that pass through unchanged) and
+  `Mutable<T>` (including `Immutable`/`Mutable` inverse and idempotency), plus
+  runtime tests for `Option.asSlice()` (3), `Option.all` / `Option.traverse` (6)
+  and `Result.all` / `Result.traverse` (7) covering all-`Some`/`Ok` results,
+  first-`None`/`Err` short-circuiting, tuple-type preservation, error-type
+  union, empty input, and short-circuiting of the mapper function.
 
 ### Infrastructure
 
-- Bumped `ci.yml` and `publish.yml` GitHub Actions versions.
+- Bumped `ci.yml` and `publish.yml` GitHub Actions versions (`actions/checkout`
+  v7, `denoland/setup-deno` v2, `actions/setup-node` v7).
 - Git-ignore the local `wiki/` checkout.
 
 ## 2.2.1
