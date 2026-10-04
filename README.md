@@ -23,11 +23,10 @@ functional programming patterns for safer code. This allows you to:
 - **Chain operations safely:** Monadic methods like `andThen`, `map`, and
   `orElse` allow elegant functional composition.
 - **Perform exhaustive checks:** The `match` method ensures you handle all cases
+  explicitly.
 - **Enforce deep immutability:** Use `Immutable<T>` to recursively make all
   properties `readonly` and convert mutable collections (`Array`, `Map`, `Set`)
   to their readonly counterparts.
-
-  explicitly.
 - **Easily wrap unsafe functions:** `Result.from` and `Option.fromNullable`
   provide simple ways to convert potentially unsafe operations.
 - **Destructure results easily:** Use `asTuple()` for Go-style `[err, val]`

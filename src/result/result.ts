@@ -153,7 +153,7 @@ interface ResultTypeStatics {
    * Result.from(() => JSON.parse('{"a": 1}')).unwrap(); // { a: 1 }
    * Result.from(() => JSON.parse('invalid')).isErr(); // true
    * Result.from(() => Ok(10)).unwrap(); // 10
-   * Result.from(() => { throw "err"; }, (e) => ({ m: e })).err(); // { m: "err" }
+   * Result.from(() => { throw "err"; }, (e) => ({ m: e })).unwrapErr(); // { m: "err" }
    * ```
    */
   from<T, E = unknown>(

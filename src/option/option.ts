@@ -976,8 +976,12 @@ export namespace Option {
    * @note Not a standard Rust Option method. Equivalent to `iter().map(fn).collect()` in Rust.
    * @example
    * ```typescript
-   * Option.traverse([1, 2, 3], (n) => (n > 0 ? Some(n * 2) : None())).unwrap();
-   * // [2, 4, 6]
+   * const doubleIfPositive = (n: number): Option<number> =>
+   *   n > 0 ? Some(n * 2) : None();
+   *
+   * // Returns Option<number[]> — an array, not a [number, number, number] tuple
+   * Option.traverse([1, 2, 3], doubleIfPositive).unwrap(); // [2, 4, 6]
+   * Option.traverse([1, 0, 3], doubleIfPositive).isNone(); // true
    * ```
    */
   export const traverse = <T, U>(
